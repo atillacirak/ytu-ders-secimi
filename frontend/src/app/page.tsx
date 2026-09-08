@@ -64,8 +64,7 @@ const FACULTIES: Faculty[] = [
       { code: 'BLM', name: 'Bilgisayar Mühendisliği' },
       { code: 'ELK', name: 'Elektrik Mühendisliği' },
       { code: 'EHM', name: 'Elektronik ve Haberleşme Mühendisliği' },
-      { code: 'MKT', name: 'Mekatronik Mühendisliği' },
-      { code: 'YZV', name: 'Yapay Zeka ve Veri Mühendisliği' },
+      { code: 'BMD', name: 'Biyomedikal Mühendisliği' },
     ]
   },
   {
@@ -73,9 +72,9 @@ const FACULTIES: Faculty[] = [
     name: 'Kimya - Metalurji Fakültesi',
     departments: [
       { code: 'BIO', name: 'Biyomühendislik' },
-      { code: 'BMD', name: 'Biyomedikal Mühendisliği' },
       { code: 'GDA', name: 'Gıda Mühendisliği' },
       { code: 'KIM', name: 'Kimya Mühendisliği' },
+      { code: 'MAT', name: 'Matematik Mühendisliği' },
       { code: 'MET', name: 'Metalurji ve Malzeme Mühendisliği' },
     ]
   },
@@ -85,13 +84,14 @@ const FACULTIES: Faculty[] = [
     departments: [
       { code: 'MAK', name: 'Makine Mühendisliği' },
       { code: 'END', name: 'Endüstri Mühendisliği' },
+      { code: 'MKT', name: 'Mekatronik Mühendisliği' },
     ]
   },
   {
     id: 'FEF',
     name: 'Fen - Edebiyat Fakültesi',
     departments: [
-      { code: 'MAT', name: 'Matematik Mühendisliği' },
+      { code: 'YZV', name: 'Yapay Zeka ve Veri Mühendisliği' },
     ]
   }
 ];
@@ -144,16 +144,95 @@ export default function Home() {
   };
 
   const getMockCurriculum = (dept: string): Course[] => {
+    const mockDb: Record<string, Course[]> = {
+      BIO: [
+        { id: '1', code: 'BIO1011', name: 'Biyomühendisliğe Giriş', credits: 3, ects: 5, year: 1, is_elective: false, instructor: 'Prof. Dr. Hüseyin Avni', is_online: false },
+        { id: '2', code: 'KIM1001', name: 'Genel Kimya 1', credits: 4, ects: 6, year: 1, is_elective: false, instructor: 'Doç. Dr. Neslihan Şahin', is_online: false },
+        { id: '3', code: 'BIO2021', name: 'Hücre Biyolojisi', credits: 3, ects: 5, year: 2, is_elective: false, instructor: 'Prof. Dr. Elif Damla', is_online: false },
+        { id: '4', code: 'BIO3041', name: 'Biyoreaktör Tasarımı', credits: 3, ects: 6, year: 3, is_elective: false, instructor: 'Doç. Dr. Ahmet Can', is_online: false },
+        { id: '5', code: 'BIO4810', name: 'Doku Mühendisliği (Seçmeli)', credits: 3, ects: 5, year: 4, is_elective: true, instructor: 'Dr. Öğr. Üyesi Gamze K.', is_online: false },
+        { id: '6', code: 'USK1001', name: 'Üniversite Seçmeli', credits: 2, ects: 3, year: 2, is_elective: true, instructor: 'Ortak Havuz', is_online: true },
+      ],
+      BMD: [
+        { id: '1', code: 'BMD1011', name: 'Biyomedikal Müh. Giriş', credits: 3, ects: 5, year: 1, is_elective: false, instructor: 'Prof. Dr. Sadık Kara', is_online: false },
+        { id: '2', code: 'BMD2012', name: 'Biyomedikal Sinyaller', credits: 3, ects: 6, year: 2, is_elective: false, instructor: 'Doç. Dr. Mehmet Fatih', is_online: false },
+        { id: '3', code: 'BMD3031', name: 'Tıbbi Görüntüleme Sistemleri', credits: 3, ects: 6, year: 3, is_elective: false, instructor: 'Prof. Dr. Ayşe Bora', is_online: false },
+        { id: '4', code: 'BMD4720', name: 'Biyoensstrümantasyon (Seçmeli)', credits: 3, ects: 5, year: 4, is_elective: true, instructor: 'Dr. Öğr. Üyesi Ali Fuat', is_online: false },
+      ],
+      GDA: [
+        { id: '1', code: 'GDA1011', name: 'Gıda Mühendisliğine Giriş', credits: 3, ects: 5, year: 1, is_elective: false, instructor: 'Prof. Dr. Osman Sağdıç', is_online: false },
+        { id: '2', code: 'GDA2021', name: 'Gıda Mikrobiyolojisi', credits: 3, ects: 6, year: 2, is_elective: false, instructor: 'Doç. Dr. Halil İbrahim', is_online: false },
+        { id: '3', code: 'GDA3011', name: 'Gıda İşleme Teknolojisi 1', credits: 3, ects: 6, year: 3, is_elective: false, instructor: 'Prof. Dr. Muhammet Aıcı', is_online: false },
+        { id: '4', code: 'GDA4510', name: 'Fonksiyonel Gıdalar (Seçmeli)', credits: 3, ects: 5, year: 4, is_elective: true, instructor: 'Dr. Öğr. Üyesi Filiz N.', is_online: false },
+      ],
+      KIM: [
+        { id: '1', code: 'KIM1011', name: 'Kimya Mühendisliğine Giriş', credits: 3, ects: 5, year: 1, is_elective: false, instructor: 'Prof. Dr. İbrahim Doymaz', is_online: false },
+        { id: '2', code: 'KIM2031', name: 'Kimyasal Termodinamik', credits: 3, ects: 6, year: 2, is_elective: false, instructor: 'Doç. Dr. Serap Güneş', is_online: false },
+        { id: '3', code: 'KIM3011', name: 'Kütle Aktarımı', credits: 3, ects: 6, year: 3, is_elective: false, instructor: 'Prof. Dr. Nuran Devrim', is_online: false },
+        { id: '4', code: 'KIM4750', name: 'Polimer Teknolojisi (Seçmeli)', credits: 3, ects: 5, year: 4, is_elective: true, instructor: 'Dr. Öğr. Üyesi Mert A.', is_online: false },
+      ],
+      MAT: [
+        { id: '1', code: 'MAT1011', name: 'Matematik Müh. Giriş', credits: 3, ects: 5, year: 1, is_elective: false, instructor: 'Prof. Dr. Salim Yüce', is_online: false },
+        { id: '2', code: 'MAT2011', name: 'Soyut Matematik', credits: 3, ects: 6, year: 2, is_elective: false, instructor: 'Doç. Dr. Zekeriya Arvasi', is_online: false },
+        { id: '3', code: 'MAT3021', name: 'Nümerik Analiz 2', credits: 3, ects: 6, year: 3, is_elective: false, instructor: 'Prof. Dr. Bayram Şahin', is_online: false },
+        { id: '4', code: 'MAT4810', name: 'Kriptoloji Temelleri (Seçmeli)', credits: 3, ects: 5, year: 4, is_elective: true, instructor: 'Dr. Öğr. Üyesi Fatih K.', is_online: false },
+      ],
+      MET: [
+        { id: '1', code: 'MET1011', name: 'Malzeme Bilimine Giriş', credits: 3, ects: 5, year: 1, is_elective: false, instructor: 'Prof. Dr. Ahmet Topuz', is_online: false },
+        { id: '2', code: 'MET2021', name: 'Malzeme Termodinamiği', credits: 3, ects: 6, year: 2, is_elective: false, instructor: 'Doç. Dr. Erhan Altan', is_online: false },
+        { id: '3', code: 'MET3011', name: 'Fiziksel Metalurji', credits: 3, ects: 6, year: 3, is_elective: false, instructor: 'Prof. Dr. Yılmaz Taptık', is_online: false },
+        { id: '4', code: 'MET4720', name: 'Kompozit Malzemeler (Seçmeli)', credits: 3, ects: 5, year: 4, is_elective: true, instructor: 'Dr. Öğr. Üyesi Bora M.', is_online: false },
+      ],
+      MAK: [
+        { id: '1', code: 'MAK1011', name: 'Makine Mühendisliğine Giriş', credits: 3, ects: 5, year: 1, is_elective: false, instructor: 'Prof. Dr. Zehra Yumurtacı', is_online: false },
+        { id: '2', code: 'MAK2011', name: 'Statik & Mukavemet', credits: 4, ects: 6, year: 2, is_elective: false, instructor: 'Doç. Dr. Orhan Çakır', is_online: false },
+        { id: '3', code: 'MAK3011', name: 'Akışkanlar Mekaniği', credits: 3, ects: 6, year: 3, is_elective: false, instructor: 'Prof. Dr. Hakan Ersoy', is_online: false },
+        { id: '4', code: 'MAK4730', name: 'Isı Değiştiricileri Tasarımı (Seçmeli)', credits: 3, ects: 5, year: 4, is_elective: true, instructor: 'Dr. Öğr. Üyesi Tarık V.', is_online: false },
+      ],
+      MKT: [
+        { id: '1', code: 'MKT1011', name: 'Mekatronik Mühendisliğine Giriş', credits: 3, ects: 5, year: 1, is_elective: false, instructor: 'Prof. Dr. Vasfi Elek', is_online: false },
+        { id: '2', code: 'MKT2021', name: 'Sensörler & Dönüştürücüler', credits: 3, ects: 6, year: 2, is_elective: false, instructor: 'Doç. Dr. Mustafa Doğan', is_online: false },
+        { id: '3', code: 'MKT3011', name: 'Robotiğe Giriş', credits: 3, ects: 6, year: 3, is_elective: false, instructor: 'Prof. Dr. Şeref Naci', is_online: false },
+        { id: '4', code: 'MKT4820', name: 'Otonom Sistemler (Seçmeli)', credits: 3, ects: 5, year: 4, is_elective: true, instructor: 'Dr. Öğr. Üyesi Alper K.', is_online: false },
+      ],
+      END: [
+        { id: '1', code: 'END1011', name: 'Endüstri Mühendisliğine Giriş', credits: 3, ects: 5, year: 1, is_elective: false, instructor: 'Prof. Dr. Ethem Tolga', is_online: false },
+        { id: '2', code: 'END2011', name: 'Yöneylem Araştırması 1', credits: 4, ects: 6, year: 2, is_elective: false, instructor: 'Doç. Dr. Nihal Erginel', is_online: false },
+        { id: '3', code: 'END3011', name: 'Üretim Planlama ve Kontrol', credits: 3, ects: 6, year: 3, is_elective: false, instructor: 'Prof. Dr. Ziya Ulukan', is_online: false },
+        { id: '4', code: 'END4710', name: 'Tedarik Zinciri Yönetimi (Seçmeli)', credits: 3, ects: 5, year: 4, is_elective: true, instructor: 'Dr. Öğr. Üyesi Gültekin C.', is_online: false },
+      ],
+      ELK: [
+        { id: '1', code: 'ELK1011', name: 'Elektrik Mühendisliğine Giriş', credits: 3, ects: 5, year: 1, is_elective: false, instructor: 'Prof. Dr. Galip Cansever', is_online: false },
+        { id: '2', code: 'ELK2011', name: 'Devre Teorisi 1', credits: 4, ects: 6, year: 2, is_elective: false, instructor: 'Doç. Dr. Muammer Ermiş', is_online: false },
+        { id: '3', code: 'ELK3011', name: 'Elektrik Makineleri 1', credits: 3, ects: 6, year: 3, is_elective: false, instructor: 'Prof. Dr. Celal Kocatepe', is_online: false },
+        { id: '4', code: 'ELK4820', name: 'Yüksek Gerilim Tekniği (Seçmeli)', credits: 3, ects: 5, year: 4, is_elective: true, instructor: 'Dr. Öğr. Üyesi Osman Ç.', is_online: false },
+      ],
+      EHM: [
+        { id: '1', code: 'EHM1011', name: 'Elektronik & Hab. Giriş', credits: 3, ects: 5, year: 1, is_elective: false, instructor: 'Prof. Dr. Tülay Yıldırım', is_online: false },
+        { id: '2', code: 'EHM2011', name: 'Elektronik Devreleri 1', credits: 4, ects: 6, year: 2, is_elective: false, instructor: 'Doç. Dr. Herman Sedef', is_online: false },
+        { id: '3', code: 'EHM3011', name: 'Haberleşme Kuramı', credits: 3, ects: 6, year: 3, is_elective: false, instructor: 'Prof. Dr. Ali Ziya', is_online: false },
+        { id: '4', code: 'EHM4750', name: 'Sayısal İşaret İşleme (Seçmeli)', credits: 3, ects: 5, year: 4, is_elective: true, instructor: 'Dr. Öğr. Üyesi Hakan K.', is_online: false },
+      ],
+      YZV: [
+        { id: '1', code: 'YZV1011', name: 'Yapay Zeka Mühendisliğine Giriş', credits: 3, ects: 5, year: 1, is_elective: false, instructor: 'Prof. Dr. Banu Diri', is_online: false },
+        { id: '2', code: 'YZV2011', name: 'Makine Öğrenmesi Temelleri', credits: 4, ects: 6, year: 2, is_elective: false, instructor: 'Doç. Dr. Erkan Uçar', is_online: false },
+        { id: '3', code: 'YZV3011', name: 'Doğal Dil İşleme', credits: 3, ects: 6, year: 3, is_elective: false, instructor: 'Prof. Dr. M. Elif Karslıgil', is_online: false },
+        { id: '4', code: 'YZV4810', name: 'Pekiştirmeli Öğrenme (Seçmeli)', credits: 3, ects: 5, year: 4, is_elective: true, instructor: 'Dr. Öğr. Üyesi Hasan E.', is_online: false },
+      ],
+    };
+
+    if (mockDb[dept]) {
+      return mockDb[dept];
+    }
+
     return [
-      { id: '1', code: 'MAT1071', name: 'Matematik 1', credits: 4, ects: 6, year: 1, is_elective: false, instructor: 'Prof. Dr. Ayşe Yılmaz', is_online: false },
-      { id: '2', code: 'FIZ1001', name: 'Fizik 1', credits: 4, ects: 6, year: 1, is_elective: false, instructor: 'Doç. Dr. Mehmet Demir', is_online: false },
-      { id: '3', code: `${dept}1011`, name: 'Mühendisliğe Giriş', credits: 3, ects: 5, year: 1, is_elective: false, instructor: 'Prof. Dr. Ahmet Elbir', is_online: false },
-      { id: '4', code: `${dept}2012`, name: 'Veri Yapıları & Algoritmalar', credits: 3, ects: 6, year: 2, is_elective: false, instructor: 'Prof. Dr. Can Yıldız', is_online: false },
-      { id: '5', code: `${dept}3011`, name: 'İşletim Sistemleri', credits: 3, ects: 6, year: 3, is_elective: false, instructor: 'Doç. Dr. Erkan Uçar', is_online: false },
-      { id: '6', code: `${dept}3730`, name: 'Blokzincir Temelleri ve Uygulamaları', credits: 3, ects: 5, year: 3, is_elective: true, instructor: 'Dr. Öğr. Üyesi Deniz Varol', is_online: false },
-      { id: '7', code: `${dept}4800`, name: 'Veri Madenciliğine Giriş', credits: 3, ects: 5, year: 4, is_elective: true, instructor: 'Prof. Dr. Banu Diri', is_online: false },
-      { id: '8', code: 'ITB2050', name: 'Felsefeye Giriş (Sosyal Seçmeli)', credits: 2, ects: 3, year: 2, is_elective: true, instructor: 'Dr. Öğr. Üyesi Kemal Sunal', is_online: true },
-      { id: '9', code: 'USK1001', name: 'Üniversite Seçmeli - İnsan ve Toplum', credits: 2, ects: 3, year: 2, is_elective: true, instructor: 'Ortak Havuz Öğretim Üyesi', is_online: true },
+      { id: '1', code: `${dept}1011`, name: `${dept} Mühendisliğine Giriş`, credits: 3, ects: 5, year: 1, is_elective: false, instructor: 'Prof. Dr. YTÜ Öğretim Üyesi', is_online: false },
+      { id: '2', code: 'MAT1071', name: 'Matematik 1', credits: 4, ects: 6, year: 1, is_elective: false, instructor: 'Prof. Dr. Ayşe Yılmaz', is_online: false },
+      { id: '3', code: 'FIZ1001', name: 'Fizik 1', credits: 4, ects: 6, year: 1, is_elective: false, instructor: 'Doç. Dr. Mehmet Demir', is_online: false },
+      { id: '4', code: `${dept}2012`, name: 'Temel Bölüm Dersleri', credits: 3, ects: 6, year: 2, is_elective: false, instructor: 'Bölüm Öğretim Üyeleri', is_online: false },
+      { id: '5', code: `${dept}3011`, name: 'İleri Bölüm Uygulamaları', credits: 3, ects: 6, year: 3, is_elective: false, instructor: 'Bölüm Öğretim Üyeleri', is_online: false },
+      { id: '6', code: `${dept}4800`, name: 'Uzmanlık Seçmeli Dersi', credits: 3, ects: 5, year: 4, is_elective: true, instructor: 'Bölüm Öğretim Üyeleri', is_online: false },
+      { id: '7', code: 'USK1001', name: 'Üniversite Seçmeli', credits: 2, ects: 3, year: 2, is_elective: true, instructor: 'Ortak Havuz', is_online: true },
     ];
   };
 
