@@ -34,7 +34,7 @@ export default function Home() {
     formData.append('file', file);
 
     try {
-      const res = await fetch('http://localhost:8000/api/upload-pdf', {
+      const res = await fetch('https://ytu-ders-secimi.onrender.com/api/upload-pdf', {
         method: 'POST',
         body: formData,
       });
@@ -63,7 +63,7 @@ export default function Home() {
     }
     setLoading(true);
     try {
-      const res = await fetch('http://localhost:8000/api/generate-schedules', {
+      const res = await fetch('https://ytu-ders-secimi.onrender.com/api/generate-schedules', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
