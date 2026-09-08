@@ -583,10 +583,16 @@ export default function Home() {
                       return (
                         <div
                           key={course.id || course.code}
-                          onClick={() => handleAddCourse(course)}
+                          onClick={() => {
+                            if (isAdded) {
+                              handleRemoveCourse(course.code);
+                            } else {
+                              handleAddCourse(course);
+                            }
+                          }}
                           className={`group relative p-4 rounded-xl border transition-all cursor-pointer flex flex-col justify-between ${
                             isAdded
-                              ? 'bg-indigo-950/30 border-indigo-500/50 shadow-md shadow-indigo-950/50'
+                              ? 'bg-indigo-950/50 border-indigo-500 shadow-lg shadow-indigo-950/80 ring-1 ring-indigo-500/50'
                               : 'bg-slate-950/60 border-slate-800/80 hover:border-indigo-500/40 hover:bg-slate-800/40'
                           }`}
                         >
@@ -674,6 +680,22 @@ export default function Home() {
                   </span>
                 </div>
 
+                {/* Total Credits & AKTS Summary Badges */}
+                <div className="grid grid-cols-2 gap-2 bg-slate-950/80 p-3 rounded-xl border border-slate-800 text-center">
+                  <div className="space-y-0.5 border-r border-slate-800/80 pr-2">
+                    <span className="text-[10px] uppercase font-semibold text-slate-400">Toplam Kredi</span>
+                    <p className="text-base font-bold text-indigo-400 font-mono">
+                      {selectedCourses.reduce((sum, c) => sum + (c.credits || 0), 0)} Kredi
+                    </p>
+                  </div>
+                  <div className="space-y-0.5 pl-2">
+                    <span className="text-[10px] uppercase font-semibold text-slate-400">Toplam AKTS</span>
+                    <p className="text-base font-bold text-emerald-400 font-mono">
+                      {selectedCourses.reduce((sum, c) => sum + (c.ects || 0), 0)} AKTS
+                    </p>
+                  </div>
+                </div>
+
                 {/* Basket Course List */}
                 <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
                   {selectedCourses.length === 0 ? (
@@ -701,9 +723,17 @@ export default function Home() {
                             )}
                           </div>
                           <p className="text-xs text-slate-300 truncate mt-0.5">{course.name}</p>
-                          {course.instructor && (
-                            <p className="text-[10px] text-slate-500 truncate">{course.instructor}</p>
-                          )}
+                          <div className="flex items-center space-x-2 text-[10px] text-slate-400 mt-1">
+                            <span>{course.credits} Kredi</span>
+                            <span>•</span>
+                            <span className="text-emerald-400 font-medium">{course.ects} AKTS</span>
+                            {course.instructor && (
+                              <>
+                                <span>•</span>
+                                <span className="truncate max-w-[110px] text-slate-500">{course.instructor}</span>
+                              </>
+                            )}
+                          </div>
                         </div>
                         <button
                           onClick={() => handleRemoveCourse(course.code)}
