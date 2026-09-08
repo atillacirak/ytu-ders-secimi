@@ -102,13 +102,12 @@ const TIME_SLOTS = [
 ];
 
 export default function Home() {
-  const [activeTab, setActiveTab] = useState<'selection' | 'schedule'>('selection');
-  const [courseCategoryTab, setCourseCategoryTab] = useState<'mandatory' | 'elective' | 'transfer'>('mandatory');
+  const [activeTab, setActiveTab] = useState<'intibak' | 'selection' | 'schedule'>('selection');
+  const [courseCategoryTab, setCourseCategoryTab] = useState<'mandatory' | 'elective' | 'curriculum'>('mandatory');
   const [selectedFaculty, setSelectedFaculty] = useState<string>('EEF');
   const [selectedDept, setSelectedDept] = useState<string>('BLM');
   const [yearFilter, setYearFilter] = useState<number | 'ALL'>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
-  const [viewMode, setViewMode] = useState<'list' | 'curriculum'>('list');
   const [curriculumYear, setCurriculumYear] = useState<number>(1);
   const [semesterFilter, setSemesterFilter] = useState<'güz' | 'bahar'>('güz');
   const [excludedCourses, setExcludedCourses] = useState<string[]>([]);
@@ -368,9 +367,8 @@ export default function Home() {
   };
 
   // Filter curriculum by search, year, and category (mandatory vs elective)
-  // Transfer tab: exclude already-marked courses from mandatory/elective lists
+  // excludedCourses (from İntibak tab) are always hidden from normal listing
   const filteredCurriculum = curriculum.filter(course => {
-    if (courseCategoryTab === 'transfer') return true; // show all in transfer tab
     const matchesCategory = courseCategoryTab === 'mandatory' ? !course.is_elective : course.is_elective;
     const matchesSearch = course.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
                           course.name.toLowerCase().includes(searchQuery.toLowerCase());
@@ -399,11 +397,6 @@ export default function Home() {
     inferSemester(c) === semesterFilter
   );
 
-  // All courses for the year (both semesters) for "add all" without filter
-  const allYearCourses = curriculum.filter(c =>
-    c.year === curriculumYear && !excludedCourses.includes(c.code)
-  );
-
   // Map courses to day slots for the curriculum grid
   const getDayCoursesForSlot = (day: string) => {
     return curriculumGridCourses.filter(course => {
@@ -428,8 +421,8 @@ export default function Home() {
     setSelectedCourses(prev => [...prev, ...toAdd]);
   };
 
-  const mandatoryCount = curriculum.filter(c => !c.is_elective).length;
-  const electiveCount = curriculum.filter(c => c.is_elective).length;
+  const mandatoryCount = curriculum.filter(c => !c.is_elective && !excludedCourses.includes(c.code)).length;
+  const electiveCount = curriculum.filter(c => c.is_elective && !excludedCourses.includes(c.code)).length;
 
 
   return (
@@ -450,10 +443,29 @@ export default function Home() {
           </div>
 
           {/* Top Stage Tabs Navigation */}
-          <div className="flex bg-slate-800/80 p-1.5 rounded-xl border border-slate-700">
+          <div className="flex bg-slate-800/80 p-1.5 rounded-xl border border-slate-700 gap-1 flex-wrap">
+            <button
+              onClick={() => setActiveTab('intibak')}
+              className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                activeTab === 'intibak'
+                  ? 'bg-rose-700 text-white shadow-md'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700/50'
+              }`}
+            >
+              <Shuffle className="w-4 h-4" />
+              <span>İntibak Dersleri</span>
+              {excludedCourses.length > 0 && (
+                <span className="ml-1 px-2 py-0.5 text-xs bg-rose-500/30 rounded-full text-rose-300">
+                  {excludedCourses.length}
+                </span>
+              )}
+            </button>
+
+            <div className="w-px bg-slate-700 self-stretch mx-0.5" />
+
             <button
               onClick={() => setActiveTab('selection')}
-              className={`flex items-center space-x-2 px-5 py-2 rounded-lg text-sm font-medium transition-all ${
+              className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                 activeTab === 'selection'
                   ? 'bg-indigo-600 text-white shadow-md'
                   : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700/50'
@@ -464,7 +476,7 @@ export default function Home() {
             </button>
             <button
               onClick={() => setActiveTab('schedule')}
-              className={`flex items-center space-x-2 px-5 py-2 rounded-lg text-sm font-medium transition-all ${
+              className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                 activeTab === 'schedule'
                   ? 'bg-indigo-600 text-white shadow-md'
                   : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700/50'
@@ -484,7 +496,161 @@ export default function Home() {
 
       {/* Main Content Area */}
       <main className="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6">
-        {activeTab === 'selection' ? (
+        {activeTab === 'intibak' ? (
+          /* ══════════════════════════════════════════
+             İNTİBAK DERSLERİ — Full Page
+          ══════════════════════════════════════════ */
+          <div className="max-w-4xl mx-auto space-y-6">
+            {/* Header card */}
+            <div className="bg-gradient-to-r from-rose-950/60 via-slate-900 to-slate-900 border border-rose-800/40 rounded-2xl p-6 shadow-2xl">
+              <div className="flex items-start gap-4">
+                <div className="bg-rose-700/30 border border-rose-600/40 p-3 rounded-xl flex-shrink-0">
+                  <Shuffle className="w-6 h-6 text-rose-300" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold text-rose-200">Yatay Geçiş – İntibak Dersleri</h2>
+                  <p className="text-sm text-slate-400 mt-1">
+                    Önceki üniversitenizde almış olduğunuz ve muaf sayılacak dersleri aşağıdan işaretleyin.
+                    İşaretlenen dersler <span className="text-indigo-300 font-medium">1. Aşama</span>'daki
+                    Zorunlu ve Seçmeli ders listelerinden otomatik olarak çıkarılır.
+                  </p>
+                  {excludedCourses.length > 0 && (
+                    <div className="mt-3 flex items-center gap-3">
+                      <span className="text-sm font-semibold text-rose-300">
+                        {excludedCourses.length} ders muaf sayıldı
+                      </span>
+                      <button
+                        onClick={() => setExcludedCourses([])}
+                        className="text-xs text-slate-400 hover:text-rose-300 border border-slate-700 hover:border-rose-700/60 px-3 py-1 rounded-lg transition-all"
+                      >
+                        Tümünü Temizle
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Faculty & Dept selector — reuse for loading the right curriculum */}
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-xl">
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Bölüm Seçin (Muaf tutulacak derslerin müfredatını yükler)</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <select
+                  value={selectedFaculty}
+                  onChange={e => {
+                    const newFacId = e.target.value;
+                    setSelectedFaculty(newFacId);
+                    const fac = FACULTIES.find(f => f.id === newFacId);
+                    if (fac && fac.departments.length > 0) setSelectedDept(fac.departments[0].code);
+                  }}
+                  className="bg-slate-950/80 border border-slate-700/80 hover:border-rose-500/50 rounded-xl px-4 py-3 text-xs font-semibold text-slate-100 focus:outline-none focus:ring-2 focus:ring-rose-500 w-full transition-all"
+                >
+                  {FACULTIES.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
+                </select>
+                <select
+                  value={selectedDept}
+                  onChange={e => setSelectedDept(e.target.value)}
+                  className="bg-slate-950/80 border border-slate-700/80 hover:border-rose-500/50 rounded-xl px-4 py-3 text-xs font-semibold text-rose-300 focus:outline-none focus:ring-2 focus:ring-rose-500 w-full transition-all"
+                >
+                  {FACULTIES.find(f => f.id === selectedFaculty)?.departments.map(d => (
+                    <option key={d.code} value={d.code}>{d.code} - {d.name}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* Curriculum course list with checkboxes */}
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl">
+              {loading ? (
+                <div className="py-12 text-center text-slate-400 flex flex-col items-center gap-2">
+                  <RefreshCw className="w-6 h-6 animate-spin text-rose-400" />
+                  <p className="text-sm">Müfredat yükleniyor...</p>
+                </div>
+              ) : curriculum.length === 0 ? (
+                <div className="py-10 text-center text-slate-500 border border-dashed border-slate-800 rounded-xl">
+                  Bu bölüm için müfredat verisi bulunamadı.
+                </div>
+              ) : (
+                <>
+                  {[1, 2, 3, 4].map(yr => {
+                    const yearCourses = curriculum.filter(c => c.year === yr);
+                    if (yearCourses.length === 0) return null;
+                    return (
+                      <div key={yr} className="mb-6">
+                        <div className="flex items-center justify-between mb-3">
+                          <h3 className="text-sm font-bold text-slate-300 flex items-center gap-2">
+                            <GraduationCap className="w-4 h-4 text-rose-400" />
+                            {yr}. Sınıf
+                          </h3>
+                          <button
+                            onClick={() => {
+                              const codes = yearCourses.map(c => c.code);
+                              const allExcluded = codes.every(code => excludedCourses.includes(code));
+                              if (allExcluded) {
+                                setExcludedCourses(prev => prev.filter(c => !codes.includes(c)));
+                              } else {
+                                setExcludedCourses(prev => [...new Set([...prev, ...codes])]);
+                              }
+                            }}
+                            className="text-xs text-rose-400 hover:text-rose-300 border border-rose-800/40 hover:border-rose-600/60 px-3 py-1 rounded-lg transition-all"
+                          >
+                            {yearCourses.every(c => excludedCourses.includes(c.code)) ? 'Tümünü Seçimi Kaldır' : 'Tümünü Seç'}
+                          </button>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                          {yearCourses.map(course => {
+                            const isExcluded = excludedCourses.includes(course.code);
+                            return (
+                              <div
+                                key={course.code}
+                                onClick={() => handleToggleExclude(course.code)}
+                                className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition-all ${
+                                  isExcluded
+                                    ? 'bg-rose-950/40 border-rose-700/60'
+                                    : 'bg-slate-950/60 border-slate-800 hover:border-rose-700/40 hover:bg-rose-950/10'
+                                }`}
+                              >
+                                <div className={`mt-0.5 w-5 h-5 flex-shrink-0 rounded-md border-2 flex items-center justify-center transition-all ${
+                                  isExcluded ? 'bg-rose-600 border-rose-500' : 'bg-transparent border-slate-600'
+                                }`}>
+                                  {isExcluded && <CheckCircle className="w-3.5 h-3.5 text-white" />}
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <span className={`font-mono font-bold text-xs ${isExcluded ? 'line-through text-slate-500' : course.is_elective ? 'text-amber-400' : 'text-indigo-400'}`}>
+                                      {course.code}
+                                    </span>
+                                    {course.is_elective && (
+                                      <span className="text-[9px] text-amber-400 bg-amber-950/60 px-1.5 rounded border border-amber-800/40">SEÇMELİ</span>
+                                    )}
+                                    {course.is_online && (
+                                      <span className="text-[9px] text-cyan-400 bg-cyan-950/60 px-1.5 rounded border border-cyan-800/40">ONLİNE</span>
+                                    )}
+                                  </div>
+                                  <p className={`text-xs mt-0.5 leading-snug ${isExcluded ? 'line-through text-slate-600' : 'text-slate-300'}`}>{course.name}</p>
+                                  <div className="text-[10px] text-slate-500 mt-1">{course.credits} Kredi • {course.ects} AKTS</div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </>
+              )}
+            </div>
+
+            {/* CTA to go to selection */}
+            <button
+              onClick={() => setActiveTab('selection')}
+              className="w-full py-3 rounded-2xl bg-gradient-to-r from-indigo-600 to-cyan-600 hover:from-indigo-500 hover:to-cyan-500 text-white font-semibold text-sm shadow-lg shadow-indigo-600/30 flex items-center justify-center gap-2 transition-all"
+            >
+              <Layers className="w-4 h-4" />
+              İntibak seçimini tamamladım, Ders Seçimine Geç →
+            </button>
+          </div>
+        ) : activeTab === 'selection' ? (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             
             {/* Left & Middle Column: Department & Curriculum Selection */}
@@ -590,11 +756,11 @@ export default function Home() {
                     </div>
                   </div>
 
-                  {/* Category Selector Sub-Tabs (Zorunlu / Seçmeli / İntibak) + View Mode Toggle */}
+                  {/* Category Selector Sub-Tabs: Zorunlu / Seçmeli / Müfredat Görünümü */}
                   <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
                     <div className="flex bg-slate-950 p-1 rounded-xl border border-slate-800 gap-1 flex-wrap">
                       <button
-                        onClick={() => { setCourseCategoryTab('mandatory'); setViewMode('list'); }}
+                        onClick={() => setCourseCategoryTab('mandatory')}
                         className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                           courseCategoryTab === 'mandatory'
                             ? 'bg-indigo-600 text-white shadow-sm'
@@ -602,14 +768,14 @@ export default function Home() {
                         }`}
                       >
                         <BookmarkCheck className="w-3.5 h-3.5" />
-                        <span>Zorunlu</span>
+                        <span>Zorunlu Dersler</span>
                         <span className="px-1.5 text-[10px] bg-slate-800/80 text-slate-300 rounded-full font-mono">
                           {mandatoryCount}
                         </span>
                       </button>
 
                       <button
-                        onClick={() => { setCourseCategoryTab('elective'); setViewMode('list'); }}
+                        onClick={() => setCourseCategoryTab('elective')}
                         className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                           courseCategoryTab === 'elective'
                             ? 'bg-amber-600 text-white shadow-sm'
@@ -617,40 +783,19 @@ export default function Home() {
                         }`}
                       >
                         <Award className="w-3.5 h-3.5" />
-                        <span>Seçmeli</span>
+                        <span>Seçmeli Dersler</span>
                         <span className="px-1.5 text-[10px] bg-amber-950 text-amber-300 rounded-full font-mono">
                           {electiveCount}
                         </span>
                       </button>
 
                       <button
-                        onClick={() => { setCourseCategoryTab('transfer'); setViewMode('list'); }}
+                        onClick={() => setCourseCategoryTab('curriculum')}
                         className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                          courseCategoryTab === 'transfer'
-                            ? 'bg-rose-700 text-white shadow-sm'
-                            : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
-                        }`}
-                      >
-                        <Shuffle className="w-3.5 h-3.5" />
-                        <span>İntibak</span>
-                        {excludedCourses.length > 0 && (
-                          <span className="px-1.5 text-[10px] bg-rose-950 text-rose-300 rounded-full font-mono">
-                            {excludedCourses.length}
-                          </span>
-                        )}
-                      </button>
-
-                      {/* Separator */}
-                      <div className="w-px bg-slate-700 mx-1 self-stretch" />
-
-                      <button
-                        onClick={() => setViewMode(v => v === 'curriculum' ? 'list' : 'curriculum')}
-                        className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                          viewMode === 'curriculum'
+                          courseCategoryTab === 'curriculum'
                             ? 'bg-cyan-700 text-white shadow-sm'
                             : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
                         }`}
-                        title="Müfredata Göre Diz"
                       >
                         <LayoutGrid className="w-3.5 h-3.5" />
                         <span>Müfredat Görünümü</span>
@@ -658,12 +803,12 @@ export default function Home() {
                     </div>
 
                     <span className="text-xs font-mono text-indigo-400">
-                      {viewMode === 'curriculum' ? `${curriculumGridCourses.length} Ders` : `${filteredCurriculum.length} Ders`} Listeleniyor
+                      {courseCategoryTab === 'curriculum' ? `${curriculumGridCourses.length} Ders` : `${filteredCurriculum.length} Ders`} Listeleniyor
                     </span>
                   </div>
 
-                  {/* Curriculum Grid Year + Semester Selector (shown only in curriculum view) */}
-                  {viewMode === 'curriculum' && (
+                  {/* Curriculum Year + Semester controls — shown only when Müfredat tab is active */}
+                  {courseCategoryTab === 'curriculum' && (
                     <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-800/50">
                       <GraduationCap className="w-4 h-4 text-cyan-400" />
                       <span className="text-xs font-semibold text-cyan-300">Sınıf:</span>
@@ -677,7 +822,7 @@ export default function Home() {
                               : 'bg-slate-800 text-slate-400 hover:bg-cyan-900 hover:text-cyan-300'
                           }`}
                         >
-                          {yr}.
+                          {yr}. Sınıf
                         </button>
                       ))}
 
@@ -728,7 +873,7 @@ export default function Home() {
                     <RefreshCw className="w-6 h-6 animate-spin text-indigo-400" />
                     <p className="text-sm">Dersler yükleniyor...</p>
                   </div>
-                ) : viewMode === 'curriculum' ? (
+                ) : courseCategoryTab === 'curriculum' ? (
                   /* ── Müfredata Göre Diz: Weekly Grid Layout ── */
                   <div>
                     {curriculumGridCourses.length === 0 ? (
@@ -818,68 +963,6 @@ export default function Home() {
                           );
                         })()}
                       </div>
-                    )}
-                  </div>
-                ) : courseCategoryTab === 'transfer' ? (
-                  /* ── İntibak Dersleri Tab ── */
-                  <div className="space-y-3">
-                    <div className="bg-rose-950/20 border border-rose-800/30 rounded-xl p-3 text-xs text-rose-300 flex gap-2">
-                      <Shuffle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-                      <span>
-                        <strong>Yatay Geçiş – İntibak Dersleri:</strong> Önceki okulunuzda aldığınız ve muaf sayılacak dersleri işaretleyin. 
-                        İşaretlenen dersler Zorunlu/Seçmeli listelerinden otomatik olarak çıkarılır.
-                      </span>
-                    </div>
-                    {curriculum.length === 0 ? (
-                      <div className="py-10 text-center text-slate-500 border border-dashed border-slate-800 rounded-xl">
-                        Bu bölüm için müfredat yüklenmedi.
-                      </div>
-                    ) : (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
-                        {curriculum.map(course => {
-                          const isExcluded = excludedCourses.includes(course.code);
-                          return (
-                            <div
-                              key={course.code}
-                              onClick={() => handleToggleExclude(course.code)}
-                              className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition-all ${
-                                isExcluded
-                                  ? 'bg-rose-950/40 border-rose-700/60 opacity-80'
-                                  : 'bg-slate-950/60 border-slate-800 hover:border-rose-700/40 hover:bg-rose-950/10'
-                              }`}
-                            >
-                              <div className={`mt-0.5 w-4 h-4 flex-shrink-0 rounded border-2 flex items-center justify-center transition-all ${
-                                isExcluded ? 'bg-rose-600 border-rose-500' : 'bg-transparent border-slate-600'
-                              }`}>
-                                {isExcluded && <XCircle className="w-3 h-3 text-white" />}
-                              </div>
-                              <div className="min-w-0 flex-1">
-                                <div className="flex items-center gap-2">
-                                  <span className={`font-mono font-bold text-xs ${isExcluded ? 'line-through text-slate-500' : course.is_elective ? 'text-amber-400' : 'text-indigo-400'}`}>
-                                    {course.code}
-                                  </span>
-                                  {course.year && (
-                                    <span className="text-[10px] text-slate-500 bg-slate-800 px-1.5 rounded">{course.year}. Sınıf</span>
-                                  )}
-                                  {course.is_elective && (
-                                    <span className="text-[9px] text-amber-400 bg-amber-950/60 px-1.5 rounded border border-amber-800/40">SEÇMELİ</span>
-                                  )}
-                                </div>
-                                <p className={`text-xs mt-0.5 ${isExcluded ? 'line-through text-slate-600' : 'text-slate-300'}`}>{course.name}</p>
-                                <div className="text-[10px] text-slate-500 mt-1">{course.credits} Kredi • {course.ects} AKTS</div>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                    {excludedCourses.length > 0 && (
-                      <button
-                        onClick={() => setExcludedCourses([])}
-                        className="w-full py-2 text-xs text-rose-400 hover:text-rose-300 border border-rose-800/40 hover:border-rose-600/60 rounded-xl transition-all bg-rose-950/20 hover:bg-rose-950/40"
-                      >
-                        Tüm intibak seçimlerini temizle ({excludedCourses.length} ders)
-                      </button>
                     )}
                   </div>
                 ) : filteredCurriculum.length === 0 ? (
