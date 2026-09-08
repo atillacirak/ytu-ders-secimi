@@ -45,20 +45,55 @@ interface ScheduleCombination {
   conflicts: string[];
 }
 
-const DEPARTMENTS = [
-  { code: 'BLM', name: 'Bilgisayar Mühendisliği' },
-  { code: 'ELK', name: 'Elektrik Mühendisliği' },
-  { code: 'END', name: 'Endüstri Mühendisliği' },
-  { code: 'EHM', name: 'Elektronik ve Haberleşme Mühendisliği' },
-  { code: 'MAK', name: 'Makine Mühendisliği' },
-  { code: 'BMD', name: 'Biyomedikal Mühendisliği' },
-  { code: 'BIO', name: 'Biyomühendislik' },
-  { code: 'GDA', name: 'Gıda Mühendisliği' },
-  { code: 'KIM', name: 'Kimya Mühendisliği' },
-  { code: 'MAT', name: 'Matematik Mühendisliği' },
-  { code: 'MKT', name: 'Mekatronik Mühendisliği' },
-  { code: 'MET', name: 'Metalurji ve Malzeme Mühendisliği' },
-  { code: 'YZV', name: 'Yapay Zeka ve Veri Mühendisliği' },
+interface Department {
+  code: string;
+  name: string;
+}
+
+interface Faculty {
+  id: string;
+  name: string;
+  departments: Department[];
+}
+
+const FACULTIES: Faculty[] = [
+  {
+    id: 'EEF',
+    name: 'Elektrik - Elektronik Fakültesi',
+    departments: [
+      { code: 'BLM', name: 'Bilgisayar Mühendisliği' },
+      { code: 'ELK', name: 'Elektrik Mühendisliği' },
+      { code: 'EHM', name: 'Elektronik ve Haberleşme Mühendisliği' },
+      { code: 'MKT', name: 'Mekatronik Mühendisliği' },
+      { code: 'YZV', name: 'Yapay Zeka ve Veri Mühendisliği' },
+    ]
+  },
+  {
+    id: 'KMF',
+    name: 'Kimya - Metalurji Fakültesi',
+    departments: [
+      { code: 'BIO', name: 'Biyomühendislik' },
+      { code: 'BMD', name: 'Biyomedikal Mühendisliği' },
+      { code: 'GDA', name: 'Gıda Mühendisliği' },
+      { code: 'KIM', name: 'Kimya Mühendisliği' },
+      { code: 'MET', name: 'Metalurji ve Malzeme Mühendisliği' },
+    ]
+  },
+  {
+    id: 'MAK_FAK',
+    name: 'Makine Fakültesi',
+    departments: [
+      { code: 'MAK', name: 'Makine Mühendisliği' },
+      { code: 'END', name: 'Endüstri Mühendisliği' },
+    ]
+  },
+  {
+    id: 'FEF',
+    name: 'Fen - Edebiyat Fakültesi',
+    departments: [
+      { code: 'MAT', name: 'Matematik Mühendisliği' },
+    ]
+  }
 ];
 
 const DAYS = ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi'];
@@ -71,6 +106,7 @@ const TIME_SLOTS = [
 export default function Home() {
   const [activeTab, setActiveTab] = useState<'selection' | 'schedule'>('selection');
   const [courseCategoryTab, setCourseCategoryTab] = useState<'mandatory' | 'elective'>('mandatory');
+  const [selectedFaculty, setSelectedFaculty] = useState<string>('EEF');
   const [selectedDept, setSelectedDept] = useState<string>('BLM');
   const [yearFilter, setYearFilter] = useState<number | 'ALL'>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
@@ -316,17 +352,47 @@ export default function Home() {
               
               {/* Department Selector & Filters Header */}
               <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {/* Faculty Selector */}
                   <div className="space-y-1">
                     <label className="text-xs font-semibold text-indigo-400 uppercase tracking-wider flex items-center gap-1.5">
-                      <Building2 className="w-3.5 h-3.5" /> Bölüm Seçin
+                      <Building2 className="w-3.5 h-3.5" /> 1. Fakülte Seçin
+                    </label>
+                    <select
+                      value={selectedFaculty}
+                      onChange={(e) => {
+                        const newFacId = e.target.value;
+                        setSelectedFaculty(newFacId);
+                        const fac = FACULTIES.find(f => f.id === newFacId);
+                        if (fac && fac.departments.length > 0) {
+                          setSelectedDept(fac.departments[0].code);
+                        }
+                      }}
+                      className="bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs font-semibold text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full"
+                    >
+                      {FACULTIES.map(f => (
+                        <option key={f.id} value={f.id}>
+                          {f.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Department Selector (Filtered by chosen Faculty) */}
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-indigo-400 uppercase tracking-wider flex items-center gap-1.5">
+                      <BookOpen className="w-3.5 h-3.5" /> 2. Bölüm Seçin
                     </label>
                     <select
                       value={selectedDept}
                       onChange={(e) => setSelectedDept(e.target.value)}
-                      className="bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-sm font-medium text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full sm:w-72"
+                      className="bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs font-semibold text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full"
                     >
-                      {DEPARTMENTS.map(d => (
+                      {FACULTIES.find(f => f.id === selectedFaculty)?.departments.map(d => (
+                        <option key={d.code} value={d.code}>
+                          {d.code} - {d.name}
+                        </option>
+                      )) || FACULTIES[0].departments.map(d => (
                         <option key={d.code} value={d.code}>
                           {d.code} - {d.name}
                         </option>
@@ -344,13 +410,13 @@ export default function Home() {
                         <button
                           key={yr}
                           onClick={() => setYearFilter(yr)}
-                          className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                          className={`px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all ${
                             yearFilter === yr
                               ? 'bg-indigo-600 text-white shadow-sm'
                               : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700/50'
                           }`}
                         >
-                          {yr === 'ALL' ? 'Tüm Sınıflar' : `${yr}. Sınıf`}
+                          {yr === 'ALL' ? 'Tümü' : `${yr}. Sınıf`}
                         </button>
                       ))}
                     </div>
