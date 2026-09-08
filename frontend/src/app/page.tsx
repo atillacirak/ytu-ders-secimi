@@ -5,8 +5,10 @@ import {
   BookOpen, Calendar, CheckCircle, Clock, Trash2, Plus, Filter, 
   Search, AlertCircle, ArrowRight, RefreshCw, Upload, Sparkles, Layers,
   ChevronRight, Laptop, Building2, User, Award, BookmarkCheck,
-  GraduationCap, LayoutGrid, XCircle, Shuffle
+  GraduationCap, LayoutGrid, XCircle, Shuffle, Globe
 } from 'lucide-react';
+import { getFullInstructorName } from '../utils/instructors';
+
 
 interface Course {
   id: string;
@@ -87,9 +89,11 @@ const FACULTIES: Faculty[] = [
     departments: [
       { code: 'BIO', name: 'Biyomühendislik Bölümü' },
       { code: 'GDA', name: 'Gıda Mühendisliği Bölümü' },
-      { code: 'KIM', name: 'Kimya Mühendisliği Bölümü' },
+      { code: 'KIM', name: 'Kimya Mühendisliği (%30 İngilizce)' },
+      { code: 'KIM_ENG', name: 'Kimya Mühendisliği (%100 İngilizce)' },
       { code: 'MAT', name: 'Matematik Mühendisliği Bölümü' },
-      { code: 'MET', name: 'Metalurji ve Malzeme Mühendisliği Bölümü' },
+      { code: 'MET', name: 'Metalurji ve Malzeme Mühendisliği (%30 İngilizce)' },
+      { code: 'MET_ENG', name: 'Metalurji ve Malzeme Mühendisliği (%100 İngilizce)' },
     ]
   }
 ];
@@ -103,13 +107,13 @@ const TIME_SLOTS = [
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState<'intibak' | 'selection' | 'schedule'>('selection');
-  const [courseCategoryTab, setCourseCategoryTab] = useState<'mandatory' | 'elective' | 'curriculum'>('mandatory');
+  const [courseCategoryTab, setCourseCategoryTab] = useState<'mandatory' | 'dept_elective' | 'social_elective' | 'curriculum'>('mandatory');
   const [selectedFaculty, setSelectedFaculty] = useState<string>('EEF');
   const [selectedDept, setSelectedDept] = useState<string>('BLM');
   const [yearFilter, setYearFilter] = useState<number | 'ALL'>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
   const [curriculumYear, setCurriculumYear] = useState<number>(1);
-  const [semesterFilter, setSemesterFilter] = useState<'güz' | 'bahar'>('güz');
+  const [semesterFilter, setSemesterFilter] = useState<'ALL' | 'güz' | 'bahar'>('güz');
   const [excludedCourses, setExcludedCourses] = useState<string[]>([]);
   
   const [curriculum, setCurriculum] = useState<Course[]>([]);
@@ -366,10 +370,27 @@ export default function Home() {
     );
   };
 
-  // Filter curriculum by search, year, and category (mandatory vs elective)
-  // excludedCourses (from İntibak tab) are always hidden from normal listing
+  // Helper to identify social/general electives (USK, ITB, GSB, SDB, MDB, or social keywords)
+  const isSocialElective = (course: Course): boolean => {
+    const c = course.code.toUpperCase();
+    const n = course.name.toLowerCase();
+    return c.startsWith('USK') || c.startsWith('ITB') || c.startsWith('GSB') || c.startsWith('SDB') || c.startsWith('MDB') ||
+           n.includes('sosyal') || n.includes('felsefe') || n.includes('sanat') || n.includes('sosyoloji') || n.includes('insan ve toplum') || n.includes('serbest');
+  };
+
+  // Filter curriculum by search, official curriculum year, and category
   const filteredCurriculum = curriculum.filter(course => {
-    const matchesCategory = courseCategoryTab === 'mandatory' ? !course.is_elective : course.is_elective;
+    let matchesCategory = false;
+    if (courseCategoryTab === 'mandatory') {
+      matchesCategory = !course.is_elective;
+    } else if (courseCategoryTab === 'dept_elective') {
+      matchesCategory = !!course.is_elective && !isSocialElective(course);
+    } else if (courseCategoryTab === 'social_elective') {
+      matchesCategory = !!course.is_elective && isSocialElective(course);
+    } else {
+      matchesCategory = true;
+    }
+
     const matchesSearch = course.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
                           course.name.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesYear = yearFilter === 'ALL' || course.year === yearFilter;
@@ -377,52 +398,16 @@ export default function Home() {
     return matchesCategory && matchesSearch && matchesYear && notExcluded;
   });
 
-  // Infer semester from course code last digit or semester field
-  // YTU convention: courses ending in 1 = Güz, 2 = Bahar. Fallback: Güz
-  const inferSemester = (course: Course): 'güz' | 'bahar' => {
-    if (course.semester) {
-      const s = course.semester.toLowerCase();
-      if (s.includes('bahar') || s.includes('spring')) return 'bahar';
-      if (s.includes('güz') || s.includes('guz') || s.includes('fall')) return 'güz';
-    }
-    const lastDigit = course.code.replace(/\D/g, '').slice(-1);
-    if (lastDigit === '2' || lastDigit === '4' || lastDigit === '6' || lastDigit === '8' || lastDigit === '0') return 'bahar';
-    return 'güz';
-  };
-
-  // For the curriculum grid view: courses for a specific year AND semester, grouped by day
-  const curriculumGridCourses = curriculum.filter(c =>
-    c.year === curriculumYear &&
-    !excludedCourses.includes(c.code) &&
-    inferSemester(c) === semesterFilter
-  );
-
-  // Map courses to day slots for the curriculum grid
-  const getDayCoursesForSlot = (day: string) => {
-    return curriculumGridCourses.filter(course => {
-      if (!course.days) return false;
-      const daysLower = course.days.toLowerCase();
-      const dayMap: Record<string, string[]> = {
-        'Pazartesi': ['pazartesi', 'pzt', 'mon'],
-        'Salı': ['salı', 'sal', 'tue'],
-        'Çarşamba': ['çarşamba', 'car', 'wed'],
-        'Perşembe': ['perşembe', 'per', 'thu'],
-        'Cuma': ['cuma', 'cum', 'fri'],
-        'Cumartesi': ['cumartesi', 'cmt', 'sat'],
-      };
-      return dayMap[day]?.some(d => daysLower.includes(d)) || false;
-    });
-  };
-
-  const handleAddAllCurriculum = () => {
-    const toAdd = curriculumGridCourses.filter(
+  const handleAddAllFilteredCourses = () => {
+    const toAdd = filteredCurriculum.filter(
       c => !selectedCourses.some(s => s.code === c.code)
     );
     setSelectedCourses(prev => [...prev, ...toAdd]);
   };
 
   const mandatoryCount = curriculum.filter(c => !c.is_elective && !excludedCourses.includes(c.code)).length;
-  const electiveCount = curriculum.filter(c => c.is_elective && !excludedCourses.includes(c.code)).length;
+  const deptElectiveCount = curriculum.filter(c => c.is_elective && !isSocialElective(c) && !excludedCourses.includes(c.code)).length;
+  const socialElectiveCount = curriculum.filter(c => c.is_elective && isSocialElective(c) && !excludedCourses.includes(c.code)).length;
 
 
   return (
@@ -620,12 +605,21 @@ export default function Home() {
                                     <span className={`font-mono font-bold text-xs ${isExcluded ? 'line-through text-slate-500' : course.is_elective ? 'text-amber-400' : 'text-indigo-400'}`}>
                                       {course.code}
                                     </span>
-                                    {course.is_elective && (
-                                      <span className="text-[9px] text-amber-400 bg-amber-950/60 px-1.5 rounded border border-amber-800/40">SEÇMELİ</span>
-                                    )}
-                                    {course.is_online && (
-                                      <span className="text-[9px] text-cyan-400 bg-cyan-950/60 px-1.5 rounded border border-cyan-800/40">ONLİNE</span>
-                                    )}
+                                    {course.code.endsWith('000') && (
+                                     <span className="text-[10px] font-bold text-purple-300 bg-purple-950/80 border border-purple-800/60 px-2 py-0.5 rounded-full">
+                                       HAVUZ DERSİ
+                                     </span>
+                                   )}
+                                   {course.is_elective && !course.code.endsWith('000') && (
+                                     <span className="text-[10px] font-bold text-amber-400 bg-amber-950/80 border border-amber-800/60 px-2 py-0.5 rounded-full">
+                                       SEÇMELİ
+                                     </span>
+                                   )}
+                                   {course.is_online && (
+                                     <span className="flex items-center gap-1 text-[10px] font-bold text-cyan-400 bg-cyan-950/80 border border-cyan-800/60 px-2 py-0.5 rounded-full">
+                                       <Laptop className="w-3 h-3" /> ONLINE
+                                     </span>
+                                   )}
                                   </div>
                                   <p className={`text-xs mt-0.5 leading-snug ${isExcluded ? 'line-through text-slate-600' : 'text-slate-300'}`}>{course.name}</p>
                                   <div className="text-[10px] text-slate-500 mt-1">{course.credits} Kredi • {course.ects} AKTS</div>
@@ -720,9 +714,9 @@ export default function Home() {
               {/* Main Course Listing Card with Search & Filters placed AT THE VERY TOP */}
               <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4">
                 
-                {/* TOP HEADER OF COURSES BLOCK: Search & Filters Bar */}
+                {/* TOP HEADER OF COURSES BLOCK: Search, Filters & Semester Bar */}
                 <div className="space-y-3 pb-3 border-b border-slate-800">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
                     {/* Integrated Search Bar */}
                     <div className="relative flex-1">
                       <Search className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-400" />
@@ -735,28 +729,45 @@ export default function Home() {
                       />
                     </div>
 
-                    {/* Class/Year Filter Pills */}
-                    <div className="flex items-center space-x-1 bg-slate-950 p-1 rounded-xl border border-slate-800 flex-shrink-0">
-                      <span className="text-[11px] font-semibold text-slate-400 px-2 flex items-center gap-1">
-                        <Filter className="w-3 h-3 text-slate-500" /> Sınıf:
-                      </span>
-                      {(['ALL', 1, 2, 3, 4] as const).map(yr => (
-                        <button
-                          key={yr}
-                          onClick={() => setYearFilter(yr)}
-                          className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${
-                            yearFilter === yr
-                              ? 'bg-indigo-600 text-white shadow'
-                              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
-                          }`}
-                        >
-                          {yr === 'ALL' ? 'Tümü' : `${yr}`}
-                        </button>
-                      ))}
+                    {/* Filter Controls: Class Pills & Add All Button */}
+                    <div className="flex items-center gap-2 flex-wrap flex-shrink-0">
+                      {/* Sınıf Filter */}
+                      <div className="flex items-center space-x-1 bg-slate-950 p-1 rounded-xl border border-slate-800">
+                        <span className="text-[11px] font-semibold text-slate-400 px-2 flex items-center gap-1">
+                          <Filter className="w-3 h-3 text-slate-500" /> Müfredat Sınıfı:
+                        </span>
+                        {(['ALL', 1, 2, 3, 4] as const).map(yr => (
+                          <button
+                            key={yr}
+                            onClick={() => setYearFilter(yr)}
+                            className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${
+                              yearFilter === yr
+                                ? 'bg-indigo-600 text-white shadow'
+                                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+                            }`}
+                          >
+                            {yr === 'ALL' ? 'Tümü' : `${yr}. Sınıf`}
+                          </button>
+                        ))}
+                      </div>
+
+                      {/* Hepsini Sepete Ekle Button */}
+                      <button
+                        onClick={handleAddAllFilteredCourses}
+                        disabled={filteredCurriculum.length === 0}
+                        className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all ${
+                          filteredCurriculum.length > 0
+                            ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/30'
+                            : 'bg-slate-800 text-slate-600 cursor-not-allowed'
+                        }`}
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        Hepsini Ekle ({filteredCurriculum.length})
+                      </button>
                     </div>
                   </div>
 
-                  {/* Category Selector Sub-Tabs: Zorunlu / Seçmeli / Müfredat Görünümü */}
+                  {/* Category Selector Sub-Tabs: Zorunlu / Bölüm Seçmeli / Sosyal Seçmeli */}
                   <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
                     <div className="flex bg-slate-950 p-1 rounded-xl border border-slate-800 gap-1 flex-wrap">
                       <button
@@ -775,97 +786,40 @@ export default function Home() {
                       </button>
 
                       <button
-                        onClick={() => setCourseCategoryTab('elective')}
+                        onClick={() => setCourseCategoryTab('dept_elective')}
                         className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                          courseCategoryTab === 'elective'
+                          courseCategoryTab === 'dept_elective'
                             ? 'bg-amber-600 text-white shadow-sm'
                             : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
                         }`}
                       >
                         <Award className="w-3.5 h-3.5" />
-                        <span>Seçmeli Dersler</span>
+                        <span>Bölüm Seçmelileri</span>
                         <span className="px-1.5 text-[10px] bg-amber-950 text-amber-300 rounded-full font-mono">
-                          {electiveCount}
+                          {deptElectiveCount}
                         </span>
                       </button>
 
                       <button
-                        onClick={() => setCourseCategoryTab('curriculum')}
+                        onClick={() => setCourseCategoryTab('social_elective')}
                         className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                          courseCategoryTab === 'curriculum'
-                            ? 'bg-cyan-700 text-white shadow-sm'
+                          courseCategoryTab === 'social_elective'
+                            ? 'bg-purple-600 text-white shadow-sm'
                             : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
                         }`}
                       >
-                        <LayoutGrid className="w-3.5 h-3.5" />
-                        <span>Müfredat Görünümü</span>
+                        <Globe className="w-3.5 h-3.5" />
+                        <span>Sosyal & Genel Seçmeliler</span>
+                        <span className="px-1.5 text-[10px] bg-purple-950 text-purple-300 rounded-full font-mono">
+                          {socialElectiveCount}
+                        </span>
                       </button>
                     </div>
 
                     <span className="text-xs font-mono text-indigo-400">
-                      {courseCategoryTab === 'curriculum' ? `${curriculumGridCourses.length} Ders` : `${filteredCurriculum.length} Ders`} Listeleniyor
+                      {filteredCurriculum.length} Ders Listeleniyor
                     </span>
                   </div>
-
-                  {/* Curriculum Year + Semester controls — shown only when Müfredat tab is active */}
-                  {courseCategoryTab === 'curriculum' && (
-                    <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-800/50">
-                      <GraduationCap className="w-4 h-4 text-cyan-400" />
-                      <span className="text-xs font-semibold text-cyan-300">Sınıf:</span>
-                      {[1, 2, 3, 4].map(yr => (
-                        <button
-                          key={yr}
-                          onClick={() => setCurriculumYear(yr)}
-                          className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
-                            curriculumYear === yr
-                              ? 'bg-cyan-600 text-white shadow'
-                              : 'bg-slate-800 text-slate-400 hover:bg-cyan-900 hover:text-cyan-300'
-                          }`}
-                        >
-                          {yr}. Sınıf
-                        </button>
-                      ))}
-
-                      <div className="w-px bg-slate-700 self-stretch mx-1" />
-                      
-                      <span className="text-xs font-semibold text-slate-400">Dönem:</span>
-                      <button
-                        onClick={() => setSemesterFilter('güz')}
-                        className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
-                          semesterFilter === 'güz'
-                            ? 'bg-orange-600 text-white shadow'
-                            : 'bg-slate-800 text-slate-400 hover:bg-orange-900 hover:text-orange-300'
-                        }`}
-                      >
-                        🍂 Güz
-                      </button>
-                      <button
-                        onClick={() => setSemesterFilter('bahar')}
-                        className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
-                          semesterFilter === 'bahar'
-                            ? 'bg-green-700 text-white shadow'
-                            : 'bg-slate-800 text-slate-400 hover:bg-green-900 hover:text-green-300'
-                        }`}
-                      >
-                        🌸 Bahar
-                      </button>
-
-                      <div className="w-px bg-slate-700 self-stretch mx-1" />
-
-                      <button
-                        onClick={handleAddAllCurriculum}
-                        disabled={curriculumGridCourses.length === 0}
-                        className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition-all ${
-                          curriculumGridCourses.length > 0
-                            ? 'bg-emerald-700 hover:bg-emerald-600 text-white shadow'
-                            : 'bg-slate-800 text-slate-600 cursor-not-allowed'
-                        }`}
-                      >
-                        <Plus className="w-3.5 h-3.5" />
-                        Hepsini Sepete Ekle ({curriculumGridCourses.length})
-                      </button>
-                    </div>
-                  )}
                 </div>
 
                 {loading ? (
@@ -873,101 +827,9 @@ export default function Home() {
                     <RefreshCw className="w-6 h-6 animate-spin text-indigo-400" />
                     <p className="text-sm">Dersler yükleniyor...</p>
                   </div>
-                ) : courseCategoryTab === 'curriculum' ? (
-                  /* ── Müfredata Göre Diz: Weekly Grid Layout ── */
-                  <div>
-                    {curriculumGridCourses.length === 0 ? (
-                      <div className="py-10 text-center text-slate-500 border border-dashed border-slate-800 rounded-xl">
-                        {curriculumYear}. sınıf için müfredatta ders bulunamadı.
-                      </div>
-                    ) : (
-                      <div className="overflow-x-auto rounded-xl border border-slate-800">
-                        <table className="w-full text-xs border-collapse">
-                          <thead>
-                            <tr className="bg-slate-950 border-b border-slate-800">
-                              <th className="p-2 border-r border-slate-800 text-center font-bold text-slate-400 w-20">Saat</th>
-                              {DAYS.map(day => (
-                                <th key={day} className="p-2 border-r border-slate-800 text-center font-bold text-cyan-300 min-w-[120px]">
-                                  {day}
-                                </th>
-                              ))}
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {/* Since we have day info but not exact time slots, show one summary row per day */}
-                            <tr className="border-b border-slate-800/60">
-                              <td className="p-1.5 border-r border-slate-800 text-center font-mono text-slate-500 bg-slate-950/40 text-[10px] align-top">
-                                Haftalık
-                              </td>
-                              {DAYS.map(day => {
-                                const dayCourses = getDayCoursesForSlot(day);
-                                return (
-                                  <td key={day} className="p-1 border-r border-slate-800/60 align-top min-h-[80px]">
-                                    {dayCourses.length === 0 ? (
-                                      <div className="h-10 flex items-center justify-center text-slate-700 text-[10px]">—</div>
-                                    ) : dayCourses.map(course => {
-                                      const isAdded = selectedCourses.some(c => c.code === course.code);
-                                      return (
-                                        <div
-                                          key={course.code}
-                                          onClick={() => isAdded ? handleRemoveCourse(course.code) : handleAddCourse(course)}
-                                          className={`p-1.5 mb-1.5 rounded-lg border cursor-pointer transition-all ${
-                                            isAdded
-                                              ? 'bg-cyan-950/60 border-cyan-600 text-cyan-200'
-                                              : 'bg-slate-900 border-slate-700 text-slate-300 hover:border-cyan-600/50 hover:bg-cyan-950/20'
-                                          }`}
-                                        >
-                                          <div className="font-mono font-bold text-[10px]">{course.code}</div>
-                                          <div className="text-[9px] opacity-80 leading-tight">{course.name}</div>
-                                          <div className="text-[9px] opacity-50 mt-0.5">{course.credits}K • {course.ects}A</div>
-                                          {course.instructor && (
-                                            <div className="text-[9px] opacity-40 truncate">{course.instructor}</div>
-                                          )}
-                                        </div>
-                                      );
-                                    })}
-                                  </td>
-                                );
-                              })}
-                            </tr>
-                          </tbody>
-                        </table>
-
-                        {/* Unscheduled courses (no days info) displayed below */}
-                        {(() => {
-                          const unscheduled = curriculumGridCourses.filter(c => !c.days);
-                          if (unscheduled.length === 0) return null;
-                          return (
-                            <div className="p-3 border-t border-slate-800">
-                              <p className="text-[10px] text-slate-500 mb-2 uppercase font-semibold tracking-wider">Program Saati Belirtilmemiş Dersler</p>
-                              <div className="flex flex-wrap gap-2">
-                                {unscheduled.map(course => {
-                                  const isAdded = selectedCourses.some(c => c.code === course.code);
-                                  return (
-                                    <div
-                                      key={course.code}
-                                      onClick={() => isAdded ? handleRemoveCourse(course.code) : handleAddCourse(course)}
-                                      className={`p-2 rounded-lg border cursor-pointer transition-all text-[10px] ${
-                                        isAdded
-                                          ? 'bg-cyan-950/60 border-cyan-600 text-cyan-200'
-                                          : 'bg-slate-900 border-slate-700 text-slate-300 hover:border-cyan-600/50'
-                                      }`}
-                                    >
-                                      <span className="font-mono font-bold">{course.code}</span>
-                                      <span className="ml-1 opacity-70">{course.name}</span>
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                            </div>
-                          );
-                        })()}
-                      </div>
-                    )}
-                  </div>
                 ) : filteredCurriculum.length === 0 ? (
                   <div className="py-12 text-center text-slate-500 border border-dashed border-slate-800 rounded-xl">
-                    Bu kategoride ders bulunamadı.
+                    Bu kriterlere uygun ders bulunamadı.
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
@@ -1031,11 +893,12 @@ export default function Home() {
                                 </span>
                               )}
                               {course.instructor && (
-                                <span className="inline-flex items-center gap-1 text-slate-400 text-[11px] truncate max-w-[150px]">
-                                  <User className="w-3 h-3 text-slate-500" />
-                                  {course.instructor}
+                                <span className="inline-flex items-center gap-1 text-slate-400 text-[11px] truncate max-w-[200px]" title={getFullInstructorName(course.instructor)}>
+                                  <User className="w-3 h-3 text-slate-500 flex-shrink-0" />
+                                  {getFullInstructorName(course.instructor)}
                                 </span>
                               )}
+
                             </div>
                           </div>
 
@@ -1277,7 +1140,10 @@ export default function Home() {
                                           <span className="text-[9px] bg-amber-900/80 text-amber-300 px-1 rounded">ONLINE</span>
                                         )}
                                       </div>
-                                      <p className="text-[10px] opacity-80 truncate mt-0.5">{activeCourse.instructor}</p>
+                                      <p className="text-[10px] opacity-80 truncate mt-0.5" title={getFullInstructorName(activeCourse.instructor)}>
+                                        {getFullInstructorName(activeCourse.instructor)}
+                                      </p>
+
                                     </div>
                                     <div className="text-[9px] opacity-60 font-mono text-right">
                                       {activeCourse.slots[0]?.classroom || 'Derslik'}
