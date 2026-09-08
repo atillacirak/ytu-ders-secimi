@@ -49,30 +49,32 @@ def get_departments():
 @app.get('/api/curriculum/{dept_code}')
 def get_curriculum(dept_code: str):
     conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
-    cursor.execute('''
-        SELECT code, name, year, is_elective, credits, ects, instructor, is_online, days
-        FROM courses
-        WHERE department_code = ?
-    ''', (dept_code,))
-    rows = cursor.fetchall()
-    conn.close()
+    try:
+        cursor.execute('SELECT * FROM courses WHERE department_code = ?', (dept_code,))
+        rows = cursor.fetchall()
+        conn.close()
 
-    result = []
-    for row in rows:
-        result.append({
-            'id': row[0],
-            'code': row[0],
-            'name': row[1],
-            'year': row[2],
-            'is_elective': bool(row[3]),
-            'credits': row[4],
-            'ects': row[5],
-            'instructor': row[6] or 'Bölüm Öğretim Üyeleri',
-            'is_online': bool(row[7]),
-            'days': row[8] if len(row) > 8 and row[8] else 'Pazartesi, Çarşamba'
-        })
-    return result
+        result = []
+        for r in rows:
+            row_dict = dict(r)
+            result.append({
+                'id': str(row_dict.get('id', row_dict.get('code'))),
+                'code': row_dict.get('code', ''),
+                'name': row_dict.get('name', ''),
+                'year': row_dict.get('year', 1),
+                'is_elective': bool(row_dict.get('is_elective', 0)),
+                'credits': row_dict.get('credits', 3),
+                'ects': row_dict.get('ects', 5),
+                'instructor': row_dict.get('instructor') or 'Bölüm Öğretim Üyeleri',
+                'is_online': bool(row_dict.get('is_online', 0)),
+                'days': row_dict.get('days') or 'Pazartesi, Çarşamba'
+            })
+        return result
+    except Exception as e:
+        conn.close()
+        return []
 
 @app.post('/api/upload-pdf', response_model=DepartmentSchedule)
 async def upload_pdf(file: UploadFile = File(...), department: str = Query('BLM')):
