@@ -51,6 +51,14 @@ const DEPARTMENTS = [
   { code: 'END', name: 'Endüstri Mühendisliği' },
   { code: 'EHM', name: 'Elektronik ve Haberleşme Mühendisliği' },
   { code: 'MAK', name: 'Makine Mühendisliği' },
+  { code: 'BMD', name: 'Biyomedikal Mühendisliği' },
+  { code: 'BIO', name: 'Biyomühendislik' },
+  { code: 'GDA', name: 'Gıda Mühendisliği' },
+  { code: 'KIM', name: 'Kimya Mühendisliği' },
+  { code: 'MAT', name: 'Matematik Mühendisliği' },
+  { code: 'MKT', name: 'Mekatronik Mühendisliği' },
+  { code: 'MET', name: 'Metalurji ve Malzeme Mühendisliği' },
+  { code: 'YZV', name: 'Yapay Zeka ve Veri Mühendisliği' },
 ];
 
 const DAYS = ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi'];
