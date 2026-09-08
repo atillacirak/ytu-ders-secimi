@@ -429,13 +429,22 @@ export default function Home() {
             {/* Left & Middle Column: Department & Curriculum Selection */}
             <div className="lg:col-span-2 space-y-6">
               
-              {/* Department Selector & Filters Header */}
-              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {/* Faculty Selector */}
-                  <div className="space-y-1">
-                    <label className="text-xs font-semibold text-indigo-400 uppercase tracking-wider flex items-center gap-1.5">
-                      <Building2 className="w-3.5 h-3.5" /> 1. Fakülte Seçin
+              {/* Modern Glassmorphic Faculty & Department Selection Bar */}
+              <div className="bg-gradient-to-r from-slate-900 via-indigo-950/40 to-slate-900 border border-slate-800/80 rounded-2xl p-5 shadow-2xl backdrop-blur space-y-4">
+                <div className="flex items-center justify-between border-b border-slate-800/80 pb-3">
+                  <span className="text-xs font-bold uppercase tracking-wider text-indigo-400 flex items-center gap-2">
+                    <Building2 className="w-4 h-4 text-indigo-400" /> Akademik Program Seçimi
+                  </span>
+                  <span className="text-xs text-slate-400 font-medium">
+                    {FACULTIES.find(f => f.id === selectedFaculty)?.name} → {FACULTIES.find(f => f.id === selectedFaculty)?.departments.find(d => d.code === selectedDept)?.name}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {/* Faculty Selector Dropdown */}
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-medium text-slate-300 flex items-center gap-1.5">
+                      Fakülte Seçiniz
                     </label>
                     <select
                       value={selectedFaculty}
@@ -447,7 +456,7 @@ export default function Home() {
                           setSelectedDept(fac.departments[0].code);
                         }
                       }}
-                      className="bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs font-semibold text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full"
+                      className="bg-slate-950/80 border border-slate-700/80 hover:border-indigo-500/50 rounded-xl px-4 py-3 text-xs font-semibold text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full transition-all shadow-inner"
                     >
                       {FACULTIES.map(f => (
                         <option key={f.id} value={f.id}>
@@ -457,15 +466,15 @@ export default function Home() {
                     </select>
                   </div>
 
-                  {/* Department Selector (Filtered by chosen Faculty) */}
-                  <div className="space-y-1">
-                    <label className="text-xs font-semibold text-indigo-400 uppercase tracking-wider flex items-center gap-1.5">
-                      <BookOpen className="w-3.5 h-3.5" /> 2. Bölüm Seçin
+                  {/* Department Selector Dropdown */}
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-medium text-slate-300 flex items-center gap-1.5">
+                      Bölüm Seçiniz
                     </label>
                     <select
                       value={selectedDept}
                       onChange={(e) => setSelectedDept(e.target.value)}
-                      className="bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs font-semibold text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full"
+                      className="bg-slate-950/80 border border-slate-700/80 hover:border-indigo-500/50 rounded-xl px-4 py-3 text-xs font-semibold text-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full transition-all shadow-inner"
                     >
                       {FACULTIES.find(f => f.id === selectedFaculty)?.departments.map(d => (
                         <option key={d.code} value={d.code}>
@@ -478,86 +487,84 @@ export default function Home() {
                       ))}
                     </select>
                   </div>
+                </div>
+              </div>
 
-                  {/* Year Filter Buttons */}
-                  <div className="space-y-1">
-                    <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-                      <Filter className="w-3.5 h-3.5" /> Sınıf Filtresi
-                    </label>
-                    <div className="flex flex-wrap gap-1 bg-slate-800/60 p-1 rounded-xl border border-slate-700/60">
+              {/* Main Course Listing Card with Search & Filters placed AT THE VERY TOP */}
+              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4">
+                
+                {/* TOP HEADER OF COURSES BLOCK: Search & Filters Bar */}
+                <div className="space-y-3 pb-3 border-b border-slate-800">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    {/* Integrated Search Bar */}
+                    <div className="relative flex-1">
+                      <Search className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-400" />
+                      <input
+                        type="text"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        placeholder="Ders Ara (Kod veya İsim ile anlık filtrele)..."
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+                      />
+                    </div>
+
+                    {/* Class/Year Filter Pills */}
+                    <div className="flex items-center space-x-1 bg-slate-950 p-1 rounded-xl border border-slate-800 flex-shrink-0">
+                      <span className="text-[11px] font-semibold text-slate-400 px-2 flex items-center gap-1">
+                        <Filter className="w-3 h-3 text-slate-500" /> Sınıf:
+                      </span>
                       {(['ALL', 1, 2, 3, 4] as const).map(yr => (
                         <button
                           key={yr}
                           onClick={() => setYearFilter(yr)}
-                          className={`px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                          className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${
                             yearFilter === yr
-                              ? 'bg-indigo-600 text-white shadow-sm'
-                              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700/50'
+                              ? 'bg-indigo-600 text-white shadow'
+                              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
                           }`}
                         >
-                          {yr === 'ALL' ? 'Tümü' : `${yr}. Sınıf`}
+                          {yr === 'ALL' ? 'Tümü' : `${yr}`}
                         </button>
                       ))}
                     </div>
                   </div>
-                </div>
 
-                {/* Search Bar */}
-                <div className="relative">
-                  <Search className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-400" />
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Ders Ara (Kod veya İsim)..."
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  />
-                </div>
-              </div>
+                  {/* Category Selector Sub-Tabs (Zorunlu vs Seçmeli) */}
+                  <div className="flex items-center justify-between gap-2 pt-1">
+                    <div className="flex bg-slate-950 p-1 rounded-xl border border-slate-800 gap-1">
+                      <button
+                        onClick={() => setCourseCategoryTab('mandatory')}
+                        className={`flex items-center space-x-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                          courseCategoryTab === 'mandatory'
+                            ? 'bg-indigo-600 text-white shadow-sm'
+                            : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+                        }`}
+                      >
+                        <BookmarkCheck className="w-3.5 h-3.5" />
+                        <span>Zorunlu Dersler</span>
+                        <span className="px-1.5 py-0.2 text-[10px] bg-slate-800 text-slate-300 rounded-full font-mono">
+                          {mandatoryCount}
+                        </span>
+                      </button>
 
-              {/* Mandatory vs Elective Category Sub-Tabs */}
-              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4">
-                
-                {/* Category Selector Sub-Tabs */}
-                <div className="flex border-b border-slate-800 pb-3 gap-2">
-                  <button
-                    onClick={() => setCourseCategoryTab('mandatory')}
-                    className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
-                      courseCategoryTab === 'mandatory'
-                        ? 'bg-indigo-600/20 text-indigo-300 border border-indigo-500/40 shadow-sm'
-                        : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
-                    }`}
-                  >
-                    <BookmarkCheck className="w-4 h-4 text-indigo-400" />
-                    <span>Zorunlu Müfredat Dersleri</span>
-                    <span className="px-2 py-0.5 text-xs bg-slate-800 text-slate-300 rounded-full font-mono">
-                      {mandatoryCount}
-                    </span>
-                  </button>
+                      <button
+                        onClick={() => setCourseCategoryTab('elective')}
+                        className={`flex items-center space-x-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                          courseCategoryTab === 'elective'
+                            ? 'bg-amber-600 text-white shadow-sm'
+                            : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+                        }`}
+                      >
+                        <Award className="w-3.5 h-3.5" />
+                        <span>Seçmeli Dersler</span>
+                        <span className="px-1.5 py-0.2 text-[10px] bg-amber-950 text-amber-300 rounded-full font-mono">
+                          {electiveCount}
+                        </span>
+                      </button>
+                    </div>
 
-                  <button
-                    onClick={() => setCourseCategoryTab('elective')}
-                    className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
-                      courseCategoryTab === 'elective'
-                        ? 'bg-amber-600/20 text-amber-300 border border-amber-500/40 shadow-sm'
-                        : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
-                    }`}
-                  >
-                    <Award className="w-4 h-4 text-amber-400" />
-                    <span>Seçmeli Dersler</span>
-                    <span className="px-2 py-0.5 text-xs bg-amber-950 text-amber-300 border border-amber-800/40 rounded-full font-mono">
-                      {electiveCount}
-                    </span>
-                  </button>
-                </div>
-
-                <div className="flex items-center justify-between text-xs text-slate-400 px-1">
-                  <span>
-                    {courseCategoryTab === 'mandatory' 
-                      ? 'Bölümün zorunlu temel müfredat dersleri gösteriliyor.' 
-                      : 'Bölüm seçmeli, fakülte seçmeli ve üniversite havuz seçmeli dersleri gösteriliyor.'}
-                  </span>
-                  <span className="font-mono text-indigo-400">{filteredCurriculum.length} Ders</span>
+                    <span className="text-xs font-mono text-indigo-400">{filteredCurriculum.length} Ders Listeleniyor</span>
+                  </div>
                 </div>
 
                 {loading ? (
