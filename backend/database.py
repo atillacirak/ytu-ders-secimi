@@ -12,6 +12,13 @@ def init_db():
     cursor.execute('CREATE TABLE IF NOT EXISTS sections (id INTEGER PRIMARY KEY AUTOINCREMENT, course_code TEXT NOT NULL, section_id TEXT NOT NULL, instructor TEXT)')
     cursor.execute('CREATE TABLE IF NOT EXISTS time_slots (id INTEGER PRIMARY KEY AUTOINCREMENT, section_db_id INTEGER NOT NULL, day TEXT NOT NULL, start_time TEXT NOT NULL, end_time TEXT NOT NULL, classroom TEXT)')
     
+    # Safe alter table for existing databases
+    for col, col_type in [('credits', 'INTEGER DEFAULT 3'), ('ects', 'INTEGER DEFAULT 5'), ('instructor', 'TEXT'), ('is_online', 'INTEGER DEFAULT 0'), ('days', 'TEXT')]:
+        try:
+            cursor.execute(f'ALTER TABLE courses ADD COLUMN {col} {col_type}')
+        except Exception:
+            pass
+
     conn.commit()
     conn.close()
 
