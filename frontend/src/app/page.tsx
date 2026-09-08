@@ -264,7 +264,7 @@ export default function Home() {
                         {slot}
                       </td>
                       {DAYS.map(day => {
-                        let matchedCourse: { code: string; secId: string; instructor?: string; room?: string } | null = null;
+                        let matchedCourse: any = null;
                         if (currentCombination) {
                           Object.entries(currentCombination.selected_sections).forEach(([code, sec]) => {
                             sec.time_slots.forEach(ts => {
