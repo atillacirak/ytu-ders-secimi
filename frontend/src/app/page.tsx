@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   BookOpen, Calendar, CheckCircle, Clock, Trash2, Plus, Filter, 
   Search, AlertCircle, ArrowRight, RefreshCw, Upload, Sparkles, Layers,
-  ChevronRight, Laptop, Building2, User
+  ChevronRight, Laptop, Building2, User, Award, BookmarkCheck
 } from 'lucide-react';
 
 interface Course {
@@ -14,6 +14,7 @@ interface Course {
   credits: number;
   ects: number;
   year?: number;
+  is_elective?: boolean;
   instructor?: string;
   is_online?: boolean;
   sections?: CourseSection[];
@@ -61,6 +62,7 @@ const TIME_SLOTS = [
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState<'selection' | 'schedule'>('selection');
+  const [courseCategoryTab, setCourseCategoryTab] = useState<'mandatory' | 'elective'>('mandatory');
   const [selectedDept, setSelectedDept] = useState<string>('BLM');
   const [yearFilter, setYearFilter] = useState<number | 'ALL'>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
@@ -76,7 +78,6 @@ export default function Home() {
 
   const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://ytu-ders-secimi.onrender.com';
 
-  // Load department curriculum on selection change
   useEffect(() => {
     fetchCurriculum(selectedDept);
   }, [selectedDept]);
@@ -89,7 +90,6 @@ export default function Home() {
         const data = await res.json();
         setCurriculum(data);
       } else {
-        // Fallback mock data if API unavailable
         setCurriculum(getMockCurriculum(deptCode));
       }
     } catch (e) {
@@ -101,13 +101,15 @@ export default function Home() {
 
   const getMockCurriculum = (dept: string): Course[] => {
     return [
-      { id: '1', code: `${dept}101`, name: 'Mühendisliğe Giriş', credits: 3, ects: 5, year: 1, instructor: 'Prof. Dr. Ahmet Yılmaz', is_online: false },
-      { id: '2', code: 'MATH101', name: 'Matematik I', credits: 4, ects: 6, year: 1, instructor: 'Doç. Dr. Ayşe Kaya', is_online: false },
-      { id: '3', code: 'PHYS101', name: 'Fizik I', credits: 4, ects: 6, year: 1, instructor: 'Dr. Öğr. Üyesi Mehmet Demir', is_online: true },
-      { id: '4', code: `${dept}201`, name: 'Veri Yapıları ve Algoritmalar', credits: 3, ects: 6, year: 2, instructor: 'Prof. Dr. Can Yıldız', is_online: false },
-      { id: '5', code: `${dept}202`, name: 'Nümerik Analiz', credits: 3, ects: 5, year: 2, instructor: 'Doç. Dr. Zeynep Şahin', is_online: true },
-      { id: '6', code: `${dept}301`, name: 'İşletim Sistemleri', credits: 3, ects: 6, year: 3, instructor: 'Prof. Dr. Murat Çelik', is_online: false },
-      { id: '7', code: `${dept}401`, name: 'Bitirme Projesi I', credits: 2, ects: 8, year: 4, instructor: 'Bölüm Öğretim Üyeleri', is_online: false }
+      { id: '1', code: 'MAT1071', name: 'Matematik 1', credits: 4, ects: 6, year: 1, is_elective: false, instructor: 'Prof. Dr. Ayşe Yılmaz', is_online: false },
+      { id: '2', code: 'FIZ1001', name: 'Fizik 1', credits: 4, ects: 6, year: 1, is_elective: false, instructor: 'Doç. Dr. Mehmet Demir', is_online: false },
+      { id: '3', code: `${dept}1011`, name: 'Mühendisliğe Giriş', credits: 3, ects: 5, year: 1, is_elective: false, instructor: 'Prof. Dr. Ahmet Elbir', is_online: false },
+      { id: '4', code: `${dept}2012`, name: 'Veri Yapıları & Algoritmalar', credits: 3, ects: 6, year: 2, is_elective: false, instructor: 'Prof. Dr. Can Yıldız', is_online: false },
+      { id: '5', code: `${dept}3011`, name: 'İşletim Sistemleri', credits: 3, ects: 6, year: 3, is_elective: false, instructor: 'Doç. Dr. Erkan Uçar', is_online: false },
+      { id: '6', code: `${dept}3730`, name: 'Blokzincir Temelleri ve Uygulamaları', credits: 3, ects: 5, year: 3, is_elective: true, instructor: 'Dr. Öğr. Üyesi Deniz Varol', is_online: false },
+      { id: '7', code: `${dept}4800`, name: 'Veri Madenciliğine Giriş', credits: 3, ects: 5, year: 4, is_elective: true, instructor: 'Prof. Dr. Banu Diri', is_online: false },
+      { id: '8', code: 'ITB2050', name: 'Felsefeye Giriş (Sosyal Seçmeli)', credits: 2, ects: 3, year: 2, is_elective: true, instructor: 'Dr. Öğr. Üyesi Kemal Sunal', is_online: true },
+      { id: '9', code: 'USK1001', name: 'Üniversite Seçmeli - İnsan ve Toplum', credits: 2, ects: 3, year: 2, is_elective: true, instructor: 'Ortak Havuz Öğretim Üyesi', is_online: true },
     ];
   };
 
@@ -140,6 +142,7 @@ export default function Home() {
           name: `${codeUpper} (Özel Ders)`,
           credits: 3,
           ects: 5,
+          is_elective: false,
           instructor: 'Bilinmiyor',
           is_online: false
         }
@@ -169,6 +172,7 @@ export default function Home() {
             name: item.name || item.code,
             credits: item.credits || 3,
             ects: item.ects || 5,
+            is_elective: item.is_elective || false,
             instructor: item.instructor || 'PDF Kaynaklı',
             is_online: item.is_online || false
           }));
@@ -195,13 +199,12 @@ export default function Home() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          courses: selectedCourses.map(c => c.code),
-          dept: selectedDept
+          selected_course_codes: selectedCourses.map(c => c.code)
         })
       });
       if (res.ok) {
         const data = await res.json();
-        setGeneratedSchedules(data.schedules || []);
+        setGeneratedSchedules(data || []);
       } else {
         generateFallbackSchedule();
       }
@@ -233,13 +236,17 @@ export default function Home() {
     setGeneratedSchedules([{ schedule: mockSchedule, score: 95, conflicts: [] }]);
   };
 
-  // Filter curriculum by search and year
+  // Filter curriculum by search, year, and category (mandatory vs elective)
   const filteredCurriculum = curriculum.filter(course => {
+    const matchesCategory = courseCategoryTab === 'mandatory' ? !course.is_elective : course.is_elective;
     const matchesSearch = course.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
                           course.name.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesYear = yearFilter === 'ALL' || course.year === yearFilter;
-    return matchesSearch && matchesYear;
+    return matchesCategory && matchesSearch && matchesYear;
   });
+
+  const mandatoryCount = curriculum.filter(c => !c.is_elective).length;
+  const electiveCount = curriculum.filter(c => c.is_elective).length;
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans">
@@ -335,7 +342,7 @@ export default function Home() {
                               : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700/50'
                           }`}
                         >
-                          {yr === 'ALL' ? 'Tüm Müfredat' : `${yr}. Sınıf`}
+                          {yr === 'ALL' ? 'Tüm Sınıflar' : `${yr}. Sınıf`}
                         </button>
                       ))}
                     </div>
@@ -349,32 +356,65 @@ export default function Home() {
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Müfredatta Ders Ara (Kod veya Ders Adı)..."
+                    placeholder="Ders Ara (Kod veya İsim)..."
                     className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   />
                 </div>
               </div>
 
-              {/* Curriculum Course Cards Grid */}
+              {/* Mandatory vs Elective Category Sub-Tabs */}
               <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4">
-                <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-                  <h2 className="text-base font-semibold text-slate-200 flex items-center gap-2">
-                    <span>Müfredat Dersleri</span>
-                    <span className="text-xs px-2.5 py-0.5 bg-slate-800 text-indigo-400 rounded-full font-mono">
-                      {filteredCurriculum.length} Ders
+                
+                {/* Category Selector Sub-Tabs */}
+                <div className="flex border-b border-slate-800 pb-3 gap-2">
+                  <button
+                    onClick={() => setCourseCategoryTab('mandatory')}
+                    className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
+                      courseCategoryTab === 'mandatory'
+                        ? 'bg-indigo-600/20 text-indigo-300 border border-indigo-500/40 shadow-sm'
+                        : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
+                    }`}
+                  >
+                    <BookmarkCheck className="w-4 h-4 text-indigo-400" />
+                    <span>Zorunlu Müfredat Dersleri</span>
+                    <span className="px-2 py-0.5 text-xs bg-slate-800 text-slate-300 rounded-full font-mono">
+                      {mandatoryCount}
                     </span>
-                  </h2>
-                  <span className="text-xs text-slate-400">Tıklayarak sepetinize ekleyebilirsiniz</span>
+                  </button>
+
+                  <button
+                    onClick={() => setCourseCategoryTab('elective')}
+                    className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
+                      courseCategoryTab === 'elective'
+                        ? 'bg-amber-600/20 text-amber-300 border border-amber-500/40 shadow-sm'
+                        : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
+                    }`}
+                  >
+                    <Award className="w-4 h-4 text-amber-400" />
+                    <span>Seçmeli Dersler</span>
+                    <span className="px-2 py-0.5 text-xs bg-amber-950 text-amber-300 border border-amber-800/40 rounded-full font-mono">
+                      {electiveCount}
+                    </span>
+                  </button>
+                </div>
+
+                <div className="flex items-center justify-between text-xs text-slate-400 px-1">
+                  <span>
+                    {courseCategoryTab === 'mandatory' 
+                      ? 'Bölümün zorunlu temel müfredat dersleri gösteriliyor.' 
+                      : 'Bölüm seçmeli, fakülte seçmeli ve üniversite havuz seçmeli dersleri gösteriliyor.'}
+                  </span>
+                  <span className="font-mono text-indigo-400">{filteredCurriculum.length} Ders</span>
                 </div>
 
                 {loading ? (
                   <div className="py-12 text-center text-slate-400 flex flex-col items-center justify-center gap-2">
                     <RefreshCw className="w-6 h-6 animate-spin text-indigo-400" />
-                    <p className="text-sm">Müfredat yükleniyor...</p>
+                    <p className="text-sm">Dersler yükleniyor...</p>
                   </div>
                 ) : filteredCurriculum.length === 0 ? (
-                  <div className="py-12 text-center text-slate-500">
-                    Ders bulunamadı.
+                  <div className="py-12 text-center text-slate-500 border border-dashed border-slate-800 rounded-xl">
+                    Bu kategoride ders bulunamadı.
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
@@ -393,7 +433,11 @@ export default function Home() {
                           <div>
                             <div className="flex items-start justify-between gap-2 mb-2">
                               <div className="flex items-center space-x-2">
-                                <span className="font-mono font-bold text-sm text-indigo-400 bg-indigo-950/80 px-2 py-0.5 rounded border border-indigo-800/50">
+                                <span className={`font-mono font-bold text-sm px-2 py-0.5 rounded border ${
+                                  course.is_elective
+                                    ? 'text-amber-400 bg-amber-950/80 border-amber-800/50'
+                                    : 'text-indigo-400 bg-indigo-950/80 border-indigo-800/50'
+                                }`}>
                                   {course.code}
                                 </span>
                                 {course.year && (
@@ -402,11 +446,18 @@ export default function Home() {
                                   </span>
                                 )}
                               </div>
-                              {course.is_online && (
-                                <span className="flex items-center gap-1 text-[10px] font-bold text-amber-400 bg-amber-950/80 border border-amber-800/60 px-2 py-0.5 rounded-full">
-                                  <Laptop className="w-3 h-3" /> ONLINE
-                                </span>
-                              )}
+                              <div className="flex items-center space-x-1">
+                                {course.is_elective && (
+                                  <span className="text-[10px] font-bold text-amber-400 bg-amber-950/80 border border-amber-800/60 px-2 py-0.5 rounded-full">
+                                    SEÇMELİ
+                                  </span>
+                                )}
+                                {course.is_online && (
+                                  <span className="flex items-center gap-1 text-[10px] font-bold text-cyan-400 bg-cyan-950/80 border border-cyan-800/60 px-2 py-0.5 rounded-full">
+                                    <Laptop className="w-3 h-3" /> ONLINE
+                                  </span>
+                                )}
+                              </div>
                             </div>
 
                             <h3 className="font-semibold text-sm text-slate-100 group-hover:text-indigo-300 transition-colors line-clamp-2">
@@ -469,7 +520,7 @@ export default function Home() {
                     <div className="py-8 text-center text-slate-500 text-sm flex flex-col items-center justify-center gap-2 border border-dashed border-slate-800 rounded-xl">
                       <AlertCircle className="w-6 h-6 text-slate-600" />
                       <span>Sepetiniz henüz boş.</span>
-                      <span className="text-xs text-slate-600">Müfredattan ders seçin veya elle ekleyin.</span>
+                      <span className="text-xs text-slate-600">Müfredattan veya Seçmelilerden ders seçin.</span>
                     </div>
                   ) : (
                     selectedCourses.map(course => (
@@ -479,9 +530,14 @@ export default function Home() {
                       >
                         <div className="min-w-0 pr-2">
                           <div className="flex items-center space-x-2">
-                            <span className="font-mono font-bold text-xs text-indigo-400">{course.code}</span>
+                            <span className={`font-mono font-bold text-xs ${course.is_elective ? 'text-amber-400' : 'text-indigo-400'}`}>
+                              {course.code}
+                            </span>
+                            {course.is_elective && (
+                              <span className="text-[9px] text-amber-400 bg-amber-950/60 px-1.5 rounded border border-amber-800/40">SEÇMELİ</span>
+                            )}
                             {course.is_online && (
-                              <span className="text-[9px] text-amber-400 bg-amber-950/60 px-1.5 rounded border border-amber-800/40">ONLINE</span>
+                              <span className="text-[9px] text-cyan-400 bg-cyan-950/60 px-1.5 rounded border border-cyan-800/40">ONLINE</span>
                             )}
                           </div>
                           <p className="text-xs text-slate-300 truncate mt-0.5">{course.name}</p>
@@ -604,7 +660,6 @@ export default function Home() {
                             {slot}
                           </td>
                           {DAYS.map(day => {
-                            // Find active course slot in this cell
                             let activeCourse: any = null;
                             const currentSchedule = generatedSchedules[selectedScheduleIdx]?.schedule || {};
 
