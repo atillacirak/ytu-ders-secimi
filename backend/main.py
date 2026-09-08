@@ -24,6 +24,13 @@ app.add_middleware(
 
 init_db()
 
+# Seed all 555 courses if DB is empty
+try:
+    from seed_all_courses import seed_all
+    seed_all()
+except Exception as e:
+    print(f"Seed warning: {e}")
+
 class GenerateScheduleRequest(BaseModel):
     selected_course_codes: List[str]
     options: Optional[OptimizationOptions] = OptimizationOptions()
@@ -69,7 +76,8 @@ def get_curriculum(dept_code: str):
                 'ects': row_dict.get('ects', 5),
                 'instructor': row_dict.get('instructor') or 'Bölüm Öğretim Üyeleri',
                 'is_online': bool(row_dict.get('is_online', 0)),
-                'days': row_dict.get('days') or 'Pazartesi, Çarşamba'
+                'days': row_dict.get('days') or None,
+                'semester': row_dict.get('semester') or None,
             })
         return result
     except Exception as e:

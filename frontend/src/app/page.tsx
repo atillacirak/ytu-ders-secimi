@@ -19,6 +19,7 @@ interface Course {
   instructor?: string;
   is_online?: boolean;
   days?: string;
+  semester?: string;
   sections?: CourseSection[];
 }
 
@@ -109,6 +110,7 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'list' | 'curriculum'>('list');
   const [curriculumYear, setCurriculumYear] = useState<number>(1);
+  const [semesterFilter, setSemesterFilter] = useState<'güz' | 'bahar'>('güz');
   const [excludedCourses, setExcludedCourses] = useState<string[]>([]);
   
   const [curriculum, setCurriculum] = useState<Course[]>([]);
@@ -377,14 +379,33 @@ export default function Home() {
     return matchesCategory && matchesSearch && matchesYear && notExcluded;
   });
 
-  // For the curriculum grid view: courses for a specific year, grouped by day
+  // Infer semester from course code last digit or semester field
+  // YTU convention: courses ending in 1 = Güz, 2 = Bahar. Fallback: Güz
+  const inferSemester = (course: Course): 'güz' | 'bahar' => {
+    if (course.semester) {
+      const s = course.semester.toLowerCase();
+      if (s.includes('bahar') || s.includes('spring')) return 'bahar';
+      if (s.includes('güz') || s.includes('guz') || s.includes('fall')) return 'güz';
+    }
+    const lastDigit = course.code.replace(/\D/g, '').slice(-1);
+    if (lastDigit === '2' || lastDigit === '4' || lastDigit === '6' || lastDigit === '8' || lastDigit === '0') return 'bahar';
+    return 'güz';
+  };
+
+  // For the curriculum grid view: courses for a specific year AND semester, grouped by day
   const curriculumGridCourses = curriculum.filter(c =>
+    c.year === curriculumYear &&
+    !excludedCourses.includes(c.code) &&
+    inferSemester(c) === semesterFilter
+  );
+
+  // All courses for the year (both semesters) for "add all" without filter
+  const allYearCourses = curriculum.filter(c =>
     c.year === curriculumYear && !excludedCourses.includes(c.code)
   );
 
   // Map courses to day slots for the curriculum grid
-  const getDayCoursesForSlot = (day: string, slot: string) => {
-    const slotStart = slot.split('-')[0].trim();
+  const getDayCoursesForSlot = (day: string) => {
     return curriculumGridCourses.filter(course => {
       if (!course.days) return false;
       const daysLower = course.days.toLowerCase();
@@ -396,16 +417,20 @@ export default function Home() {
         'Cuma': ['cuma', 'cum', 'fri'],
         'Cumartesi': ['cumartesi', 'cmt', 'sat'],
       };
-      const dayMatches = dayMap[day]?.some(d => daysLower.includes(d)) || false;
-      // Try to match the time slot if course has time info
-      return dayMatches;
+      return dayMap[day]?.some(d => daysLower.includes(d)) || false;
     });
   };
 
-
+  const handleAddAllCurriculum = () => {
+    const toAdd = curriculumGridCourses.filter(
+      c => !selectedCourses.some(s => s.code === c.code)
+    );
+    setSelectedCourses(prev => [...prev, ...toAdd]);
+  };
 
   const mandatoryCount = curriculum.filter(c => !c.is_elective).length;
   const electiveCount = curriculum.filter(c => c.is_elective).length;
+
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans">
@@ -637,11 +662,11 @@ export default function Home() {
                     </span>
                   </div>
 
-                  {/* Curriculum Grid Year Selector (shown only in curriculum view) */}
+                  {/* Curriculum Grid Year + Semester Selector (shown only in curriculum view) */}
                   {viewMode === 'curriculum' && (
-                    <div className="flex items-center gap-2 pt-1">
+                    <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-800/50">
                       <GraduationCap className="w-4 h-4 text-cyan-400" />
-                      <span className="text-xs font-semibold text-cyan-300">Müfredat Yılı:</span>
+                      <span className="text-xs font-semibold text-cyan-300">Sınıf:</span>
                       {[1, 2, 3, 4].map(yr => (
                         <button
                           key={yr}
@@ -652,9 +677,48 @@ export default function Home() {
                               : 'bg-slate-800 text-slate-400 hover:bg-cyan-900 hover:text-cyan-300'
                           }`}
                         >
-                          {yr}. Sınıf
+                          {yr}.
                         </button>
                       ))}
+
+                      <div className="w-px bg-slate-700 self-stretch mx-1" />
+                      
+                      <span className="text-xs font-semibold text-slate-400">Dönem:</span>
+                      <button
+                        onClick={() => setSemesterFilter('güz')}
+                        className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
+                          semesterFilter === 'güz'
+                            ? 'bg-orange-600 text-white shadow'
+                            : 'bg-slate-800 text-slate-400 hover:bg-orange-900 hover:text-orange-300'
+                        }`}
+                      >
+                        🍂 Güz
+                      </button>
+                      <button
+                        onClick={() => setSemesterFilter('bahar')}
+                        className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
+                          semesterFilter === 'bahar'
+                            ? 'bg-green-700 text-white shadow'
+                            : 'bg-slate-800 text-slate-400 hover:bg-green-900 hover:text-green-300'
+                        }`}
+                      >
+                        🌸 Bahar
+                      </button>
+
+                      <div className="w-px bg-slate-700 self-stretch mx-1" />
+
+                      <button
+                        onClick={handleAddAllCurriculum}
+                        disabled={curriculumGridCourses.length === 0}
+                        className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition-all ${
+                          curriculumGridCourses.length > 0
+                            ? 'bg-emerald-700 hover:bg-emerald-600 text-white shadow'
+                            : 'bg-slate-800 text-slate-600 cursor-not-allowed'
+                        }`}
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        Hepsini Sepete Ekle ({curriculumGridCourses.length})
+                      </button>
                     </div>
                   )}
                 </div>
@@ -685,44 +749,42 @@ export default function Home() {
                             </tr>
                           </thead>
                           <tbody>
-                            {TIME_SLOTS.map(slot => {
-                              const rowHasCourse = DAYS.some(d => getDayCoursesForSlot(d, slot).length > 0);
-                              if (!rowHasCourse) return null;
-                              return (
-                                <tr key={slot} className="border-b border-slate-800/60 hover:bg-slate-800/20">
-                                  <td className="p-1.5 border-r border-slate-800 text-center font-mono text-slate-500 bg-slate-950/40 text-[10px]">
-                                    {slot}
+                            {/* Since we have day info but not exact time slots, show one summary row per day */}
+                            <tr className="border-b border-slate-800/60">
+                              <td className="p-1.5 border-r border-slate-800 text-center font-mono text-slate-500 bg-slate-950/40 text-[10px] align-top">
+                                Haftalık
+                              </td>
+                              {DAYS.map(day => {
+                                const dayCourses = getDayCoursesForSlot(day);
+                                return (
+                                  <td key={day} className="p-1 border-r border-slate-800/60 align-top min-h-[80px]">
+                                    {dayCourses.length === 0 ? (
+                                      <div className="h-10 flex items-center justify-center text-slate-700 text-[10px]">—</div>
+                                    ) : dayCourses.map(course => {
+                                      const isAdded = selectedCourses.some(c => c.code === course.code);
+                                      return (
+                                        <div
+                                          key={course.code}
+                                          onClick={() => isAdded ? handleRemoveCourse(course.code) : handleAddCourse(course)}
+                                          className={`p-1.5 mb-1.5 rounded-lg border cursor-pointer transition-all ${
+                                            isAdded
+                                              ? 'bg-cyan-950/60 border-cyan-600 text-cyan-200'
+                                              : 'bg-slate-900 border-slate-700 text-slate-300 hover:border-cyan-600/50 hover:bg-cyan-950/20'
+                                          }`}
+                                        >
+                                          <div className="font-mono font-bold text-[10px]">{course.code}</div>
+                                          <div className="text-[9px] opacity-80 leading-tight">{course.name}</div>
+                                          <div className="text-[9px] opacity-50 mt-0.5">{course.credits}K • {course.ects}A</div>
+                                          {course.instructor && (
+                                            <div className="text-[9px] opacity-40 truncate">{course.instructor}</div>
+                                          )}
+                                        </div>
+                                      );
+                                    })}
                                   </td>
-                                  {DAYS.map(day => {
-                                    const dayCourses = getDayCoursesForSlot(day, slot);
-                                    return (
-                                      <td key={day} className="p-1 border-r border-slate-800/60 align-top">
-                                        {dayCourses.map(course => {
-                                          const isAdded = selectedCourses.some(c => c.code === course.code);
-                                          return (
-                                            <div
-                                              key={course.code}
-                                              onClick={() => isAdded ? handleRemoveCourse(course.code) : handleAddCourse(course)}
-                                              className={`p-1.5 mb-1 rounded-lg border cursor-pointer transition-all ${
-                                                isAdded
-                                                  ? 'bg-cyan-950/60 border-cyan-600 text-cyan-200'
-                                                  : 'bg-slate-900 border-slate-700 text-slate-300 hover:border-cyan-600/50 hover:bg-cyan-950/20'
-                                              }`}
-                                            >
-                                              <div className="font-mono font-bold text-[10px]">{course.code}</div>
-                                              <div className="text-[9px] opacity-80 truncate">{course.name}</div>
-                                              {course.instructor && (
-                                                <div className="text-[9px] opacity-50 truncate">{course.instructor}</div>
-                                              )}
-                                            </div>
-                                          );
-                                        })}
-                                      </td>
-                                    );
-                                  })}
-                                </tr>
-                              );
-                            })}
+                                );
+                              })}
+                            </tr>
                           </tbody>
                         </table>
 
