@@ -51,7 +51,7 @@ def get_curriculum(dept_code: str):
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute('''
-        SELECT code, name, year, is_elective, credits, ects, instructor, is_online
+        SELECT code, name, year, is_elective, credits, ects, instructor, is_online, days
         FROM courses
         WHERE department_code = ?
     ''', (dept_code,))
@@ -69,7 +69,8 @@ def get_curriculum(dept_code: str):
             'credits': row[4],
             'ects': row[5],
             'instructor': row[6] or 'Bölüm Öğretim Üyeleri',
-            'is_online': bool(row[7])
+            'is_online': bool(row[7]),
+            'days': row[8] if len(row) > 8 and row[8] else 'Pazartesi, Çarşamba'
         })
     return result
 

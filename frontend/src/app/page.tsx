@@ -17,6 +17,7 @@ interface Course {
   is_elective?: boolean;
   instructor?: string;
   is_online?: boolean;
+  days?: string;
   sections?: CourseSection[];
 }
 
@@ -62,20 +63,11 @@ const FACULTIES: Faculty[] = [
     name: 'Elektrik - Elektronik Fakültesi',
     departments: [
       { code: 'BLM', name: 'Bilgisayar Mühendisliği' },
+      { code: 'BMD', name: 'Biyomedikal Mühendisliği' },
       { code: 'ELK', name: 'Elektrik Mühendisliği' },
       { code: 'EHM', name: 'Elektronik ve Haberleşme Mühendisliği' },
-      { code: 'BMD', name: 'Biyomedikal Mühendisliği' },
-    ]
-  },
-  {
-    id: 'KMF',
-    name: 'Kimya - Metalurji Fakültesi',
-    departments: [
-      { code: 'BIO', name: 'Biyomühendislik' },
-      { code: 'GDA', name: 'Gıda Mühendisliği' },
-      { code: 'KIM', name: 'Kimya Mühendisliği' },
-      { code: 'MAT', name: 'Matematik Mühendisliği' },
-      { code: 'MET', name: 'Metalurji ve Malzeme Mühendisliği' },
+      { code: 'KOM', name: 'Kontrol ve Otomasyon Mühendisliği' },
+      { code: 'YZV', name: 'Yapay Zeka ve Veri Mühendisliği' },
     ]
   },
   {
@@ -88,10 +80,14 @@ const FACULTIES: Faculty[] = [
     ]
   },
   {
-    id: 'FEF',
-    name: 'Fen - Edebiyat Fakültesi',
+    id: 'KMF',
+    name: 'Kimya - Metalurji Fakültesi',
     departments: [
-      { code: 'YZV', name: 'Yapay Zeka ve Veri Mühendisliği' },
+      { code: 'BIO', name: 'Biyomühendislik Bölümü' },
+      { code: 'GDA', name: 'Gıda Mühendisliği Bölümü' },
+      { code: 'KIM', name: 'Kimya Mühendisliği Bölümü' },
+      { code: 'MAT', name: 'Matematik Mühendisliği Bölümü' },
+      { code: 'MET', name: 'Metalurji ve Malzeme Mühendisliği Bölümü' },
     ]
   }
 ];
@@ -630,12 +626,20 @@ export default function Home() {
                               {course.name}
                             </h3>
 
-                            {course.instructor && (
-                              <p className="text-xs text-slate-400 mt-2 flex items-center gap-1">
-                                <User className="w-3 h-3 text-slate-500" />
-                                <span className="truncate">{course.instructor}</span>
-                              </p>
-                            )}
+                            <div className="flex flex-wrap items-center gap-2 mt-2 text-xs text-slate-400">
+                              {course.days && (
+                                <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-indigo-300 bg-indigo-950/90 border border-indigo-800/60 px-2 py-0.5 rounded-lg shadow-sm">
+                                  <Clock className="w-3 h-3 text-indigo-400" />
+                                  {course.days}
+                                </span>
+                              )}
+                              {course.instructor && (
+                                <span className="inline-flex items-center gap-1 text-slate-400 text-[11px] truncate max-w-[150px]">
+                                  <User className="w-3 h-3 text-slate-500" />
+                                  {course.instructor}
+                                </span>
+                              )}
+                            </div>
                           </div>
 
                           <div className="flex items-center justify-between mt-3 pt-2.5 border-t border-slate-800/60 text-xs text-slate-400">
