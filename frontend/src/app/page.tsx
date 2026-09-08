@@ -4,7 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { 
   BookOpen, Calendar, CheckCircle, Clock, Trash2, Plus, Filter, 
   Search, AlertCircle, ArrowRight, RefreshCw, Upload, Sparkles, Layers,
-  ChevronRight, Laptop, Building2, User, Award, BookmarkCheck
+  ChevronRight, Laptop, Building2, User, Award, BookmarkCheck,
+  GraduationCap, LayoutGrid, XCircle, Shuffle
 } from 'lucide-react';
 
 interface Course {
@@ -101,11 +102,14 @@ const TIME_SLOTS = [
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState<'selection' | 'schedule'>('selection');
-  const [courseCategoryTab, setCourseCategoryTab] = useState<'mandatory' | 'elective'>('mandatory');
+  const [courseCategoryTab, setCourseCategoryTab] = useState<'mandatory' | 'elective' | 'transfer'>('mandatory');
   const [selectedFaculty, setSelectedFaculty] = useState<string>('EEF');
   const [selectedDept, setSelectedDept] = useState<string>('BLM');
   const [yearFilter, setYearFilter] = useState<number | 'ALL'>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
+  const [viewMode, setViewMode] = useState<'list' | 'curriculum'>('list');
+  const [curriculumYear, setCurriculumYear] = useState<number>(1);
+  const [excludedCourses, setExcludedCourses] = useState<string[]>([]);
   
   const [curriculum, setCurriculum] = useState<Course[]>([]);
   const [selectedCourses, setSelectedCourses] = useState<Course[]>([]);
@@ -355,14 +359,50 @@ export default function Home() {
     setGeneratedSchedules([{ schedule: mockSchedule, score: 95, conflicts: [] }]);
   };
 
+  const handleToggleExclude = (code: string) => {
+    setExcludedCourses(prev =>
+      prev.includes(code) ? prev.filter(c => c !== code) : [...prev, code]
+    );
+  };
+
   // Filter curriculum by search, year, and category (mandatory vs elective)
+  // Transfer tab: exclude already-marked courses from mandatory/elective lists
   const filteredCurriculum = curriculum.filter(course => {
+    if (courseCategoryTab === 'transfer') return true; // show all in transfer tab
     const matchesCategory = courseCategoryTab === 'mandatory' ? !course.is_elective : course.is_elective;
     const matchesSearch = course.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
                           course.name.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesYear = yearFilter === 'ALL' || course.year === yearFilter;
-    return matchesCategory && matchesSearch && matchesYear;
+    const notExcluded = !excludedCourses.includes(course.code);
+    return matchesCategory && matchesSearch && matchesYear && notExcluded;
   });
+
+  // For the curriculum grid view: courses for a specific year, grouped by day
+  const curriculumGridCourses = curriculum.filter(c =>
+    c.year === curriculumYear && !excludedCourses.includes(c.code)
+  );
+
+  // Map courses to day slots for the curriculum grid
+  const getDayCoursesForSlot = (day: string, slot: string) => {
+    const slotStart = slot.split('-')[0].trim();
+    return curriculumGridCourses.filter(course => {
+      if (!course.days) return false;
+      const daysLower = course.days.toLowerCase();
+      const dayMap: Record<string, string[]> = {
+        'Pazartesi': ['pazartesi', 'pzt', 'mon'],
+        'Salı': ['salı', 'sal', 'tue'],
+        'Çarşamba': ['çarşamba', 'car', 'wed'],
+        'Perşembe': ['perşembe', 'per', 'thu'],
+        'Cuma': ['cuma', 'cum', 'fri'],
+        'Cumartesi': ['cumartesi', 'cmt', 'sat'],
+      };
+      const dayMatches = dayMap[day]?.some(d => daysLower.includes(d)) || false;
+      // Try to match the time slot if course has time info
+      return dayMatches;
+    });
+  };
+
+
 
   const mandatoryCount = curriculum.filter(c => !c.is_elective).length;
   const electiveCount = curriculum.filter(c => c.is_elective).length;
@@ -525,48 +565,260 @@ export default function Home() {
                     </div>
                   </div>
 
-                  {/* Category Selector Sub-Tabs (Zorunlu vs Seçmeli) */}
-                  <div className="flex items-center justify-between gap-2 pt-1">
-                    <div className="flex bg-slate-950 p-1 rounded-xl border border-slate-800 gap-1">
+                  {/* Category Selector Sub-Tabs (Zorunlu / Seçmeli / İntibak) + View Mode Toggle */}
+                  <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+                    <div className="flex bg-slate-950 p-1 rounded-xl border border-slate-800 gap-1 flex-wrap">
                       <button
-                        onClick={() => setCourseCategoryTab('mandatory')}
-                        className={`flex items-center space-x-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                        onClick={() => { setCourseCategoryTab('mandatory'); setViewMode('list'); }}
+                        className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                           courseCategoryTab === 'mandatory'
                             ? 'bg-indigo-600 text-white shadow-sm'
                             : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
                         }`}
                       >
                         <BookmarkCheck className="w-3.5 h-3.5" />
-                        <span>Zorunlu Dersler</span>
-                        <span className="px-1.5 py-0.2 text-[10px] bg-slate-800 text-slate-300 rounded-full font-mono">
+                        <span>Zorunlu</span>
+                        <span className="px-1.5 text-[10px] bg-slate-800/80 text-slate-300 rounded-full font-mono">
                           {mandatoryCount}
                         </span>
                       </button>
 
                       <button
-                        onClick={() => setCourseCategoryTab('elective')}
-                        className={`flex items-center space-x-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                        onClick={() => { setCourseCategoryTab('elective'); setViewMode('list'); }}
+                        className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                           courseCategoryTab === 'elective'
                             ? 'bg-amber-600 text-white shadow-sm'
                             : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
                         }`}
                       >
                         <Award className="w-3.5 h-3.5" />
-                        <span>Seçmeli Dersler</span>
-                        <span className="px-1.5 py-0.2 text-[10px] bg-amber-950 text-amber-300 rounded-full font-mono">
+                        <span>Seçmeli</span>
+                        <span className="px-1.5 text-[10px] bg-amber-950 text-amber-300 rounded-full font-mono">
                           {electiveCount}
                         </span>
                       </button>
+
+                      <button
+                        onClick={() => { setCourseCategoryTab('transfer'); setViewMode('list'); }}
+                        className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                          courseCategoryTab === 'transfer'
+                            ? 'bg-rose-700 text-white shadow-sm'
+                            : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+                        }`}
+                      >
+                        <Shuffle className="w-3.5 h-3.5" />
+                        <span>İntibak</span>
+                        {excludedCourses.length > 0 && (
+                          <span className="px-1.5 text-[10px] bg-rose-950 text-rose-300 rounded-full font-mono">
+                            {excludedCourses.length}
+                          </span>
+                        )}
+                      </button>
+
+                      {/* Separator */}
+                      <div className="w-px bg-slate-700 mx-1 self-stretch" />
+
+                      <button
+                        onClick={() => setViewMode(v => v === 'curriculum' ? 'list' : 'curriculum')}
+                        className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                          viewMode === 'curriculum'
+                            ? 'bg-cyan-700 text-white shadow-sm'
+                            : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+                        }`}
+                        title="Müfredata Göre Diz"
+                      >
+                        <LayoutGrid className="w-3.5 h-3.5" />
+                        <span>Müfredat Görünümü</span>
+                      </button>
                     </div>
 
-                    <span className="text-xs font-mono text-indigo-400">{filteredCurriculum.length} Ders Listeleniyor</span>
+                    <span className="text-xs font-mono text-indigo-400">
+                      {viewMode === 'curriculum' ? `${curriculumGridCourses.length} Ders` : `${filteredCurriculum.length} Ders`} Listeleniyor
+                    </span>
                   </div>
+
+                  {/* Curriculum Grid Year Selector (shown only in curriculum view) */}
+                  {viewMode === 'curriculum' && (
+                    <div className="flex items-center gap-2 pt-1">
+                      <GraduationCap className="w-4 h-4 text-cyan-400" />
+                      <span className="text-xs font-semibold text-cyan-300">Müfredat Yılı:</span>
+                      {[1, 2, 3, 4].map(yr => (
+                        <button
+                          key={yr}
+                          onClick={() => setCurriculumYear(yr)}
+                          className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
+                            curriculumYear === yr
+                              ? 'bg-cyan-600 text-white shadow'
+                              : 'bg-slate-800 text-slate-400 hover:bg-cyan-900 hover:text-cyan-300'
+                          }`}
+                        >
+                          {yr}. Sınıf
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 {loading ? (
                   <div className="py-12 text-center text-slate-400 flex flex-col items-center justify-center gap-2">
                     <RefreshCw className="w-6 h-6 animate-spin text-indigo-400" />
                     <p className="text-sm">Dersler yükleniyor...</p>
+                  </div>
+                ) : viewMode === 'curriculum' ? (
+                  /* ── Müfredata Göre Diz: Weekly Grid Layout ── */
+                  <div>
+                    {curriculumGridCourses.length === 0 ? (
+                      <div className="py-10 text-center text-slate-500 border border-dashed border-slate-800 rounded-xl">
+                        {curriculumYear}. sınıf için müfredatta ders bulunamadı.
+                      </div>
+                    ) : (
+                      <div className="overflow-x-auto rounded-xl border border-slate-800">
+                        <table className="w-full text-xs border-collapse">
+                          <thead>
+                            <tr className="bg-slate-950 border-b border-slate-800">
+                              <th className="p-2 border-r border-slate-800 text-center font-bold text-slate-400 w-20">Saat</th>
+                              {DAYS.map(day => (
+                                <th key={day} className="p-2 border-r border-slate-800 text-center font-bold text-cyan-300 min-w-[120px]">
+                                  {day}
+                                </th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {TIME_SLOTS.map(slot => {
+                              const rowHasCourse = DAYS.some(d => getDayCoursesForSlot(d, slot).length > 0);
+                              if (!rowHasCourse) return null;
+                              return (
+                                <tr key={slot} className="border-b border-slate-800/60 hover:bg-slate-800/20">
+                                  <td className="p-1.5 border-r border-slate-800 text-center font-mono text-slate-500 bg-slate-950/40 text-[10px]">
+                                    {slot}
+                                  </td>
+                                  {DAYS.map(day => {
+                                    const dayCourses = getDayCoursesForSlot(day, slot);
+                                    return (
+                                      <td key={day} className="p-1 border-r border-slate-800/60 align-top">
+                                        {dayCourses.map(course => {
+                                          const isAdded = selectedCourses.some(c => c.code === course.code);
+                                          return (
+                                            <div
+                                              key={course.code}
+                                              onClick={() => isAdded ? handleRemoveCourse(course.code) : handleAddCourse(course)}
+                                              className={`p-1.5 mb-1 rounded-lg border cursor-pointer transition-all ${
+                                                isAdded
+                                                  ? 'bg-cyan-950/60 border-cyan-600 text-cyan-200'
+                                                  : 'bg-slate-900 border-slate-700 text-slate-300 hover:border-cyan-600/50 hover:bg-cyan-950/20'
+                                              }`}
+                                            >
+                                              <div className="font-mono font-bold text-[10px]">{course.code}</div>
+                                              <div className="text-[9px] opacity-80 truncate">{course.name}</div>
+                                              {course.instructor && (
+                                                <div className="text-[9px] opacity-50 truncate">{course.instructor}</div>
+                                              )}
+                                            </div>
+                                          );
+                                        })}
+                                      </td>
+                                    );
+                                  })}
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+
+                        {/* Unscheduled courses (no days info) displayed below */}
+                        {(() => {
+                          const unscheduled = curriculumGridCourses.filter(c => !c.days);
+                          if (unscheduled.length === 0) return null;
+                          return (
+                            <div className="p-3 border-t border-slate-800">
+                              <p className="text-[10px] text-slate-500 mb-2 uppercase font-semibold tracking-wider">Program Saati Belirtilmemiş Dersler</p>
+                              <div className="flex flex-wrap gap-2">
+                                {unscheduled.map(course => {
+                                  const isAdded = selectedCourses.some(c => c.code === course.code);
+                                  return (
+                                    <div
+                                      key={course.code}
+                                      onClick={() => isAdded ? handleRemoveCourse(course.code) : handleAddCourse(course)}
+                                      className={`p-2 rounded-lg border cursor-pointer transition-all text-[10px] ${
+                                        isAdded
+                                          ? 'bg-cyan-950/60 border-cyan-600 text-cyan-200'
+                                          : 'bg-slate-900 border-slate-700 text-slate-300 hover:border-cyan-600/50'
+                                      }`}
+                                    >
+                                      <span className="font-mono font-bold">{course.code}</span>
+                                      <span className="ml-1 opacity-70">{course.name}</span>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          );
+                        })()}
+                      </div>
+                    )}
+                  </div>
+                ) : courseCategoryTab === 'transfer' ? (
+                  /* ── İntibak Dersleri Tab ── */
+                  <div className="space-y-3">
+                    <div className="bg-rose-950/20 border border-rose-800/30 rounded-xl p-3 text-xs text-rose-300 flex gap-2">
+                      <Shuffle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                      <span>
+                        <strong>Yatay Geçiş – İntibak Dersleri:</strong> Önceki okulunuzda aldığınız ve muaf sayılacak dersleri işaretleyin. 
+                        İşaretlenen dersler Zorunlu/Seçmeli listelerinden otomatik olarak çıkarılır.
+                      </span>
+                    </div>
+                    {curriculum.length === 0 ? (
+                      <div className="py-10 text-center text-slate-500 border border-dashed border-slate-800 rounded-xl">
+                        Bu bölüm için müfredat yüklenmedi.
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                        {curriculum.map(course => {
+                          const isExcluded = excludedCourses.includes(course.code);
+                          return (
+                            <div
+                              key={course.code}
+                              onClick={() => handleToggleExclude(course.code)}
+                              className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition-all ${
+                                isExcluded
+                                  ? 'bg-rose-950/40 border-rose-700/60 opacity-80'
+                                  : 'bg-slate-950/60 border-slate-800 hover:border-rose-700/40 hover:bg-rose-950/10'
+                              }`}
+                            >
+                              <div className={`mt-0.5 w-4 h-4 flex-shrink-0 rounded border-2 flex items-center justify-center transition-all ${
+                                isExcluded ? 'bg-rose-600 border-rose-500' : 'bg-transparent border-slate-600'
+                              }`}>
+                                {isExcluded && <XCircle className="w-3 h-3 text-white" />}
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-center gap-2">
+                                  <span className={`font-mono font-bold text-xs ${isExcluded ? 'line-through text-slate-500' : course.is_elective ? 'text-amber-400' : 'text-indigo-400'}`}>
+                                    {course.code}
+                                  </span>
+                                  {course.year && (
+                                    <span className="text-[10px] text-slate-500 bg-slate-800 px-1.5 rounded">{course.year}. Sınıf</span>
+                                  )}
+                                  {course.is_elective && (
+                                    <span className="text-[9px] text-amber-400 bg-amber-950/60 px-1.5 rounded border border-amber-800/40">SEÇMELİ</span>
+                                  )}
+                                </div>
+                                <p className={`text-xs mt-0.5 ${isExcluded ? 'line-through text-slate-600' : 'text-slate-300'}`}>{course.name}</p>
+                                <div className="text-[10px] text-slate-500 mt-1">{course.credits} Kredi • {course.ects} AKTS</div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                    {excludedCourses.length > 0 && (
+                      <button
+                        onClick={() => setExcludedCourses([])}
+                        className="w-full py-2 text-xs text-rose-400 hover:text-rose-300 border border-rose-800/40 hover:border-rose-600/60 rounded-xl transition-all bg-rose-950/20 hover:bg-rose-950/40"
+                      >
+                        Tüm intibak seçimlerini temizle ({excludedCourses.length} ders)
+                      </button>
+                    )}
                   </div>
                 ) : filteredCurriculum.length === 0 ? (
                   <div className="py-12 text-center text-slate-500 border border-dashed border-slate-800 rounded-xl">
