@@ -74,7 +74,7 @@ def get_curriculum(dept_code: str):
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
     try:
-        cursor.execute('SELECT * FROM courses WHERE department_code = ?', (dept_code,))
+        cursor.execute('SELECT * FROM courses WHERE department_code = ? OR department_code = "ITB"', (dept_code,))
         rows = cursor.fetchall()
 
         result = []
