@@ -2,6 +2,7 @@
 import os
 import re
 import sqlite3
+import json
 import pdfplumber
 import pandas as pd
 from database import DB_PATH, init_db
@@ -12,8 +13,7 @@ DESKTOP_DIR = r"C:\Users\ati_c\OneDrive\Desktop\ders seçim"
 if not os.path.exists(DESKTOP_DIR):
     DESKTOP_DIR = r"C:\Users\ati_c\Desktop\ders seçim"
 
-
-
+CACHE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', 'parsed_courses_cache.json')
 
 DEPT_MAPPING = {
     "biyomudhendislik": ("BIO", "Biyomühendislik"),
@@ -37,116 +37,15 @@ DEPT_MAPPING = {
     "yapay zeka": ("YZV", "Yapay Zeka Mühendisliği"),
 }
 
-
-DAYS_MAP = {
-    'PAZARTESİ': 'Pazartesi',
-    'SALI': 'Salı',
-    'ÇARŞAMBA': 'Çarşamba',
-    'PERŞEMBE': 'Perşembe',
-    'CUMA': 'Cuma',
-    'CUMARTESİ': 'Cumartesi'
+PAGE_DAYS = {0: 'Pazartesi', 1: 'Salı', 2: 'Çarşamba', 3: 'Perşembe', 4: 'Cuma', 5: 'Cumartesi'}
+DAYS_LIST = ['PAZARTESİ', 'SALI', 'ÇARŞAMBA', 'PERŞEMBE', 'CUMA', 'CUMARTESİ']
+DAY_TITLE_MAP = {
+    'PAZARTESİ': 'Pazartesi', 'SALI': 'Salı', 'ÇARŞAMBA': 'Çarşamba',
+    'PERŞEMBE': 'Perşembe', 'CUMA': 'Cuma', 'CUMARTESİ': 'Cumartesi'
 }
 
-CLEAN_COURSE_DB = {
-    # --- Ortak Servis Dersleri ---
-    'ATA1031': {'name': 'Atatürk İlkeleri ve İnkılap Tarihi 1', 'year': 4, 'is_elective': 0, 'credits': 0, 'ects': 2},
-    'ATA1032': {'name': 'Atatürk İlkeleri ve İnkılâp Tarihi 2', 'year': 4, 'is_elective': 0, 'credits': 0, 'ects': 2},
-    'TDB1031': {'name': 'Türkçe 1', 'year': 3, 'is_elective': 0, 'credits': 0, 'ects': 2},
-    'TDB1032': {'name': 'Türkçe 2', 'year': 4, 'is_elective': 0, 'credits': 0, 'ects': 2},
-    'FIZ1001': {'name': 'Fizik 1', 'year': 1, 'is_elective': 0, 'credits': 4, 'ects': 6},
-    'FIZ1002': {'name': 'Fizik 2', 'year': 1, 'is_elective': 0, 'credits': 4, 'ects': 6},
-    'FIZ1951': {'name': 'Mühendisler için Yarıiletken Fiziği', 'year': 1, 'is_elective': 0, 'credits': 3, 'ects': 6},
-    'MAT1071': {'name': 'Matematik 1', 'year': 1, 'is_elective': 0, 'credits': 4, 'ects': 6},
-    'MAT1072': {'name': 'Matematik 2', 'year': 1, 'is_elective': 0, 'credits': 4, 'ects': 6},
-    'MAT1320': {'name': 'Lineer Cebir', 'year': 1, 'is_elective': 0, 'credits': 2, 'ects': 4},
-    'MAT2411': {'name': 'Diferansiyel Denklemler', 'year': 2, 'is_elective': 0, 'credits': 3, 'ects': 5},
-    'MDB1031': {'name': 'İleri İngilizce 1', 'year': 1, 'is_elective': 0, 'credits': 3, 'ects': 3},
-    'MDB1032': {'name': 'İleri İngilizce 2', 'year': 1, 'is_elective': 0, 'credits': 3, 'ects': 3},
-
-    # --- Bilgisayar Mühendisliği (BLM Müfredatı) ---
-    'BLM1011': {'name': 'Bilgisayar Bilimlerine Giriş', 'year': 1, 'is_elective': 0, 'credits': 4, 'ects': 6},
-    'BLM1991': {'name': 'İş Sağlığı ve Güvenliği 1', 'year': 1, 'is_elective': 0, 'credits': 2, 'ects': 2},
-    'BLM1031': {'name': 'Yapısal Programlama', 'year': 1, 'is_elective': 0, 'credits': 4, 'ects': 6},
-    'BLM1022': {'name': 'Sayısal Analiz', 'year': 1, 'is_elective': 0, 'credits': 3, 'ects': 6},
-    'BLM1033': {'name': 'Devre Teorisi ve Elektronik Devreler', 'year': 1, 'is_elective': 0, 'credits': 4, 'ects': 6},
-    'BLM2012': {'name': 'Nesneye Yönelik Programlama', 'year': 2, 'is_elective': 0, 'credits': 4, 'ects': 6},
-    'BLM2611': {'name': 'Lojik Devreler', 'year': 2, 'is_elective': 0, 'credits': 4, 'ects': 6},
-    'BLM2642': {'name': 'Bilgisayar Mühendisleri için Diferansiyel Denklemler', 'year': 2, 'is_elective': 0, 'credits': 3, 'ects': 6},
-    'BLM2011': {'name': 'İstatistik ve Olasılık Hesapları', 'year': 2, 'is_elective': 0, 'credits': 3, 'ects': 6},
-    'BLM2521': {'name': 'Ayrık Matematik', 'year': 2, 'is_elective': 0, 'credits': 3, 'ects': 6},
-    'BLM2512': {'name': 'Veri Yapıları ve Algoritmalar', 'year': 2, 'is_elective': 0, 'credits': 4, 'ects': 6},
-    'BLM2022': {'name': 'Bilgisayar Organizasyonu', 'year': 2, 'is_elective': 0, 'credits': 3, 'ects': 4},
-    'BLM2041': {'name': 'Bilgisayar Mühendisleri için Sinyaller ve Sistemler', 'year': 2, 'is_elective': 0, 'credits': 3, 'ects': 6},
-    'BLM2042': {'name': 'Sistem Analizi ve Tasarımı', 'year': 2, 'is_elective': 0, 'credits': 2, 'ects': 3},
-    'BLM2502': {'name': 'Hesaplama Kuramı', 'year': 2, 'is_elective': 0, 'credits': 3, 'ects': 6},
-    'BLM1992': {'name': 'İş Sağlığı ve Güvenliği 2', 'year': 2, 'is_elective': 0, 'credits': 2, 'ects': 2},
-    'BLM3011': {'name': 'İşletim Sistemleri', 'year': 3, 'is_elective': 0, 'credits': 3, 'ects': 5},
-    'BLM3041': {'name': 'Veritabanı Yönetimi', 'year': 3, 'is_elective': 0, 'credits': 4, 'ects': 6},
-    'BLM3021': {'name': 'Algoritma Analizi', 'year': 3, 'is_elective': 0, 'credits': 3, 'ects': 5},
-    'BLM3061': {'name': 'Mikroişlemci Sistemleri ve Assembly Dili', 'year': 3, 'is_elective': 0, 'credits': 4, 'ects': 5},
-    'BLM3042': {'name': 'Seminer ve Meslek Etiği', 'year': 3, 'is_elective': 0, 'credits': 3, 'ects': 3},
-    'BLM3002': {'name': 'Genel Staj', 'year': 3, 'is_elective': 0, 'credits': 0, 'ects': 3},
-    'BLM3051': {'name': 'Veri İletişimi ve Bilgisayar Ağları', 'year': 3, 'is_elective': 0, 'credits': 3, 'ects': 4},
-    'BLM3010': {'name': 'Bilgisayar Projesi', 'year': 3, 'is_elective': 0, 'credits': 3, 'ects': 4},
-    'BLM3722': {'name': 'Yazılım Mühendisliği', 'year': 3, 'is_elective': 0, 'credits': 3, 'ects': 4},
-    'BLM3510': {'name': 'Yapay Zeka', 'year': 3, 'is_elective': 0, 'credits': 3, 'ects': 4},
-    'BLM4002': {'name': 'Mesleki Staj', 'year': 3, 'is_elective': 0, 'credits': 0, 'ects': 3},
-    'BLM9000': {'name': 'Bitirme Çalışması', 'year': 4, 'is_elective': 0, 'credits': 4, 'ects': 8},
-
-}
-
-# Müfredattaki Genel / Sosyal / Mesleki Seçmeli Ders Şablonları (Ders saati/programı olmayan)
-BLM_CURRICULUM_ELECTIVE_PLACEHOLDERS = [
-    # 2. Yıl Güz
-    ('BLM', 'USS-2G', 'Üniversite Sosyal Seçmeli -1', 2, 1, 3, 3, 'Sosyal Seçmeli Havuzu', 0, ''),
-    # 3. Yıl Bahar
-    ('BLM', 'MES1-3B', 'Mesleki Seçmeli 1-1', 3, 1, 3, 8, 'Bölüm Seçmeli Havuzu', 0, ''),
-    ('BLM', 'SOS1-3B', 'Sosyal Seçmeli 1-1', 3, 1, 3, 4, 'Sosyal Seçmeli Havuzu', 0, ''),
-    # 4. Yıl Güz
-    ('BLM', 'MES2-4G', 'Mesleki Seçmeli 2-1', 4, 1, 1, 3, 'Bölüm Seçmeli Havuzu', 0, ''),
-    ('BLM', 'UMS-4G', 'Üniversite Mesleki Seçmeli', 4, 1, 3, 5, 'Üniversite Seçmeli Havuzu', 0, ''),
-    ('BLM', 'MES1-4G1', 'Mesleki Seçmeli 1-2', 4, 1, 3, 8, 'Bölüm Seçmeli Havuzu', 0, ''),
-    ('BLM', 'MES1-4G2', 'Mesleki Seçmeli 1-3', 4, 1, 3, 8, 'Bölüm Seçmeli Havuzu', 0, ''),
-    ('BLM', 'USS-4G', 'Üniversite Sosyal Seçmeli -2', 4, 1, 3, 3, 'Sosyal Seçmeli Havuzu', 0, ''),
-    # 4. Yıl Bahar
-    ('BLM', 'MES1-4B1', 'Mesleki Seçmeli 1-4', 4, 1, 3, 8, 'Bölüm Seçmeli Havuzu', 0, ''),
-    ('BLM', 'MES1-4B2', 'Mesleki Seçmeli 1-5', 4, 1, 3, 8, 'Bölüm Seçmeli Havuzu', 0, ''),
-    ('BLM', 'USS-4B', 'Üniversite Sosyal Seçmeli -3', 4, 1, 3, 3, 'Sosyal Seçmeli Havuzu', 0, ''),
-]
-
-def clean_course_details(code, raw_name="", year_column=1):
-    clean_code = code.upper().replace(" ", "")
-    year = year_column if 1 <= year_column <= 4 else 1
-
-    clean_name = raw_name
-    garbage_terms = [
-        r'\bONLINE\b', r'\bON LINE\b', r'\bUZAKTAN\b', r'\bGr\.\s?\d+\b', r'\bGroup\s?\d+\b',
-        r'\b\d\.\s?Sınıf\b', r'\bDZ-\d+\b', r'\bProf\.Dr\.[^\s]*', r'\bDoç\.Dr\.[^\s]*',
-        r'\bDr\.Öğr\.Üyesi[^\s]*', r'\bArş\.Gör\.[^\s]*', r'\bKMB-\d+\b', r'\b\(Yıldız\)\b',
-        r'\b\d{2}\.\d{2}-\d{2}\.\d{2}\b', r'RAMI2026', r'ELEKTRİK ELEKTRONİK FAKÜLTESİ'
-    ]
-    for p in garbage_terms:
-        clean_name = re.sub(p, '', clean_name, flags=re.IGNORECASE)
-    
-    clean_name = re.sub(r'\s+', ' ', clean_name).strip()
-    
-    credits, ects = 3, 5
-    if clean_code in CLEAN_COURSE_DB:
-        clean_name = CLEAN_COURSE_DB[clean_code]['name']
-        year = CLEAN_COURSE_DB[clean_code]['year']
-        credits = CLEAN_COURSE_DB[clean_code]['credits']
-        ects = CLEAN_COURSE_DB[clean_code]['ects']
-
-    if len(clean_name) < 3 or clean_name.lower() in ['online', 'ders', 'güz', 'bahar', 'saat']:
-        clean_name = f"{clean_code} Dersi"
-
-    is_elective = 0
-    upper_check = (raw_name + " " + clean_name + " " + clean_code).upper()
-    elective_keys = ['SEÇ', 'ELECTIVE', 'MES1', 'MES2', 'MES3', 'MES4', 'USK', 'ITB', 'GSB', 'SDB', 'GRUP', 'HAVUZ', 'USS', 'UMS', 'SOS']
-    if any(k in upper_check for k in elective_keys) or (year >= 3 and clean_code.startswith(('BLM37', 'BLM4', 'MAK4', 'MAK32', 'MAK33', 'MAK34', 'END4', 'END37', 'MSE4', 'MSE35', 'BME4', 'EHM4', 'ELM4', 'KMM4'))):
-        is_elective = 1
-
-    return clean_name, year, is_elective, credits, ects
+CODE_RE = re.compile(r"([A-ZÇĞİÖŞÜ]{2,6}\d{3,5}(?:\.\d{2})?)")
+TIME_RE = re.compile(r"(\d{1,2})[\.:](\d{2})\s*-\s*(\d{1,2})[\.:](\d{2})")
 
 def get_dept_code(filename):
     fname_lower = filename.lower()
@@ -155,196 +54,210 @@ def get_dept_code(filename):
             return code, name
     return "GENEL", "Genel Mühendislik"
 
-def process_pdf_schedule(file_path, dept_code):
+def process_pdf_schedule_universal(file_path, default_dept_code):
     courses_dict = {}
-    try:
-        with pdfplumber.open(file_path) as pdf:
-            current_day = 'Pazartesi'
-            for page in pdf.pages:
-                tables = page.extract_tables()
-                for table in tables:
+
+    with pdfplumber.open(file_path) as pdf:
+        for page_idx, page in enumerate(pdf.pages):
+            tables = page.extract_tables()
+            page_day = PAGE_DAYS.get(page_idx, 'Pazartesi')
+
+            for table in tables:
+                if not table: continue
+
+                header_row = [str(c or '').strip() for c in table[0]]
+                hour_cols = {}
+
+                for c_idx, cell_txt in enumerate(header_row):
+                    tm = TIME_RE.search(cell_txt)
+                    if tm:
+                        s_t = f"{int(tm.group(1)):02d}.{tm.group(2)}"
+                        e_t = f"{int(tm.group(3)):02d}.{tm.group(4)}"
+                        hour_cols[c_idx] = (s_t, e_t)
+
+                # Layout 1: Horizontal Matrix (Hours in columns e.g. Makine Müh)
+                if len(hour_cols) >= 3:
+                    current_year = 1
+                    for row in table[1:]:
+                        if not row: continue
+                        yr_match = re.search(r'\b([1-4])\b', str(row[1] or ''))
+                        if yr_match:
+                            current_year = int(yr_match.group(1))
+
+                        for c_idx, (start_t, end_t) in hour_cols.items():
+                            if c_idx >= len(row): continue
+                            cell_val = str(row[c_idx] or '').strip()
+                            if not cell_val: continue
+
+                            lines = [l.strip() for l in cell_val.split('\n') if l.strip()]
+                            for line in lines:
+                                m = CODE_RE.search(line)
+                                if m:
+                                    raw_code = m.group(1)
+                                    base_code = raw_code.split('.')[0]
+                                    sec_no = f"Gr{raw_code.split('.')[1]}" if '.' in raw_code else 'Gr1'
+
+                                    name = lines[0] if len(lines) > 0 else base_code
+                                    inst = lines[1] if len(lines) > 1 else ''
+                                    room = lines[2] if len(lines) > 2 else ('Online' if 'ONLINE' in cell_val.upper() else 'Derslik')
+
+                                    add_course_slot(courses_dict, default_dept_code, base_code, name, current_year, sec_no, inst, page_day, start_t, end_t, room)
+
+                # Layout 2: Vertical Column Layout (Hours in rows e.g. Metalurji, Kimya, Mekatronik)
+                else:
+                    col_year_map = {}
+                    for r_idx in range(min(5, len(table))):
+                        r_cells = table[r_idx]
+                        if not r_cells: continue
+                        for c_idx, cell in enumerate(r_cells):
+                            if cell:
+                                txt = str(cell).replace('\n', ' ')
+                                if '1. Sınıf' in txt or '1.Sınıf' in txt or 'First Grade' in txt: col_year_map[c_idx] = 1
+                                elif '2. Sınıf' in txt or '2.Sınıf' in txt or 'Second Grade' in txt: col_year_map[c_idx] = 2
+                                elif '3. Sınıf' in txt or '3.Sınıf' in txt or 'Third Grade' in txt: col_year_map[c_idx] = 3
+                                elif '4. Sınıf' in txt or '4.Sınıf' in txt or 'Fourth Grade' in txt: col_year_map[c_idx] = 4
+
+                    last_yr = 1
+                    for c_idx in range(max(len(r) for r in table if r)):
+                        if c_idx in col_year_map: last_yr = col_year_map[c_idx]
+                        else: col_year_map[c_idx] = last_yr
+
+                    current_day = page_day
+
                     for row in table:
-                        if not row or len(row) < 3:
-                            continue
-                        
-                        first_col = str(row[0] or '').replace(' ', '').upper()
-                        for d_key, d_val in DAYS_MAP.items():
-                            if d_key.replace('\n','').replace(' ','') in first_col:
-                                current_day = d_val
+                        if not row: continue
+                        row_str = " ".join([str(c or '') for c in row])
+
+                        for d in DAYS_LIST:
+                            if d in row_str.upper():
+                                current_day = DAY_TITLE_MAP[d]
                                 break
-                        
-                        for year_col_idx, cell in enumerate(row[2:], start=1):
-                            if not cell or year_col_idx > 4:
-                                continue
-                            cell_text = str(cell).replace('\n', ' ').strip()
-                            if not cell_text:
-                                continue
-                            
-                            code_match = re.search(r'([A-Z]{3,4}\s?\d{4})', cell_text)
-                            if code_match:
-                                code = code_match.group(1).replace(' ', '')
-                                raw_name = cell_text.replace(code_match.group(1), '').strip()
+
+                        time_match = None
+                        for cell in row:
+                            if cell:
+                                tm = TIME_RE.search(str(cell))
+                                if tm:
+                                    time_match = (f"{int(tm.group(1)):02d}.{tm.group(2)}", f"{int(tm.group(3)):02d}.{tm.group(4)}")
+                                    break
+                        if not time_match: continue
+
+                        for c_idx, cell in enumerate(row):
+                            if not cell: continue
+                            cell_txt = str(cell).strip()
+                            if not cell_txt: continue
+
+                            codes = CODE_RE.findall(cell_txt)
+                            for raw_code in codes:
+                                if raw_code in ['SAAT', 'GÜN', 'GÜNLER', 'SINIF', 'YILI', 'DERS', 'PROGRAMI', 'FAKÜLTESİ']: continue
+                                base_code = raw_code.split('.')[0]
+                                sec_no = f"Gr{raw_code.split('.')[1]}" if '.' in raw_code else 'Gr1'
+
+                                lines = [l.strip() for l in cell_txt.split('\n') if l.strip()]
+                                clean_name = lines[0] if lines else base_code
                                 
-                                clean_name, year, is_elective, credits, ects = clean_course_details(code, raw_name, year_col_idx)
-                                is_online = 1 if ('ONLINE' in cell_text.upper() or 'UZAKTAN' in cell_text.upper()) else 0
-                                
-                                if code not in courses_dict:
-                                    courses_dict[code] = {
-                                        'dept': dept_code,
-                                        'code': code,
-                                        'name': clean_name,
-                                        'year': year,
-                                        'is_elective': is_elective,
-                                        'credits': credits,
-                                        'ects': ects,
-                                        'is_online': is_online,
-                                        'days': set([current_day])
-                                    }
-                                else:
-                                    courses_dict[code]['days'].add(current_day)
-    except Exception as e:
-        print(f"Error parsing PDF schedule {file_path}: {e}")
-    
+                                gr_matches = re.findall(r'(Gr:?\s*\d+|Gr\d+)', cell_txt, re.IGNORECASE)
+                                if gr_matches and sec_no == 'Gr1':
+                                    sec_no = gr_matches[0].replace(' ', '').replace(':', '')
+
+                                room_match = re.search(r'(KMB\s?\d+|D\d{3}|DB\d{2}|D007|Online|ON LINE)', cell_txt, re.IGNORECASE)
+                                classroom = room_match.group(0) if room_match else ('Online' if 'ONLINE' in cell_txt.upper() else 'Derslik')
+
+                                add_course_slot(courses_dict, default_dept_code, base_code, clean_name, col_year_map.get(c_idx, 1), sec_no, '', current_day, time_match[0], time_match[1], classroom)
+
     return list(courses_dict.values())
 
-def process_excel_schedule(file_path, dept_code):
-    courses_dict = {}
-    try:
-        df = pd.read_excel(file_path)
-        current_day = 'Pazartesi'
-        for _, row in df.iterrows():
-            row_str = " ".join([str(val) for val in row.values if pd.notna(val)])
-            
-            for d_key, d_val in DAYS_MAP.items():
-                if d_key.replace('\n','') in row_str.upper():
-                    current_day = d_val
-                    break
-            
-            code_matches = re.findall(r'([A-Z]{3,4}\s?\d{4})\s+([A-ZÇĞİÖŞÜa-zçğiöşü0-9\s\.\,\-\(\)]+)', row_str)
-            for code, name_raw in code_matches:
-                clean_code = code.replace(" ", "")
-                digit_match = re.search(r'\d', clean_code)
-                yr = int(digit_match.group(0)) if digit_match else 1
-                if yr > 4 or yr < 1: yr = 1
-                
-                clean_name, year, is_elective, credits, ects = clean_course_details(clean_code, name_raw, yr)
-                
-                if clean_code not in courses_dict:
-                    courses_dict[clean_code] = {
-                        'dept': dept_code,
-                        'code': clean_code,
-                        'name': clean_name,
-                        'year': year,
-                        'is_elective': is_elective,
-                        'credits': credits,
-                        'ects': ects,
-                        'is_online': 0,
-                        'days': set([current_day])
-                    }
-                else:
-                    courses_dict[clean_code]['days'].add(current_day)
-    except Exception as e:
-        print(f"Error reading excel {file_path}: {e}")
-    return list(courses_dict.values())
+def add_course_slot(courses_dict, dept_code, code, name, year, sec_id, instructor, day, start_t, end_t, classroom):
+    if code not in courses_dict:
+        courses_dict[code] = {
+            'dept': dept_code,
+            'code': code,
+            'name': name,
+            'year': year,
+            'is_elective': 1 if (year >= 3 or code.startswith(('MSE4', 'MSE3', 'MAK4', 'END4', 'KMM4', 'BME4', 'ELM4'))) else 0,
+            'credits': 3,
+            'ects': 5,
+            'is_online': 1 if classroom.lower() == 'online' else 0,
+            'days': set([day]),
+            'sections': {}
+        }
+    else:
+        courses_dict[code]['days'].add(day)
+
+    sec_map = courses_dict[code]['sections']
+    if sec_id not in sec_map:
+        sec_map[sec_id] = {
+            'section_id': sec_id,
+            'instructor': instructor or 'Bölüm Öğr. El.',
+            'time_slots': []
+        }
+
+    sec_map[sec_id]['time_slots'].append({
+        'day': day,
+        'start_time': start_t,
+        'end_time': end_t,
+        'classroom': classroom
+    })
 
 def parse_and_seed_comprehensive():
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
 
-    cursor.execute('DROP TABLE IF EXISTS courses')
-    cursor.execute('''
-        CREATE TABLE courses (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            department_code TEXT NOT NULL,
-            code TEXT NOT NULL,
-            name TEXT NOT NULL,
-            year INTEGER NOT NULL,
-            is_elective INTEGER DEFAULT 0,
-            credits INTEGER DEFAULT 3,
-            ects INTEGER DEFAULT 5,
-            instructor TEXT,
-            is_online INTEGER DEFAULT 0,
-            days TEXT DEFAULT '',
-            UNIQUE(department_code, code)
-        )
-    ''')
+    files = [f for f in os.listdir(DESKTOP_DIR) if f.endswith('.pdf')]
+    print(f"Processing {len(files)} PDF files in Desktop directory...")
 
-
-    total_added = 0
-    files = os.listdir(DESKTOP_DIR) if os.path.exists(DESKTOP_DIR) else []
-    
-    print(f"Desktop folder: processing {len(files)} files...")
+    cache_data = []
 
     for fname in files:
-        file_path = os.path.join(DESKTOP_DIR, fname)
+        fpath = os.path.join(DESKTOP_DIR, fname)
         dept_code, dept_name = get_dept_code(fname)
-        
-        cursor.execute("INSERT OR IGNORE INTO departments (name, code) VALUES (?, ?)", (dept_name, dept_code))
-        
-        courses = []
-        if fname.endswith(".pdf"):
-            courses = process_pdf_schedule(file_path, dept_code)
-        elif fname.endswith(".xlsx") or fname.endswith(".xls"):
-            courses = process_excel_schedule(file_path, dept_code)
-            
+
+        courses = process_pdf_schedule_universal(fpath, dept_code)
+
         for c in courses:
-            days_str = ", ".join(sorted(list(c['days'])))
             cursor.execute(
-                """INSERT OR REPLACE INTO courses 
-                   (department_code, code, name, year, is_elective, credits, ects, instructor, is_online, days)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-                (c['dept'], c['code'], c['name'], c['year'], c['is_elective'], c['credits'], c['ects'], 'Bölüm Öğretim Üyeleri', c['is_online'], days_str)
+                '''INSERT OR REPLACE INTO courses 
+                   (department_code, code, name, year, is_elective, credits, ects, instructor, is_online)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)''',
+                (c['dept'], c['code'], c['name'], c['year'], c['is_elective'], c['credits'], c['ects'], '', c['is_online'])
             )
 
-            total_added += 1
+            sec_list_json = []
+            for sec_id, sec_data in c['sections'].items():
+                cursor.execute(
+                    'INSERT INTO sections (course_code, section_id, instructor) VALUES (?, ?, ?)',
+                    (c['code'], sec_id, sec_data['instructor'])
+                )
+                sec_db_id = cursor.lastrowid
 
-
-    # Update clean course details ONLY for courses actually parsed from PDF/Excel schedules
-    for c_code, c_info in CLEAN_COURSE_DB.items():
-        cursor.execute(
-            """UPDATE courses SET
-                 name = ?,
-                 year = ?,
-                 is_elective = ?,
-                 credits = ?,
-                 ects = ?
-               WHERE department_code = 'BLM' AND code = ?""",
-            (c_info['name'], c_info['year'], c_info['is_elective'], c_info['credits'], c_info['ects'], c_code)
-        )
-
-
-
-    # Insert curriculum elective placeholders (No schedule/day required)
-    for dept_code, c_code, c_name, yr, is_e, cred, ects, inst, is_on, days in BLM_CURRICULUM_ELECTIVE_PLACEHOLDERS:
-        cursor.execute(
-            """INSERT OR REPLACE INTO courses (department_code, code, name, year, is_elective, credits, ects, instructor, is_online, days)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-            (dept_code, c_code, c_name, yr, is_e, cred, ects, inst, is_on, days)
-        )
-
-
-
-    # General electives for other departments
-    generic_courses = [
-        ('MET', 'ITB1000', 'Sosyal Seçmeli Dersi', 2, 1, 3, 3, 'Sosyal Seçmeli Havuzu', 0, ''),
-        ('MET_ENG', 'ITB1000', 'Social Elective Course', 2, 1, 3, 3, 'Sosyal Seçmeli Havuzu', 0, ''),
-        ('KIM', 'ITB1000', 'Sosyal Seçmeli Dersi', 2, 1, 3, 3, 'Sosyal Seçmeli Havuzu', 0, ''),
-        ('KIM_ENG', 'ITB1000', 'Social Elective Course', 2, 1, 3, 3, 'Sosyal Seçmeli Havuzu', 0, ''),
-    ]
-    for d, c_code, c_name, yr, is_e, cred, ects, inst, is_on, days in generic_courses:
-        cursor.execute(
-            """INSERT OR REPLACE INTO courses (department_code, code, name, year, is_elective, credits, ects, instructor, is_online, days)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-            (d, c_code, c_name, yr, is_e, cred, ects, inst, is_on, days)
-        )
-
-    # Clean garbage header rows
-    cursor.execute("DELETE FROM courses WHERE code LIKE '%2026%' OR name LIKE '%HAFTALIK%'")
+                for ts in sec_data['time_slots']:
+                    cursor.execute(
+                        'INSERT INTO time_slots (section_db_id, day, start_time, end_time, classroom) VALUES (?, ?, ?, ?, ?)',
+                        (sec_db_id, ts['day'], ts['start_time'], ts['end_time'], ts['classroom'])
+                    )
 
     conn.commit()
     conn.close()
 
-    print(f"Tüm müfredat dersleri ve seçmeli şablonları başarıyla yüklendi! Toplam {total_added} ders.")
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        conn.row_factory = sqlite3.Row
+        courses = [dict(r) for r in conn.execute('SELECT * FROM courses').fetchall()]
+        sections = [dict(r) for r in conn.execute('SELECT * FROM sections').fetchall()]
+        time_slots = [dict(r) for r in conn.execute('SELECT * FROM time_slots').fetchall()]
+        conn.close()
+
+        cache_data = {'courses': courses, 'sections': sections, 'time_slots': time_slots}
+        cache_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
+        os.makedirs(cache_dir, exist_ok=True)
+        cache_path = os.path.join(cache_dir, 'parsed_courses_cache.json')
+        with open(cache_path, 'w', encoding='utf-8') as f:
+            json.dump(cache_data, f, ensure_ascii=False, indent=2)
+        print(f"Parsed courses cached to {cache_path}")
+    except Exception as e:
+        print(f"JSON cache saving warning: {e}")
+
+    print("Tüm ders programları başarıyla işlendi!")
 
 if __name__ == '__main__':
     parse_and_seed_comprehensive()

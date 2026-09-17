@@ -27,8 +27,8 @@ class DepartmentSchedule(BaseModel):
     courses: List[Course] = []
 
 class OptimizationOptions(BaseModel):
-    target_free_days: bool = False
-    minimize_gaps: bool = False
+    target_free_days: bool = True
+    minimize_gaps: bool = True
     avoid_early_mornings: bool = False
     preferred_instructors: Optional[Dict[str, str]] = None
     locked_sections: Optional[Dict[str, str]] = None

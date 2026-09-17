@@ -22,6 +22,35 @@ def init_db():
         except Exception:
             pass
 
+    # Fast load from cached JSON data if database tables are empty
+    cursor.execute('SELECT COUNT(*) FROM courses')
+    c_count = cursor.fetchone()[0]
+    
+    cache_json_path = os.path.join(BASE_DIR, 'data', 'parsed_courses_cache.json')
+    if c_count == 0 and os.path.exists(cache_json_path):
+        try:
+            import json
+            with open(cache_json_path, 'r', encoding='utf-8') as f:
+                cached = json.load(f)
+                
+            cursor.executemany(
+                '''INSERT OR REPLACE INTO courses 
+                   (id, department_code, code, name, year, is_elective, credits, ects, instructor, is_online, days, semester)
+                   VALUES (:id, :department_code, :code, :name, :year, :is_elective, :credits, :ects, :instructor, :is_online, :days, :semester)''',
+                cached.get('courses', [])
+            )
+            cursor.executemany(
+                'INSERT OR REPLACE INTO sections (id, course_code, section_id, instructor) VALUES (:id, :course_code, :section_id, :instructor)',
+                cached.get('sections', [])
+            )
+            cursor.executemany(
+                'INSERT OR REPLACE INTO time_slots (id, section_db_id, day, start_time, end_time, classroom) VALUES (:id, :section_db_id, :day, :start_time, :end_time, :classroom)',
+                cached.get('time_slots', [])
+            )
+            print("Database instantly seeded from cached JSON file!")
+        except Exception as e:
+            print(f"Cache loading warning: {e}")
+
     conn.commit()
     conn.close()
 

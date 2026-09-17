@@ -1,21 +1,30 @@
-# Python
-__pycache__/
-*.py[cod]
-*.class
-venv/
-.venv/
-env/
-.env
-
 # Node / Next.js
 node_modules/
 .next/
 out/
 build/
 dist/
+*.tsbuildinfo
+next-env.d.ts
 
-# IDE / OS
-.vscode/
-.idea/
+# Python / FastAPI
+backend/venv/
+__pycache__/
+*.py[cod]
+*$py.class
+*.sqlite3-journal
+
+# Environment variables
+.env*.local
+.env
+
+# OS / Editor
 .DS_Store
 Thumbs.db
+.vscode/
+.idea/
+
+# Scratch & Temporary
+*.tmp
+extracted_chat_dialog.txt
+chatgpt_page.html

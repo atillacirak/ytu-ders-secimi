@@ -6,119 +6,125 @@ from models import DepartmentSchedule, Course, Section, TimeSlot
 
 DAYS = ['PAZARTESİ', 'SALI', 'ÇARŞAMBA', 'PERŞEMBE', 'CUMA', 'CUMARTESI', 'PAZAR']
 DAYS_MAP = {
-    'PAZARTESİ': 'Pazartesi', 'PA': 'Pazartesi', 'ZA': 'Pazartesi', 'R': 'Pazartesi', 'T': 'Pazartesi', 'E': 'Pazartesi', 'S': 'Pazartesi', 'İ': 'Pazartesi',
-    'SALI': 'Salı', 'SA': 'Salı', 'L': 'Salı', 'I': 'Salı',
-    'ÇARŞAMBA': 'Çarşamba', 'Ç': 'Çarşamba', 'A': 'Çarşamba', 'ŞAM': 'Çarşamba', 'BA': 'Çarşamba',
-    'PERŞEMBE': 'Perşembe', 'PER': 'Perşembe', 'ŞEM': 'Perşembe', 'BE': 'Perşembe',
-    'CUMA': 'Cuma', 'CU': 'Cuma', 'M': 'Cuma',
-    'CUMARTESİ': 'Cumartesi', 'C': 'Cumartesi', 'TS': 'Cumartesi',
-    'PAZAR': 'Pazar'
+    'PAZARTESİ': 'Pazartesi', 'SALI': 'Salı', 'ÇARŞAMBA': 'Çarşamba', 'PERŞEMBE': 'Perşembe', 'CUMA': 'Cuma', 'CTS': 'Cumartesi', 'PAZAR': 'Pazar'
 }
 
 def parse_ytu_pdf(pdf_path: str) -> DepartmentSchedule:
     schedule = DepartmentSchedule(department='Bilgisayar Mühendisliği', academic_year='2026-2027 GÜZ')
-    
     courses_dict: Dict[str, Course] = {}
+
+    current_day = 'Pazartesi'
 
     with pdfplumber.open(pdf_path) as pdf:
         for page in pdf.pages:
             tables = page.extract_tables()
             for table in tables:
-                current_day = 'Pazartesi'
-                for row in table:
+                row_idx = 0
+                while row_idx < len(table):
+                    row = table[row_idx]
                     if not row or len(row) < 3:
+                        row_idx += 1
                         continue
-                    
-                    # Gün kontrolü
-                    first_cell = str(row[0]).strip().replace('\n', '').upper() if row[0] else ''
-                    for d_key, d_val in DAYS_MAP.items():
-                        if d_key in first_cell:
-                            current_day = d_val
+
+                    first_col = str(row[0] or '').replace('\n', '').replace(' ', '').upper()
+                    for d_k in ['PAZARTESİ', 'SALI', 'ÇARŞAMBA', 'PERŞEMBE', 'CUMA', 'CUMARTESİ', 'PAZAR']:
+                        if d_k in first_col or d_k[:4] in first_col:
+                            current_day = DAYS_MAP.get(d_k, current_day)
                             break
-                    
-                    time_cell = str(row[1]).strip() if len(row) > 1 and row[1] else ''
+
+                    time_cell = str(row[1] or '').strip()
                     if not re.match(r'\d{2}[.:]\d{2}-\d{2}[.:]\d{2}', time_cell):
+                        row_idx += 1
                         continue
-                    
-                    parts = time_cell.split('-')
-                    start_time = parts[0].replace(':', '.')
-                    end_time = parts[1].replace(':', '.')
 
-                    # Yıllar (1. YIL, 2. YIL, 3. YIL, 4. YIL)
-                    year_cells = row[2:]
-                    for y_idx, cell in enumerate(year_cells):
-                        if not cell:
-                            continue
-                        year_num = y_idx + 1
-                        lines = [line.strip() for line in str(cell).split('\n') if line.strip()]
-                        if not lines:
-                            continue
+                    for y_idx, cell in enumerate(row[2:], start=1):
+                        if y_idx > 4 or not cell: continue
+                        txt = str(cell).strip()
+                        if not txt: continue
 
-                        # Örnek hücre:
-                        # Line 0: MAT1071 Matematik 1
-                        # Line 1: HTK Gr1
-                        # Line 2: DB11
-                        
-                        full_text = ' '.join(lines)
-                        # Course Code bul (örn BLM3021, MAT1071, FIZ1001)
-                        code_match = re.search(r'([A-Z]{3,4}\d{4})', full_text)
-                        if not code_match:
-                            continue
-                        
-                        code = code_match.group(1)
-                        course_name = full_text.split(code)[-1].split('Gr')[0].strip()
-                        if not course_name:
-                            course_name = code
+                        lines = [l.strip() for l in txt.split('\n') if l.strip()]
+                        first_line = lines[0] if lines else ''
 
-                        if code not in courses_dict:
-                            courses_dict[code] = Course(
-                                code=code,
-                                name=course_name,
-                                year=year_num,
-                                sections=[]
-                            )
+                        code_match = re.search(r'([A-Z]{3,4}\d{4})', first_line)
+                        if code_match:
+                            code = code_match.group(1)
+                            name = first_line.replace(code, '').strip()
+                            start_time = time_cell.split('-')[0].replace(':', '.')
+                            end_time = time_cell.split('-')[1].replace(':', '.')
+                            info_lines = lines[1:]
 
-                        # Group / Instructor / Room parsing
-                        gr_matches = re.findall(r'(?:([A-ZÇĞİÖŞÜ]{2,4})\s+)?(Gr\d+|Gr:\s*\d+|Gr:\s*\d+,\s*\d+)', full_text)
-                        room_match = re.search(r'(D\d{3}|DB\d{2}|D007|Online)', full_text)
-                        classroom = room_match.group(1) if room_match else 'TBA'
+                            # Look ahead in consecutive rows for this column
+                            next_r = row_idx + 1
+                            while next_r < len(table):
+                                next_row = table[next_r]
+                                if not next_row or len(next_row) < 2 + y_idx:
+                                    break
+                                next_time = str(next_row[1] or '').strip()
+                                if not re.match(r'\d{2}[.:]\d{2}-\d{2}[.:]\d{2}', next_time):
+                                    break
 
-                        if gr_matches:
-                            for inst, gr in gr_matches:
-                                section_id = gr.replace(' ', '')
-                                instructor = inst if inst else 'Bölüm Öğr. El.'
-                                
-                                # Course altında section var mı
+                                next_cell = next_row[1 + y_idx]
+                                if not next_cell or not str(next_cell).strip():
+                                    end_time = next_time.split('-')[1].replace(':', '.')
+                                    next_r += 1
+                                    continue
+
+                                next_lines = [l.strip() for l in str(next_cell).split('\n') if l.strip()]
+                                next_first = next_lines[0] if next_lines else ''
+
+                                if re.search(r'([A-Z]{3,4}\d{4})', next_first):
+                                    break
+                                else:
+                                    end_time = next_time.split('-')[1].replace(':', '.')
+                                    info_lines.extend(next_lines)
+                                    next_r += 1
+
+                            if code not in courses_dict:
+                                courses_dict[code] = Course(
+                                    code=code,
+                                    name=name if name else code,
+                                    year=y_idx,
+                                    sections=[]
+                                )
+
+                            full_info_text = ' '.join(info_lines)
+                            gr_matches = re.findall(r'(?:([A-ZÇĞİÖŞÜ]{2,4})\s+)?(Gr:?\s*\d+|Gr:?\s*\d+,\s*\d+|Gr\d+)', full_info_text)
+                            rooms = re.findall(r'(D\d{3}|DB\d{2}|D007|Online)', full_info_text)
+                            classroom = ", ".join(set(rooms)) if rooms else ('Online' if 'ONLINE' in (name + " " + full_info_text).upper() else 'Derslik')
+
+                            if gr_matches:
+                                for inst, gr in gr_matches:
+                                    sec_id = gr.replace(' ', '').replace(':', '')
+                                    instructor = inst if inst else 'Bölüm Öğr. El.'
+
+                                    target_course = courses_dict[code]
+                                    sec = next((s for s in target_course.sections if s.section_id == sec_id), None)
+                                    if not sec:
+                                        sec = Section(section_id=sec_id, instructor=instructor, time_slots=[])
+                                        target_course.sections.append(sec)
+
+                                    sec.time_slots.append(TimeSlot(
+                                        day=current_day,
+                                        start_time=start_time,
+                                        end_time=end_time,
+                                        classroom=classroom
+                                    ))
+                            else:
+                                sec_id = 'Gr1'
                                 target_course = courses_dict[code]
-                                sec = next((s for s in target_course.sections if s.section_id == section_id), None)
+                                sec = next((s for s in target_course.sections if s.section_id == sec_id), None)
                                 if not sec:
-                                    sec = Section(section_id=section_id, instructor=instructor, time_slots=[])
+                                    sec = Section(section_id=sec_id, instructor='Bölüm Öğr. El.', time_slots=[])
                                     target_course.sections.append(sec)
 
-                                # Slot ekle
-                                slot = TimeSlot(
+                                sec.time_slots.append(TimeSlot(
                                     day=current_day,
                                     start_time=start_time,
                                     end_time=end_time,
                                     classroom=classroom
-                                )
-                                sec.time_slots.append(slot)
-                        else:
-                            # Varsayılan Gr1
-                            section_id = 'Gr1'
-                            target_course = courses_dict[code]
-                            sec = next((s for s in target_course.sections if s.section_id == section_id), None)
-                            if not sec:
-                                sec = Section(section_id=section_id, instructor='Bölüm Öğr. El.', time_slots=[])
-                                target_course.sections.append(sec)
-                            
-                            slot = TimeSlot(
-                                day=current_day,
-                                start_time=start_time,
-                                end_time=end_time,
-                                classroom=classroom
-                            )
-                            sec.time_slots.append(slot)
+                                ))
+
+                    row_idx += 1
 
     schedule.courses = list(courses_dict.values())
     return schedule

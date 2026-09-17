@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4f46e5"/>
+      <stop offset="100%" stop-color="#06b6d4"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="16" fill="url(#grad)"/>
+  <!-- Book / Calendar Icon -->
+  <path d="M18 18h28a2 2 0 0 1 2 2v26a2 2 0 0 1-2 2H18a2 2 0 0 1-2-2V20a2 2 0 0 1 2-2z" fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <line x1="26" y1="14" x2="26" y2="22" stroke="#ffffff" stroke-width="4" stroke-linecap="round"/>
+  <line x1="38" y1="14" x2="38" y2="22" stroke="#ffffff" stroke-width="4" stroke-linecap="round"/>
+  <line x1="16" y1="28" x2="48" y2="28" stroke="#ffffff" stroke-width="3"/>
+  <circle cx="26" cy="36" r="2.5" fill="#ffffff"/>
+  <circle cx="38" cy="36" r="2.5" fill="#ffffff"/>
+  <circle cx="26" cy="42" r="2.5" fill="#ffffff"/>
+  <circle cx="38" cy="42" r="2.5" fill="#ffffff"/>
+</svg>
