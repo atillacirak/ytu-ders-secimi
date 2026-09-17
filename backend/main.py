@@ -178,7 +178,7 @@ def get_courses(department: str = Query('BLM')):
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     
-    cursor.execute('SELECT code, name, year, is_elective FROM courses WHERE department_code = ?', (department,))
+    cursor.execute('SELECT code, name, year, is_elective FROM courses WHERE department_code = ? OR department_code = "ITB"', (department,))
     course_rows = cursor.fetchall()
     
     courses: List[Course] = []
