@@ -136,6 +136,47 @@ export default function Home() {
   const [editingCourseCode, setEditingCourseCode] = useState<string | null>(null);
   const [manageSearch, setManageSearch] = useState('');
 
+  const [showOnlyAvailable, setShowOnlyAvailable] = useState(false);
+  const [lockedSections, setLockedSections] = useState<Record<string, string>>({});
+  const [availableCodes, setAvailableCodes] = useState<Set<string>>(new Set());
+  const [isFetchingAvailable, setIsFetchingAvailable] = useState(false);
+
+  useEffect(() => {
+    if (!showOnlyAvailable) return;
+    
+    let isMounted = true;
+    const fetchAvailable = async () => {
+      setIsFetchingAvailable(true);
+      try {
+        const payload = {
+          selected_course_codes: selectedCourses.map(c => c.code),
+          department_code: selectedDept,
+          options: {
+            ...optimizationOptions,
+            locked_sections: lockedSections
+          }
+        };
+        const res = await fetch(`${API_BASE}/api/available-courses`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if (!res.ok) throw new Error('API error');
+        const data = await res.json();
+        if (isMounted && Array.isArray(data)) {
+          setAvailableCodes(new Set(data));
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        if (isMounted) setIsFetchingAvailable(false);
+      }
+    };
+    
+    fetchAvailable();
+    return () => { isMounted = false; };
+  }, [showOnlyAvailable, selectedCourses, selectedDept, lockedSections, optimizationOptions, API_BASE]);
+
   const [optimizationOptions, setOptimizationOptions] = useState({
     target_free_days: false,
     minimize_gaps: false,
@@ -675,7 +716,10 @@ export default function Home() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           selected_course_codes: selectedCourses.map(c => c.code),
-          options: opts
+          options: {
+            ...opts,
+            locked_sections: lockedSections
+          }
         })
       });
       if (res.ok) {
@@ -741,7 +785,8 @@ export default function Home() {
                           course.name.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesYear = yearFilter === 'ALL' || course.year === yearFilter;
     const notExcluded = !excludedCourses.includes(course.code);
-    return matchesSearch && matchesYear && notExcluded;
+    const matchesAvailable = showOnlyAvailable ? availableCodes.has(course.code) : true;
+    return matchesSearch && matchesYear && notExcluded && matchesAvailable;
   });
 
   // Category counts based on active filters
@@ -1302,6 +1347,19 @@ export default function Home() {
                         ))}
                       </div>
 
+                      {/* Çakışmayanları Göster Toggle */}
+                      <label className="flex items-center space-x-2 cursor-pointer bg-slate-950 p-1.5 px-3 rounded-xl border border-slate-800 hover:border-emerald-500/50 transition-all">
+                        <input
+                          type="checkbox"
+                          checked={showOnlyAvailable}
+                          onChange={(e) => setShowOnlyAvailable(e.target.checked)}
+                          className="rounded bg-slate-900 border-slate-700 text-emerald-500 focus:ring-emerald-500 focus:ring-offset-slate-900"
+                        />
+                        <span className="text-[11px] font-semibold text-slate-300">
+                          {isFetchingAvailable ? 'Hesaplanıyor...' : 'Çakışmayan Dersler'}
+                        </span>
+                      </label>
+
                       {/* Hepsini Sepete Ekle Button */}
                       <button
                         onClick={handleAddAllFilteredCourses}
@@ -1441,9 +1499,36 @@ export default function Home() {
 
                             </div>
 
-                            <h3 className="font-semibold text-sm text-slate-100 group-hover:text-indigo-300 transition-colors line-clamp-2">
+                            <h3 className="font-semibold text-sm text-slate-100 group-hover:text-indigo-300 transition-colors line-clamp-2 mt-1">
                               {course.name}
                             </h3>
+
+                            {course.sections && course.sections.length > 1 && (
+                              <div className="mt-2">
+                                <div className="text-[10px] font-bold text-emerald-400 mb-1 flex items-center gap-1">
+                                  <Layers className="w-3 h-3" />
+                                  Şube Opsiyonlu ({course.sections.length} Şube)
+                                </div>
+                                {isAdded && (
+                                  <div onClick={e => e.stopPropagation()}>
+                                    <select
+                                      value={lockedSections[course.code] || ''}
+                                      onChange={(e) => {
+                                        setLockedSections(prev => ({...prev, [course.code]: e.target.value}));
+                                      }}
+                                      className="w-full bg-slate-900 border border-slate-700 text-slate-300 rounded-lg px-2 py-1 text-[11px] focus:outline-none focus:border-indigo-500"
+                                    >
+                                      <option value="">(Otomatik Seçim - En iyi şube)</option>
+                                      {course.sections.map((s: any) => (
+                                        <option key={s.section_id} value={s.section_id}>
+                                          Şube {s.section_id} - {s.instructor || 'Bilinmiyor'}
+                                        </option>
+                                      ))}
+                                    </select>
+                                  </div>
+                                )}
+                              </div>
+                            )}
 
                             <div className="flex flex-wrap items-center gap-2 mt-2 text-xs text-slate-400">
                               {course.days && (

@@ -35,6 +35,11 @@ class GenerateScheduleRequest(BaseModel):
     selected_course_codes: List[str]
     options: Optional[OptimizationOptions] = OptimizationOptions()
 
+class AvailableCoursesRequest(BaseModel):
+    selected_course_codes: List[str]
+    department_code: str
+    options: Optional[OptimizationOptions] = OptimizationOptions()
+
 class DepartmentItem(BaseModel):
     code: str
     name: str
@@ -498,4 +503,75 @@ def delete_course(course_code: str):
     except Exception as e:
         conn.close()
         raise HTTPException(status_code=500, detail=f"Ders silinirken hata: {str(e)}")
+
+
+
+@app.post('/api/available-courses')
+def get_available_courses(req: AvailableCoursesRequest):
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+
+    def fetch_course(code):
+        cursor.execute('SELECT code, name, year, is_elective FROM courses WHERE code = ? LIMIT 1', (code,))
+        row = cursor.fetchone()
+        if not row: return None
+        c_code, c_name, c_year, c_elec = row['code'], row['name'], row['year'], row['is_elective']
+        cursor.execute('SELECT id, section_id, instructor FROM sections WHERE course_code = ?', (c_code,))
+        sec_rows = cursor.fetchall()
+        sections = []
+        for sec_row in sec_rows:
+            s_id = sec_row['section_id']
+            cursor.execute('SELECT day, start_time, end_time, classroom FROM time_slots WHERE section_db_id = ?', (sec_row['id'],))
+            ts_rows = cursor.fetchall()
+            slots = [TimeSlot(day=ts['day'], start_time=ts['start_time'], end_time=ts['end_time'], classroom=ts['classroom'] or '') for ts in ts_rows]
+            sections.append(Section(section_id=s_id, instructor=sec_row['instructor'] or '', time_slots=slots))
+        return Course(code=c_code, name=c_name, year=c_year or 1, is_elective=bool(c_elec), sections=sections)
+
+    selected_courses = []
+    for code in req.selected_course_codes:
+        c = fetch_course(code)
+        if c:
+            selected_courses.append(c)
+        else:
+            selected_courses.append(Course(code=code, name=code, year=1, is_elective=True, sections=[Section(section_id='-', instructor='', time_slots=[])]))
+
+    cursor.execute('SELECT code FROM courses WHERE department_code = ?', (req.department_code,))
+    all_dept_codes = [r['code'] for r in cursor.fetchall()]
+    other_codes = [c for c in all_dept_codes if c not in req.selected_course_codes]
+    
+    other_courses = []
+    for code in other_codes:
+        c = fetch_course(code)
+        if c:
+            other_courses.append(c)
+
+    from schedule_solver import generate_schedules, sections_overlap
+    
+    base_schedules = generate_schedules(selected_courses, req.options or OptimizationOptions(), max_results=50)
+
+    available_codes = []
+    if not base_schedules and selected_courses:
+        pass # conflicts exist in base, so nothing can be added
+    else:
+        for oc in other_courses:
+            can_add = False
+            for sec in oc.sections:
+                for base in (base_schedules or [None]):
+                    has_conflict = False
+                    if base:
+                        for existing_code, existing_sec in base.selected_sections.items():
+                            if sections_overlap(sec, existing_sec):
+                                has_conflict = True
+                                break
+                    if not has_conflict:
+                        can_add = True
+                        break
+                if can_add:
+                    break
+            if can_add or not selected_courses:
+                available_codes.append(oc.code)
+
+    conn.close()
+    return available_codes
 
