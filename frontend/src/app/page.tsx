@@ -1512,32 +1512,60 @@ export default function Home() {
                               {course.name}
                             </h3>
 
-                            {course.sections && course.sections.length > 1 && (
-                              <div className="mt-2">
-                                <div className="text-[10px] font-bold text-emerald-400 mb-1 flex items-center gap-1">
-                                  <Layers className="w-3 h-3" />
-                                  Şube Opsiyonlu ({course.sections.length} Şube)
-                                </div>
-                                {isAdded && (
-                                  <div onClick={e => e.stopPropagation()}>
-                                    <select
-                                      value={lockedSections[course.code] || ''}
-                                      onChange={(e) => {
-                                        setLockedSections(prev => ({...prev, [course.code]: e.target.value}));
-                                      }}
-                                      className="w-full bg-slate-900 border border-slate-700 text-slate-300 rounded-lg px-2 py-1 text-[11px] focus:outline-none focus:border-indigo-500"
-                                    >
-                                      <option value="">(Otomatik Seçim - En iyi şube)</option>
-                                      {course.sections.map((s: any) => (
-                                        <option key={s.section_id} value={s.section_id}>
-                                          Şube {s.section_id} - {s.instructor || 'Bilinmiyor'}
-                                        </option>
-                                      ))}
-                                    </select>
+                            {(() => {
+                              if (!course.sections || course.sections.length <= 1) return null;
+                              
+                              const getSectionScheduleStr = (sec: any) => {
+                                const slots = sec.time_slots || sec.schedule || [];
+                                if (slots.length === 0) return 'Zaman Belirsiz';
+                                const sorted = [...slots].sort((a, b) => {
+                                  if (a.day !== b.day) return a.day.localeCompare(b.day);
+                                  return a.start_time.localeCompare(b.start_time);
+                                });
+                                return sorted.map((ts: any) => `${ts.day.substring(0,3)} ${ts.start_time}-${ts.end_time}`).join(', ');
+                              };
+
+                              const uniqueSchedules = new Set();
+                              course.sections.forEach((sec: any) => {
+                                uniqueSchedules.add(getSectionScheduleStr(sec));
+                              });
+
+                              if (uniqueSchedules.size <= 1) return null;
+
+                              return (
+                                <div className="mt-2.5">
+                                  <div className="text-[10px] font-bold text-emerald-400 mb-1.5 flex items-center gap-1">
+                                    <Layers className="w-3 h-3" />
+                                    {uniqueSchedules.size} Farklı Saat Opsiyonu
                                   </div>
-                                )}
-                              </div>
-                            )}
+                                  {isAdded && (
+                                    <div onClick={e => e.stopPropagation()} className="relative">
+                                      <select
+                                        value={lockedSections[course.code] || ''}
+                                        onChange={(e) => {
+                                          setLockedSections(prev => ({...prev, [course.code]: e.target.value}));
+                                        }}
+                                        className="w-full appearance-none bg-slate-900 border border-slate-700 hover:border-indigo-500/50 text-slate-300 rounded-lg pl-2 pr-6 py-1.5 text-[11px] focus:outline-none focus:ring-1 focus:ring-indigo-500 transition-all cursor-pointer text-ellipsis overflow-hidden whitespace-nowrap"
+                                        title={lockedSections[course.code] ? `Seçili: Şube ${lockedSections[course.code]}` : 'Otomatik Seçim'}
+                                      >
+                                        <option value="">(Otomatik Seçim - En iyi şube)</option>
+                                        {course.sections.map((s: any) => {
+                                          const timeStr = getSectionScheduleStr(s);
+                                          return (
+                                            <option key={s.section_id} value={s.section_id}>
+                                              Şube {s.section_id} | {s.instructor || 'Bilinmiyor'} ({timeStr})
+                                            </option>
+                                          );
+                                        })}
+                                      </select>
+                                      <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-400">
+                                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })()}
 
                             <div className="flex flex-wrap items-center gap-2 mt-2 text-xs text-slate-400">
                               {course.days && (
@@ -1645,13 +1673,42 @@ export default function Home() {
                             <span>{course.credits} Kredi</span>
                             <span>•</span>
                             <span className="text-emerald-400 font-medium">{course.ects} AKTS</span>
-                            {course.instructor && (
-                              <>
-                                <span>•</span>
-                                <span className="truncate max-w-[110px] text-slate-500">{course.instructor}</span>
-                              </>
-                            )}
                           </div>
+
+                          {/* Şube Seçici for Basket */}
+                          {(() => {
+                            if (!course.sections || course.sections.length <= 1) return null;
+                            const getSectionScheduleStr = (sec: any) => {
+                              const slots = sec.time_slots || sec.schedule || [];
+                              if (slots.length === 0) return 'Belirsiz';
+                              const sorted = [...slots].sort((a, b) => {
+                                if (a.day !== b.day) return a.day.localeCompare(b.day);
+                                return a.start_time.localeCompare(b.start_time);
+                              });
+                              return sorted.map((ts: any) => `${ts.day.substring(0,3)} ${ts.start_time}`).join(', ');
+                            };
+                            const uniqueSchedules = new Set();
+                            course.sections.forEach((sec: any) => uniqueSchedules.add(getSectionScheduleStr(sec)));
+                            if (uniqueSchedules.size <= 1) return null;
+
+                            return (
+                              <div className="mt-1.5 pr-2" onClick={e => e.stopPropagation()}>
+                                <select
+                                  value={lockedSections[course.code] || ''}
+                                  onChange={(e) => setLockedSections(prev => ({...prev, [course.code]: e.target.value}))}
+                                  className="w-full appearance-none bg-slate-900 border border-slate-700 hover:border-indigo-500/50 text-slate-300 rounded-md px-1.5 py-1 text-[10px] focus:outline-none focus:ring-1 focus:ring-indigo-500 transition-all cursor-pointer text-ellipsis overflow-hidden whitespace-nowrap"
+                                >
+                                  <option value="">(Şube: Otomatik Seçim)</option>
+                                  {course.sections.map((s: any) => (
+                                    <option key={s.section_id} value={s.section_id}>
+                                      Şube {s.section_id} | {s.instructor || '?'} ({getSectionScheduleStr(s)})
+                                    </option>
+                                  ))}
+                                </select>
+                              </div>
+                            );
+                          })()}
+
                         </div>
                         <button
                           onClick={() => handleRemoveCourse(course.code)}
