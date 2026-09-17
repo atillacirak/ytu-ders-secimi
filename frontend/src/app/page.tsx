@@ -789,7 +789,9 @@ export default function Home() {
                           course.name.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesYear = yearFilter === 'ALL' || course.year === yearFilter;
     const notExcluded = !excludedCourses.includes(course.code);
-    const matchesAvailable = showOnlyAvailable ? availableCodes.has(course.code) : true;
+    const matchesAvailable = showOnlyAvailable 
+      ? (selectedCourses.length === 0 ? true : availableCodes.has(course.code))
+      : true;
     return matchesSearch && matchesYear && notExcluded && matchesAvailable;
   });
 
