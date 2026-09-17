@@ -787,7 +787,7 @@ export default function Home() {
   const baseFilteredCurriculum = curriculum.filter(course => {
     const matchesSearch = course.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
                           course.name.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesYear = yearFilter === 'ALL' || course.year === yearFilter;
+    const matchesYear = isSocialElective(course) || yearFilter === 'ALL' || course.year === yearFilter;
     const notExcluded = !excludedCourses.includes(course.code);
     const matchesAvailable = showOnlyAvailable 
       ? (selectedCourses.length === 0 ? true : availableCodes.has(course.code))
