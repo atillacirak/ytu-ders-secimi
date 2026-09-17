@@ -74,6 +74,7 @@ const FACULTIES: Faculty[] = [
       { code: 'ELK', name: 'Elektrik Mühendisliği' },
       { code: 'EHM', name: 'Elektronik ve Haberleşme Mühendisliği' },
       { code: 'YZV', name: 'Yapay Zeka ve Veri Mühendisliği' },
+      { code: 'KOM', name: 'Kontrol ve Otomasyon Mühendisliği' },
     ]
   },
   {
@@ -97,6 +98,14 @@ const FACULTIES: Faculty[] = [
       { code: 'MET', name: 'Metalurji ve Malzeme Mühendisliği (%30 İngilizce)' },
       { code: 'MET_ENG', name: 'Metalurji ve Malzeme Mühendisliği (%100 İngilizce)' },
     ]
+  },
+  {
+    id: 'STF',
+    name: 'Sanat ve Tasarım Fakültesi',
+    departments: [
+      { code: 'ILT', name: 'İletişim ve Tasarımı' },
+      { code: 'FVP', name: 'Fotoğraf ve Video' },
+    ]
   }
 ];
 
@@ -109,6 +118,9 @@ const TIME_SLOTS = [
 ];
 
 export default function Home() {
+  const [facultiesList, setFacultiesList] = useState<Faculty[]>(FACULTIES);
+  const [localCurriculums, setLocalCurriculums] = useState<Record<string, Course[]>>({});
+
   const [isMounted, setIsMounted] = useState(false);
 
   const [activeTab, setActiveTab] = useState<'intibak' | 'management' | 'selection' | 'schedule'>('selection');
@@ -147,6 +159,25 @@ export default function Home() {
     minimize_gaps: false,
     avoid_early_mornings: false
   });
+
+  // --- PDF Preview Modal State ---
+  const [showPdfModal, setShowPdfModal] = useState(false);
+  const [pdfModalFile, setPdfModalFile] = useState<File | null>(null);
+  
+  const [pdfModalFacMode, setPdfModalFacMode] = useState<'select' | 'new'>('select');
+  const [pdfModalSelectedFac, setPdfModalSelectedFac] = useState(FACULTIES[0].id);
+  const [pdfModalCustomFac, setPdfModalCustomFac] = useState('');
+  
+  const [pdfModalDeptMode, setPdfModalDeptMode] = useState<'select' | 'new'>('select');
+  const [pdfModalSelectedDept, setPdfModalSelectedDept] = useState(FACULTIES[0].departments[0].code);
+  const [pdfModalCustomDept, setPdfModalCustomDept] = useState('');
+
+
+  const [pdfModalParsing, setPdfModalParsing] = useState(false);
+  const [pdfModalCourses, setPdfModalCourses] = useState<any[]>([]);
+  const [pdfModalSelected, setPdfModalSelected] = useState<Set<string>>(new Set());
+  const [pdfModalError, setPdfModalError] = useState('');
+  const pdfModalInputRef = useRef<HTMLInputElement>(null);
 
   const handleExportPNG = async () => {
     if (!scheduleRef.current) return;
@@ -385,6 +416,10 @@ export default function Home() {
 
 
   const fetchCurriculum = async (deptCode: string) => {
+    if (localCurriculums[deptCode]) {
+      setCurriculum(localCurriculums[deptCode]);
+      return;
+    }
     setLoading(true);
     try {
       const res = await fetch(`${API_BASE}/api/curriculum/${deptCode}`);
@@ -674,6 +709,129 @@ export default function Home() {
     setManualCode('');
   };
 
+  // --- PDF Preview Modal Handlers ---
+  const handlePdfModalParse = async () => {
+    if (!pdfModalFile) return;
+    setPdfModalParsing(true);
+    setPdfModalError('');
+    setPdfModalCourses([]);
+    setPdfModalSelected(new Set());
+
+    const formData = new FormData();
+    formData.append('file', pdfModalFile);
+
+    try {
+      const resolvedFac = pdfModalFacMode === 'select' 
+        ? (facultiesList.find(f => f.id === pdfModalSelectedFac)?.name || pdfModalSelectedFac)
+        : pdfModalCustomFac;
+      const resolvedDept = pdfModalDeptMode === 'select'
+        ? (facultiesList.find(f => f.id === pdfModalSelectedFac)?.departments.find(d => d.code === pdfModalSelectedDept)?.name || pdfModalSelectedDept)
+        : pdfModalCustomDept;
+      
+      const fullDeptName = (resolvedFac ? resolvedFac + ' / ' : '') + resolvedDept;
+      const deptParam = encodeURIComponent(fullDeptName || 'Bölümüm');
+
+      const res = await fetch(`${API_BASE}/api/parse-pdf-preview?department_name=${deptParam}`, {
+        method: 'POST',
+        body: formData,
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ detail: 'Bilinmeyen hata' }));
+        setPdfModalError(err.detail || 'PDF işlenirken hata oluştu.');
+        return;
+      }
+      const data = await res.json();
+      const courses = data.courses || [];
+      setPdfModalCourses(courses);
+      setPdfModalSelected(new Set(courses.map((c: any) => c.code)));
+      if (courses.length === 0) {
+        setPdfModalError("PDF'den ders bulunamadı. Lütfen YTÜ ders programı PDF'i yüklediğinizden emin olun.");
+      }
+    } catch (e) {
+      setPdfModalError('Sunucuya bağlanılamadı. Backend çalışıyor mu?');
+    } finally {
+      setPdfModalParsing(false);
+    }
+  };
+
+  const handlePdfModalAddSelected = () => {
+    const toAdd: Course[] = [];
+    const newCurriculum: Course[] = [];
+
+    pdfModalCourses.forEach((item: any) => {
+      const sections = (item.sections || []).map((sec: any) => ({
+        section_id: sec.section_id,
+        section_no: sec.section_id,
+        instructor: sec.instructor || 'PDF Kaynaklı',
+        time_slots: sec.time_slots || [],
+      }));
+
+      const allSlots: string[] = [];
+      sections.forEach((sec: any) => {
+        (sec.time_slots || []).forEach((ts: any) => {
+          allSlots.push(`${ts.day} ${ts.start_time}-${ts.end_time}`);
+        });
+      });
+
+      const parsedCourse: Course = {
+        id: `pdf_${Date.now()}_${item.code}`,
+        code: item.code,
+        name: item.name || item.code,
+        credits: item.credits || 3,
+        ects: item.ects || 5,
+        year: item.year || 1,
+        is_elective: item.is_elective || false,
+        instructor: item.instructor || 'PDF Kaynaklı',
+        is_online: item.is_online || false,
+        days: allSlots.join(', '),
+        sections: sections,
+      };
+
+      newCurriculum.push(parsedCourse);
+
+      if (pdfModalSelected.has(item.code) && !selectedCourses.find(c => c.code === item.code)) {
+        toAdd.push(parsedCourse);
+      }
+    });
+
+    let finalFacId = pdfModalSelectedFac;
+    let finalDeptCode = pdfModalSelectedDept;
+
+    if (pdfModalFacMode === 'new' && pdfModalCustomFac.trim()) {
+      finalFacId = 'CUSTOM_FAC_' + Date.now();
+      const newFac = {
+        id: finalFacId,
+        name: pdfModalCustomFac.trim(),
+        departments: []
+      };
+      setFacultiesList(prev => [...prev, newFac]);
+    }
+
+    if (pdfModalDeptMode === 'new' && pdfModalCustomDept.trim()) {
+      finalDeptCode = 'CUSTOM_DEPT_' + Date.now();
+      setFacultiesList(prev => {
+        const copy = [...prev];
+        const facIndex = copy.findIndex(f => f.id === finalFacId);
+        if (facIndex !== -1) {
+          copy[facIndex].departments.push({ code: finalDeptCode, name: pdfModalCustomDept.trim() });
+        }
+        return copy;
+      });
+    }
+
+    setLocalCurriculums(prev => ({ ...prev, [finalDeptCode]: newCurriculum }));
+    setCurriculum(newCurriculum);
+    setSelectedFaculty(finalFacId);
+    setSelectedDept(finalDeptCode);
+
+    setSelectedCourses(prev => [...prev, ...toAdd]);
+    setShowPdfModal(false);
+    setPdfModalFile(null);
+    setPdfModalCourses([]);
+    setPdfModalSelected(new Set());
+    setPdfModalError('');
+  };
+
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -835,7 +993,11 @@ export default function Home() {
   const baseFilteredCurriculum = curriculum.filter(course => {
     const matchesSearch = course.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
                           course.name.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesYear = isSocialElective(course) || yearFilter === 'ALL' || course.year === yearFilter;
+    
+    // Convert course.year to number for safe comparison, since yearFilter is a number
+    const cYear = typeof course.year === 'string' ? parseInt(course.year, 10) : course.year;
+    const matchesYear = yearFilter === 'ALL' || cYear === yearFilter;
+    
     const notExcluded = !excludedCourses.includes(course.code);
     const matchesAvailable = showOnlyAvailable 
       ? (selectedCourses.length === 0 ? true : availableCodes.has(course.code))
@@ -1015,19 +1177,19 @@ export default function Home() {
                   onChange={e => {
                     const newFacId = e.target.value;
                     setSelectedFaculty(newFacId);
-                    const fac = FACULTIES.find(f => f.id === newFacId);
+                    const fac = facultiesList.find(f => f.id === newFacId);
                     if (fac && fac.departments.length > 0) setSelectedDept(fac.departments[0].code);
                   }}
                   className="bg-slate-950/80 border border-slate-700/80 hover:border-rose-500/50 rounded-xl px-4 py-3 text-xs font-semibold text-slate-100 focus:outline-none focus:ring-2 focus:ring-rose-500 w-full transition-all"
                 >
-                  {FACULTIES.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
+                  {facultiesList.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
                 </select>
                 <select
                   value={selectedDept}
                   onChange={e => setSelectedDept(e.target.value)}
                   className="bg-slate-950/80 border border-slate-700/80 hover:border-rose-500/50 rounded-xl px-4 py-3 text-xs font-semibold text-rose-300 focus:outline-none focus:ring-2 focus:ring-rose-500 w-full transition-all"
                 >
-                  {FACULTIES.find(f => f.id === selectedFaculty)?.departments.map(d => (
+                  {facultiesList.find(f => f.id === selectedFaculty)?.departments.map(d => (
                     <option key={d.code} value={d.code}>{d.code} - {d.name}</option>
                   ))}
                 </select>
@@ -1172,19 +1334,19 @@ export default function Home() {
                   onChange={e => {
                     const newFacId = e.target.value;
                     setSelectedFaculty(newFacId);
-                    const fac = FACULTIES.find(f => f.id === newFacId);
+                    const fac = facultiesList.find(f => f.id === newFacId);
                     if (fac && fac.departments.length > 0) setSelectedDept(fac.departments[0].code);
                   }}
                   className="bg-slate-950 border border-slate-700/80 rounded-xl px-3 py-2 text-xs font-semibold text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500"
                 >
-                  {FACULTIES.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
+                  {facultiesList.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
                 </select>
                 <select
                   value={selectedDept}
                   onChange={e => setSelectedDept(e.target.value)}
                   className="bg-slate-950 border border-slate-700/80 rounded-xl px-3 py-2 text-xs font-semibold text-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-500"
                 >
-                  {FACULTIES.find(f => f.id === selectedFaculty)?.departments.map(d => (
+                  {facultiesList.find(f => f.id === selectedFaculty)?.departments.map(d => (
                     <option key={d.code} value={d.code}>{d.code} - {d.name}</option>
                   ))}
                 </select>
@@ -1307,7 +1469,7 @@ export default function Home() {
                     <Building2 className="w-4 h-4 text-indigo-400" /> Akademik Program Seçimi
                   </span>
                   <span className="text-xs text-slate-400 font-medium">
-                    {FACULTIES.find(f => f.id === selectedFaculty)?.name} → {FACULTIES.find(f => f.id === selectedFaculty)?.departments.find(d => d.code === selectedDept)?.name}
+                    {facultiesList.find(f => f.id === selectedFaculty)?.name} → {facultiesList.find(f => f.id === selectedFaculty)?.departments.find(d => d.code === selectedDept)?.name}
                   </span>
                 </div>
 
@@ -1322,14 +1484,14 @@ export default function Home() {
                       onChange={(e) => {
                         const newFacId = e.target.value;
                         setSelectedFaculty(newFacId);
-                        const fac = FACULTIES.find(f => f.id === newFacId);
+                        const fac = facultiesList.find(f => f.id === newFacId);
                         if (fac && fac.departments.length > 0) {
                           setSelectedDept(fac.departments[0].code);
                         }
                       }}
                       className="bg-slate-950/80 border border-slate-700/80 hover:border-indigo-500/50 rounded-xl px-4 py-3 text-xs font-semibold text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full transition-all shadow-inner"
                     >
-                      {FACULTIES.map(f => (
+                      {facultiesList.map(f => (
                         <option key={f.id} value={f.id}>
                           {f.name}
                         </option>
@@ -1347,7 +1509,7 @@ export default function Home() {
                       onChange={(e) => setSelectedDept(e.target.value)}
                       className="bg-slate-950/80 border border-slate-700/80 hover:border-indigo-500/50 rounded-xl px-4 py-3 text-xs font-semibold text-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full transition-all shadow-inner"
                     >
-                      {FACULTIES.find(f => f.id === selectedFaculty)?.departments.map(d => (
+                      {facultiesList.find(f => f.id === selectedFaculty)?.departments.map(d => (
                         <option key={d.code} value={d.code}>
                           {d.code} - {d.name}
                         </option>
@@ -1359,6 +1521,26 @@ export default function Home() {
                     </select>
                   </div>
                 </div>
+              </div>
+
+              {/* "Bölümüm Listede Yok" Banner */}
+              <div className="flex items-center justify-between bg-indigo-950/30 border border-indigo-800/40 rounded-xl px-4 py-2.5">
+                <div className="flex items-center gap-2 text-xs text-slate-400">
+                  <Upload className="w-3.5 h-3.5 text-indigo-400 flex-shrink-0" />
+                  <span>Bölümün listede yok mu? Ders programı PDF&apos;ini yükle, dersleri otomatik algıla.</span>
+                </div>
+                <button
+                  onClick={() => {
+                    setShowPdfModal(true);
+                    setPdfModalCourses([]);
+                    setPdfModalFile(null);
+                    setPdfModalError('');
+                  }}
+                  className="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold px-3 py-1.5 rounded-lg transition-all shadow-lg shadow-indigo-600/20 ml-3 flex-shrink-0"
+                >
+                  <Upload className="w-3 h-3" />
+                  PDF Yükle
+                </button>
               </div>
 
               {/* Main Course Listing Card with Search & Filters placed AT THE VERY TOP */}
@@ -1593,10 +1775,10 @@ export default function Home() {
                                         title={lockedSections[course.code] ? `Seçili: Şube ${lockedSections[course.code]}` : 'Otomatik Seçim'}
                                       >
                                         <option value="">(Otomatik Seçim - En iyi şube)</option>
-                                        {course.sections.map((s: any) => {
+                                        {course.sections.map((s: any, idx: number) => {
                                           const timeStr = getSectionScheduleStr(s);
                                           return (
-                                            <option key={s.section_id} value={s.section_id}>
+                                            <option key={`${s.section_id}_${idx}`} value={s.section_id}>
                                               Şube {s.section_id} | {s.instructor || 'Bilinmiyor'} ({timeStr})
                                             </option>
                                           );
@@ -1665,9 +1847,21 @@ export default function Home() {
                     </div>
                     <h2 className="text-base font-semibold text-slate-200">Ders Sepetim</h2>
                   </div>
-                  <span className="text-xs px-2.5 py-0.5 bg-emerald-950 text-emerald-400 border border-emerald-800/60 rounded-full font-mono">
-                    {selectedCourses.length} Ders
-                  </span>
+                  <div className="flex items-center gap-2">
+                    {selectedCourses.length > 0 && (
+                      <button
+                        onClick={() => setSelectedCourses([])}
+                        className="text-[10px] bg-red-950/40 text-red-400 hover:bg-red-900/60 px-2 py-1 rounded-md border border-red-900/50 transition-colors flex items-center"
+                        title="Sepeti tamamen temizle"
+                      >
+                        <Trash2 className="w-3 h-3 mr-1" />
+                        Temizle
+                      </button>
+                    )}
+                    <span className="text-xs px-2.5 py-0.5 bg-emerald-950 text-emerald-400 border border-emerald-800/60 rounded-full font-mono">
+                      {selectedCourses.length} Ders
+                    </span>
+                  </div>
                 </div>
 
                 {/* Total Credits & AKTS Summary Badges */}
@@ -1743,8 +1937,8 @@ export default function Home() {
                                   className="w-full appearance-none bg-slate-900 border border-slate-700 hover:border-indigo-500/50 text-slate-300 rounded-md px-1.5 py-1 text-[10px] focus:outline-none focus:ring-1 focus:ring-indigo-500 transition-all cursor-pointer text-ellipsis overflow-hidden whitespace-nowrap"
                                 >
                                   <option value="">(Şube: Otomatik Seçim)</option>
-                                  {course.sections.map((s: any) => (
-                                    <option key={s.section_id} value={s.section_id}>
+                                  {course.sections.map((s: any, idx: number) => (
+                                    <option key={`${s.section_id}_${idx}`} value={s.section_id}>
                                       Şube {s.section_id} | {s.instructor || '?'} ({getSectionScheduleStr(s)})
                                     </option>
                                   ))}
@@ -2392,7 +2586,7 @@ export default function Home() {
                   onChange={e => setManageFormData(prev => ({ ...prev, department_code: e.target.value }))}
                   className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500"
                 >
-                  {FACULTIES.flatMap(f => f.departments).map(d => (
+                  {facultiesList.flatMap(f => f.departments).map(d => (
                     <option key={d.code} value={d.code}>{d.code} - {d.name}</option>
                   ))}
                 </select>
@@ -2647,6 +2841,292 @@ export default function Home() {
                 Kaydet & Veritabanına İşle
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* PDF Preview Modal */}
+      {showPdfModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
+          onClick={(e) => { if (e.target === e.currentTarget) setShowPdfModal(false); }}
+        >
+          <div className="bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col">
+            {/* Header */}
+            <div className="flex items-center justify-between p-5 border-b border-slate-800">
+              <div className="flex items-center gap-2">
+                <Upload className="w-5 h-5 text-indigo-400" />
+                <h2 className="text-sm font-bold text-white">PDF&apos;den Ders Yükle</h2>
+                <span className="text-xs text-slate-500 font-normal">— DB&apos;ye kaydedilmez</span>
+              </div>
+              <button
+                onClick={() => setShowPdfModal(false)}
+                className="text-slate-400 hover:text-white transition-colors"
+              >
+                <XCircle className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="p-5 space-y-4 overflow-y-auto flex-1">
+              {/* Fakülte + Bölüm */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-slate-300 flex items-center gap-1">
+                    <Building2 className="w-3 h-3 text-slate-400" />
+                    Fakülte Adı
+                  </label>
+                  {pdfModalFacMode === 'select' ? (
+                    <select
+                      value={pdfModalSelectedFac}
+                      onChange={(e) => {
+                        if (e.target.value === 'NEW') {
+                          setPdfModalFacMode('new');
+                        } else {
+                          setPdfModalSelectedFac(e.target.value);
+                          const fac = facultiesList.find(f => f.id === e.target.value);
+                          if (fac && fac.departments.length > 0) {
+                            setPdfModalSelectedDept(fac.departments[0].code);
+                            setPdfModalDeptMode('select');
+                          }
+                        }
+                      }}
+                      className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-xs text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    >
+                      {facultiesList.map(f => (
+                        <option key={f.id} value={f.id}>{f.name}</option>
+                      ))}
+                      <option value="NEW" className="text-indigo-400 font-bold">+ Yeni Fakülte Ekle...</option>
+                    </select>
+                  ) : (
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={pdfModalCustomFac}
+                        onChange={(e) => setPdfModalCustomFac(e.target.value)}
+                        placeholder="Fakülte adı..."
+                        className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      />
+                      <button
+                        onClick={() => { setPdfModalFacMode('select'); setPdfModalCustomFac(''); }}
+                        className="px-3 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs whitespace-nowrap transition-colors"
+                      >
+                        İptal
+                      </button>
+                    </div>
+                  )}
+                </div>
+                
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-slate-300 flex items-center gap-1">
+                    <GraduationCap className="w-3 h-3 text-slate-400" />
+                    Bölüm Adı
+                  </label>
+                  {pdfModalDeptMode === 'select' ? (
+                    <select
+                      value={pdfModalSelectedDept}
+                      onChange={(e) => {
+                        if (e.target.value === 'NEW') setPdfModalDeptMode('new');
+                        else setPdfModalSelectedDept(e.target.value);
+                      }}
+                      className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-xs text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    >
+                      {(facultiesList.find(f => f.id === pdfModalSelectedFac)?.departments || []).map(d => (
+                        <option key={d.code} value={d.code}>{d.name}</option>
+                      ))}
+                      <option value="NEW" className="text-indigo-400 font-bold">+ Yeni Bölüm Ekle...</option>
+                    </select>
+                  ) : (
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={pdfModalCustomDept}
+                        onChange={(e) => setPdfModalCustomDept(e.target.value)}
+                        placeholder="Bölüm adı..."
+                        className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      />
+                      <button
+                        onClick={() => { setPdfModalDeptMode('select'); setPdfModalCustomDept(''); }}
+                        className="px-3 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs whitespace-nowrap transition-colors"
+                      >
+                        İptal
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Drag & Drop / Dosya seçimi */}
+              <div
+                className={`border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-all ${
+                  pdfModalFile
+                    ? 'border-indigo-500/60 bg-indigo-950/20'
+                    : 'border-slate-700 hover:border-indigo-500/50 hover:bg-slate-800/30'
+                }`}
+                onClick={() => pdfModalInputRef.current?.click()}
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  const file = e.dataTransfer.files?.[0];
+                  if (file && file.name.endsWith('.pdf')) {
+                    setPdfModalFile(file);
+                    setPdfModalCourses([]);
+                    setPdfModalError('');
+                  }
+                }}
+              >
+                <input
+                  ref={pdfModalInputRef}
+                  type="file"
+                  accept=".pdf"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      setPdfModalFile(file);
+                      setPdfModalCourses([]);
+                      setPdfModalError('');
+                    }
+                  }}
+                />
+                {pdfModalFile ? (
+                  <div className="space-y-1">
+                    <CheckCircle className="w-8 h-8 text-indigo-400 mx-auto" />
+                    <p className="text-xs font-semibold text-indigo-300">{pdfModalFile.name}</p>
+                    <p className="text-xs text-slate-500">{(pdfModalFile.size / 1024).toFixed(0)} KB</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <Upload className="w-8 h-8 text-slate-500 mx-auto" />
+                    <p className="text-xs text-slate-400">PDF&apos;i buraya sürükle veya <span className="text-indigo-400 font-semibold">tıkla seç</span></p>
+                    <p className="text-xs text-slate-600">YTÜ ders programı tablosu içeren PDF</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Parse butonu */}
+              {pdfModalFile && pdfModalCourses.length === 0 && !pdfModalParsing && !pdfModalError && (
+                <button
+                  onClick={handlePdfModalParse}
+                  className="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold py-2.5 rounded-xl transition-all shadow-lg shadow-indigo-600/20"
+                >
+                  <Sparkles className="w-4 h-4" />
+                  Dersleri Tespit Et
+                </button>
+              )}
+
+              {/* Parsing spinner */}
+              {pdfModalParsing && (
+                <div className="flex items-center justify-center gap-2 text-xs text-indigo-400 py-2">
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                  PDF analiz ediliyor...
+                </div>
+              )}
+
+              {/* Error */}
+              {pdfModalError && (
+                <div className="flex items-start gap-2 bg-red-950/30 border border-red-800/40 rounded-xl p-3">
+                  <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
+                  <p className="text-xs text-red-300">{pdfModalError}</p>
+                </div>
+              )}
+
+              {/* Ders listesi önizlemesi */}
+              {pdfModalCourses.length > 0 && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs font-semibold text-slate-300">
+                      {pdfModalCourses.length} ders tespit edildi
+                    </p>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setPdfModalSelected(new Set(pdfModalCourses.map((c: any) => c.code)))}
+                        className="text-xs text-indigo-400 hover:text-indigo-300"
+                      >Tümünü seç</button>
+                      <span className="text-slate-600">|</span>
+                      <button
+                        onClick={() => setPdfModalSelected(new Set())}
+                        className="text-xs text-slate-400 hover:text-slate-300"
+                      >Temizle</button>
+                    </div>
+                  </div>
+                  <div className="space-y-1 max-h-52 overflow-y-auto pr-1">
+                    {pdfModalCourses.map((course: any) => {
+                      const isSelected = pdfModalSelected.has(course.code);
+                      const alreadyAdded = !!selectedCourses.find(c => c.code === course.code);
+                      const dayStr = (course.sections || [])
+                        .flatMap((s: any) => (s.time_slots || []).map((t: any) => `${t.day} ${t.start_time}-${t.end_time}`))
+                        .slice(0, 2).join(', ');
+                      return (
+                        <label
+                          key={course.code}
+                          className={`flex items-start gap-3 p-2.5 rounded-xl cursor-pointer transition-all ${
+                            alreadyAdded
+                              ? 'opacity-50 cursor-not-allowed bg-slate-800/20'
+                              : isSelected
+                              ? 'bg-indigo-950/40 border border-indigo-700/40'
+                              : 'bg-slate-800/30 border border-transparent hover:border-slate-700/60'
+                          }`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={isSelected && !alreadyAdded}
+                            disabled={alreadyAdded}
+                            onChange={() => {
+                              if (alreadyAdded) return;
+                              setPdfModalSelected(prev => {
+                                const next = new Set(prev);
+                                if (next.has(course.code)) next.delete(course.code);
+                                else next.add(course.code);
+                                return next;
+                              });
+                            }}
+                            className="mt-0.5 rounded bg-slate-800 border-slate-600 text-indigo-500 focus:ring-indigo-500 focus:ring-offset-slate-900"
+                          />
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-bold text-indigo-300">{course.code}</span>
+                              {alreadyAdded && <span className="text-[10px] bg-emerald-900/40 text-emerald-400 px-1.5 py-0.5 rounded-full">Eklendi</span>}
+                            </div>
+                            <p className="text-xs text-slate-300 truncate">{course.name}</p>
+                            {dayStr && <p className="text-[10px] text-slate-500 mt-0.5">{dayStr}</p>}
+                          </div>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Footer actions */}
+            {pdfModalCourses.length > 0 && (
+              <div className="flex items-center justify-between p-5 border-t border-slate-800 bg-slate-900/50">
+                <p className="text-xs text-slate-400">
+                  <span className="font-semibold text-white">{pdfModalSelected.size}</span> ders seçili
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setShowPdfModal(false)}
+                    className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition-all"
+                  >
+                    İptal
+                  </button>
+                  <button
+                    onClick={handlePdfModalAddSelected}
+                    disabled={pdfModalSelected.size === 0}
+                    className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                      pdfModalSelected.size > 0
+                        ? 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/20'
+                        : 'bg-slate-800 text-slate-600 cursor-not-allowed'
+                    }`}
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    Seçilenleri Ekle ({pdfModalSelected.size})
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}

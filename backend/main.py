@@ -56,6 +56,7 @@ def get_departments():
         {'code': 'ELK', 'name': 'Elektrik Mühendisliği'},
         {'code': 'EHM', 'name': 'Elektronik ve Haberleşme Mühendisliği'},
         {'code': 'YZV', 'name': 'Yapay Zeka ve Veri Mühendisliği'},
+        {'code': 'KOM', 'name': 'Kontrol ve Otomasyon Mühendisliği'},
         {'code': 'MAK', 'name': 'Makine Mühendisliği'},
         {'code': 'END', 'name': 'Endüstri Mühendisliği'},
         {'code': 'MKT', 'name': 'Mekatronik Mühendisliği'},
@@ -172,6 +173,36 @@ async def upload_pdf(file: UploadFile = File(...), department: str = Query('BLM'
         return schedule
     except Exception as e:
         raise HTTPException(status_code=500, detail=f'PDF işlenirken hata oluştu: {str(e)}')
+
+@app.post('/api/parse-pdf-preview', response_model=DepartmentSchedule)
+async def parse_pdf_preview(file: UploadFile = File(...), department_name: str = Query('Bilinmeyen Bölüm')):
+    """
+    PDF'i parse eder ama DB'ye KAYDETMEZ.
+    Kullanicinin kendi bolumu listede yoksa gecici olarak kullanmak icin.
+    """
+    if not file.filename.endswith('.pdf'):
+        raise HTTPException(status_code=400, detail='Sadece PDF dosyalari yuklenebilir.')
+
+    import uuid
+    os.makedirs('temp_uploads', exist_ok=True)
+    tmp_name = f"preview_{uuid.uuid4().hex}.pdf"
+    file_path = os.path.join('temp_uploads', tmp_name)
+
+    with open(file_path, 'wb') as buffer:
+        shutil.copyfileobj(file.file, buffer)
+
+    try:
+        schedule = parse_ytu_pdf(file_path, department=department_name)
+        return schedule
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f'PDF islenirken hata olustu: {str(e)}')
+    finally:
+        try:
+            if os.path.exists(file_path):
+                # os.remove(file_path)
+                pass
+        except:
+            pass
 
 @app.get('/api/courses', response_model=List[Course])
 def get_courses(department: str = Query('BLM')):
