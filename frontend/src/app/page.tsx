@@ -141,41 +141,6 @@ export default function Home() {
   const [availableCodes, setAvailableCodes] = useState<Set<string>>(new Set());
   const [isFetchingAvailable, setIsFetchingAvailable] = useState(false);
 
-  useEffect(() => {
-    if (!showOnlyAvailable) return;
-    
-    let isMounted = true;
-    const fetchAvailable = async () => {
-      setIsFetchingAvailable(true);
-      try {
-        const payload = {
-          selected_course_codes: selectedCourses.map(c => c.code),
-          department_code: selectedDept,
-          options: {
-            ...optimizationOptions,
-            locked_sections: lockedSections
-          }
-        };
-        const res = await fetch(`${API_BASE}/api/available-courses`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-        if (!res.ok) throw new Error('API error');
-        const data = await res.json();
-        if (isMounted && Array.isArray(data)) {
-          setAvailableCodes(new Set(data));
-        }
-      } catch (err) {
-        console.error(err);
-      } finally {
-        if (isMounted) setIsFetchingAvailable(false);
-      }
-    };
-    
-    fetchAvailable();
-    return () => { isMounted = false; };
-  }, [showOnlyAvailable, selectedCourses, selectedDept, lockedSections, optimizationOptions, API_BASE]);
 
   const [optimizationOptions, setOptimizationOptions] = useState({
     target_free_days: false,
@@ -232,6 +197,45 @@ export default function Home() {
   });
 
   const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
+
+  useEffect(() => {
+    if (selectedCourses.length === 0) {
+      setAvailableCodes(new Set());
+      return;
+    }
+    
+    let isMounted = true;
+    const fetchAvailable = async () => {
+      setIsFetchingAvailable(true);
+      try {
+        const payload = {
+          selected_course_codes: selectedCourses.map(c => c.code),
+          department_code: selectedDept,
+          options: {
+            ...optimizationOptions,
+            locked_sections: lockedSections
+          }
+        };
+        const res = await fetch(`${API_BASE}/api/available-courses`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if (!res.ok) throw new Error('API error');
+        const data = await res.json();
+        if (isMounted && Array.isArray(data)) {
+          setAvailableCodes(new Set(data));
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        if (isMounted) setIsFetchingAvailable(false);
+      }
+    };
+    
+    fetchAvailable();
+    return () => { isMounted = false; };
+  }, [selectedCourses, selectedDept, lockedSections, optimizationOptions, API_BASE]);
 
   const handleOpenAddCourseModal = () => {
     setEditingCourseCode(null);
@@ -1493,6 +1497,11 @@ export default function Home() {
                                 {course.is_online && (
                                   <span className="flex items-center gap-1 text-[10px] font-bold text-cyan-400 bg-cyan-950/80 border border-cyan-800/60 px-2 py-0.5 rounded-full">
                                     <Laptop className="w-3 h-3" /> ONLINE
+                                  </span>
+                                )}
+                                {selectedCourses.length > 0 && !isAdded && !availableCodes.has(course.code) && !isFetchingAvailable && (
+                                  <span className="flex items-center gap-1 text-[10px] font-bold text-rose-400 bg-rose-950/80 border border-rose-800/60 px-2 py-0.5 rounded-full">
+                                    <AlertCircle className="w-3 h-3" /> ÇAKIŞIYOR
                                   </span>
                                 )}
                               </div>
