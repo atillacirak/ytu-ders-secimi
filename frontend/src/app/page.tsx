@@ -516,81 +516,129 @@ export default function Home() {
     return parseInt(parts[0], 10) * 60 + (parts[1] ? parseInt(parts[1], 10) : 0);
   };
 
-  // Comprehensive slot extractor for both course.days string AND course.sections[] / schedule[]
-  const getCourseAllSlots = (course: Course): { day: string; start: number; end: number; timeStr: string }[] => {
+  // Helper to extract time slots for a single section
+  const getSectionSlots = (sec: any): { day: string; start: number; end: number; timeStr: string }[] => {
     const slots: { day: string; start: number; end: number; timeStr: string }[] = [];
-    const daysList = ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi', 'Pazar'];
-
-    // 1. Extract from course.sections if available
-    if (course.sections && Array.isArray(course.sections)) {
-      course.sections.forEach(sec => {
-        const timeArr = sec.schedule || (sec as any).time_slots || [];
-        timeArr.forEach((ts: any) => {
-          if (ts.day && ts.start_time && ts.end_time) {
-            slots.push({
-              day: ts.day,
-              start: parseMin(ts.start_time),
-              end: parseMin(ts.end_time),
-              timeStr: `${ts.day} ${ts.start_time}-${ts.end_time}`
-            });
-          }
+    const timeArr = sec.schedule || sec.time_slots || [];
+    timeArr.forEach((ts: any) => {
+      if (ts.day && ts.start_time && ts.end_time) {
+        slots.push({
+          day: ts.day,
+          start: parseMin(ts.start_time),
+          end: parseMin(ts.end_time),
+          timeStr: `${ts.day} ${ts.start_time}-${ts.end_time}`
         });
+      }
+    });
+    return slots;
+  };
+
+  // Helper to extract all possible section slot options for a course (or specific locked section)
+  const getCourseSectionsSlots = (course: Course, lockedSectionId?: string): { day: string; start: number; end: number; timeStr: string }[][] => {
+    if (course.sections && course.sections.length > 0) {
+      let sectionsToConsider = course.sections;
+      if (lockedSectionId) {
+        const found = course.sections.find((s: any) => s.section_id === lockedSectionId);
+        if (found) sectionsToConsider = [found];
+      }
+      const result: { day: string; start: number; end: number; timeStr: string }[][] = [];
+      sectionsToConsider.forEach((sec: any) => {
+        const sSlots = getSectionSlots(sec);
+        if (sSlots.length > 0) {
+          result.push(sSlots);
+        }
       });
+      if (result.length > 0) return result;
     }
 
-    // 2. Extract from course.days text string (matches all patterns like "Salı 12:00-14:50, Salı 16:00-17:50")
+    // fallback to course.days if sections array is not populated
+    const fallbackSlots: { day: string; start: number; end: number; timeStr: string }[] = [];
     if (course.days) {
       const text = course.days;
+      const daysList = ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi', 'Pazar'];
       daysList.forEach(d => {
         if (text.includes(d)) {
-          // Global match regex to find ALL time intervals (e.g. 16:00-18:50 or 09.00-11.50)
           const regex = /(\d{1,2}[\.:]\d{2})\s*-\s*(\d{1,2}[\.:]\d{2})/g;
           let match;
           while ((match = regex.exec(text)) !== null) {
             const startM = parseMin(match[1]);
             const endM = parseMin(match[2]);
-            // Avoid duplicate additions
-            if (!slots.some(s => s.day === d && s.start === startM && s.end === endM)) {
-              slots.push({
-                day: d,
-                start: startM,
-                end: endM,
-                timeStr: `${d} ${match[1]}-${match[2]}`
-              });
-            }
+            fallbackSlots.push({
+              day: d,
+              start: startM,
+              end: endM,
+              timeStr: `${d} ${match[1]}-${match[2]}`
+            });
           }
         }
       });
     }
+    return [fallbackSlots];
+  };
 
-    return slots;
+  const slotsOverlap = (slots1: { day: string; start: number; end: number }[], slots2: { day: string; start: number; end: number }[]) => {
+    for (const s1 of slots1) {
+      for (const s2 of slots2) {
+        if (s1.day === s2.day) {
+          if (Math.max(s1.start, s2.start) < Math.min(s1.end, s2.end)) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
+  };
+
+  const canAddCourseWithoutConflict = (coursesList: Course[], lockedSecs: Record<string, string>): boolean => {
+    if (coursesList.length <= 1) return true;
+    
+    const allCourseOptions: { day: string; start: number; end: number; timeStr: string }[][][] = coursesList.map(c => 
+      getCourseSectionsSlots(c, lockedSecs[c.code])
+    );
+
+    const findValid = (index: number, currentChoice: { day: string; start: number; end: number; timeStr: string }[][]): boolean => {
+      if (index === allCourseOptions.length) return true;
+      const sectionOptions = allCourseOptions[index];
+      if (sectionOptions.length === 0) {
+        return findValid(index + 1, currentChoice);
+      }
+      for (const secSlots of sectionOptions) {
+        let overlaps = false;
+        for (const chosen of currentChoice) {
+          if (slotsOverlap(secSlots, chosen)) {
+            overlaps = true;
+            break;
+          }
+        }
+        if (!overlaps) {
+          if (findValid(index + 1, [...currentChoice, secSlots])) {
+            return true;
+          }
+        }
+      }
+      return false;
+    };
+
+    return findValid(0, []);
+  };
+
+  // Comprehensive slot extractor for single schedule generation / fallback
+  const getCourseAllSlots = (course: Course): { day: string; start: number; end: number; timeStr: string }[] => {
+    const secOptions = getCourseSectionsSlots(course, lockedSections[course.code]);
+    return secOptions[0] || [];
   };
 
   const handleAddCourse = (course: Course) => {
     if (selectedCourses.some(c => c.code === course.code)) return;
 
-    // Extract all time slots of the new course
-    const newCourseSlots = getCourseAllSlots(course);
+    const testCourses = [...selectedCourses, course];
+    const possible = canAddCourseWithoutConflict(testCourses, lockedSections);
 
-    // If new course has time slots, check conflicts against selected courses in basket
-    if (newCourseSlots.length > 0) {
-      for (const existingCourse of selectedCourses) {
-        const existingSlots = getCourseAllSlots(existingCourse);
-
-        for (const newSlot of newCourseSlots) {
-          for (const exSlot of existingSlots) {
-            if (newSlot.day === exSlot.day) {
-              // Check time overlap: max(start1, start2) < min(end1, end2)
-              if (Math.max(newSlot.start, exSlot.start) < Math.min(newSlot.end, exSlot.end)) {
-                const msg = `⚠️ Zaman Çakışması: "${course.name}" (${newSlot.timeStr}) dersi, sepetinizdeki "${existingCourse.name}" (${exSlot.timeStr}) ile çakışmaktadır!`;
-                console.warn(msg);
-                setConflictWarning(msg);
-                return; // BLOCK ADDING COURSE TO BASKET!
-              }
-            }
-          }
-        }
-      }
+    if (!possible) {
+      const msg = `⚠️ Zaman Çakışması: "${course.name}" dersinin mevcut sepetinizdeki derslerle çakışmayan hiçbir şubesi / saati bulunamadı!`;
+      console.warn(msg);
+      setConflictWarning(msg);
+      return;
     }
 
     setConflictWarning(null);

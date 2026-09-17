@@ -507,6 +507,9 @@ def delete_course(course_code: str):
 
 
 @app.post('/api/available-courses')
+
+
+@app.post('/api/available-courses')
 def get_available_courses(req: AvailableCoursesRequest):
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
@@ -536,7 +539,7 @@ def get_available_courses(req: AvailableCoursesRequest):
         else:
             selected_courses.append(Course(code=code, name=code, year=1, is_elective=True, sections=[Section(section_id='-', instructor='', time_slots=[])]))
 
-    cursor.execute('SELECT code FROM courses WHERE department_code = ?', (req.department_code,))
+    cursor.execute('SELECT code FROM courses WHERE department_code = ? OR department_code = "ITB"', (req.department_code,))
     all_dept_codes = [r['code'] for r in cursor.fetchall()]
     other_codes = [c for c in all_dept_codes if c not in req.selected_course_codes]
     
@@ -574,4 +577,3 @@ def get_available_courses(req: AvailableCoursesRequest):
 
     conn.close()
     return available_codes
-
