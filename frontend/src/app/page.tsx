@@ -221,17 +221,31 @@ export default function Home() {
   };
 
   const handleExportVisualizerPNG = async () => {
-    if (!visualizerScheduleRef.current) return;
+    const node = visualizerScheduleRef.current;
+    if (!node) return;
     try {
-      const dataUrl = await toPng(visualizerScheduleRef.current, {
+      const fullWidth = Math.max(node.scrollWidth, 1080);
+      const fullHeight = node.scrollHeight;
+
+      const dataUrl = await toPng(node, {
         cacheBust: true,
         backgroundColor: '#ffffff',
-        pixelRatio: 2, // A4 yüksek çözünürlük & netlik
+        pixelRatio: 2, // 2x Ultra-sharp A4 resolution
+        width: fullWidth,
+        height: fullHeight,
         style: {
+          width: `${fullWidth}px`,
+          maxWidth: `${fullWidth}px`,
+          minWidth: `${fullWidth}px`,
           borderRadius: '0px',
           border: 'none',
           boxShadow: 'none',
           margin: '0px',
+          padding: '24px',
+          backgroundColor: '#ffffff',
+          color: '#0f172a',
+          colorScheme: 'light',
+          transform: 'none',
         }
       });
       const link = document.createElement('a');
