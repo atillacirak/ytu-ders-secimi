@@ -2741,11 +2741,11 @@ export default function Home() {
                             ];
 
                             const MONOCHROME_PALETTE = {
-                              bg: 'bg-slate-50',
+                              bg: 'bg-slate-100',
                               border: 'border-slate-300',
                               text: 'text-slate-900',
                               accent: 'text-slate-950 font-bold',
-                              badge: 'bg-white text-slate-800 border-slate-300 font-semibold'
+                              badge: 'bg-white text-slate-900 border-slate-300 font-semibold'
                             };
 
                             const getCourseColor = (code: string) => {
