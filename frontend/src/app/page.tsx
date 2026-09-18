@@ -946,29 +946,49 @@ export default function Home() {
 
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans">
+    <div className={`min-h-screen flex flex-col font-sans transition-colors duration-200 ${
+      activeTab === 'visualizer' ? 'bg-white text-slate-900' : 'bg-slate-950 text-slate-100'
+    }`}>
       {/* Top Header */}
-      <header className="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-50 no-print">
+      <header className={`border-b sticky top-0 z-50 no-print transition-colors duration-200 ${
+        activeTab === 'visualizer'
+          ? 'bg-white/95 border-slate-200 text-slate-900 shadow-xs backdrop-blur'
+          : 'border-slate-800 bg-slate-900/80 backdrop-blur text-slate-100'
+      }`}>
         <div className="max-w-7xl mx-auto px-4 py-4 flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center space-x-3">
-            <div className="bg-indigo-600 p-2.5 rounded-xl shadow-lg shadow-indigo-600/30">
+            <div className={`p-2.5 rounded-xl shadow-lg ${
+              activeTab === 'visualizer' ? 'bg-slate-900 shadow-slate-900/10' : 'bg-indigo-600 shadow-indigo-600/30'
+            }`}>
               <BookOpen className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h1 className="text-xl font-bold bg-gradient-to-r from-indigo-400 to-cyan-400 bg-clip-text text-transparent">
+              <h1 className={`text-xl font-bold ${
+                activeTab === 'visualizer'
+                  ? 'text-slate-900'
+                  : 'bg-gradient-to-r from-indigo-400 to-cyan-400 bg-clip-text text-transparent'
+              }`}>
                 YTÜ Ders Seçimi & Program Oluşturucu
               </h1>
-              <p className="text-xs text-slate-400">Yıldız Technical University Schedule Builder</p>
+              <p className={`text-xs ${activeTab === 'visualizer' ? 'text-slate-500' : 'text-slate-400'}`}>
+                Yıldız Technical University Schedule Builder
+              </p>
             </div>
           </div>
 
           {/* Top Stage Tabs Navigation */}
-          <div className="flex bg-slate-800/80 p-1.5 rounded-xl border border-slate-700 gap-1 flex-wrap">
+          <div className={`flex p-1.5 rounded-xl border gap-1 flex-wrap ${
+            activeTab === 'visualizer'
+              ? 'bg-slate-100 border-slate-200'
+              : 'bg-slate-800/80 border-slate-700'
+          }`}>
             <button
               onClick={() => setActiveTab('intibak')}
               className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                 activeTab === 'intibak'
                   ? 'bg-rose-700 text-white shadow-md'
+                  : activeTab === 'visualizer'
+                  ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/70'
                   : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700/50'
               }`}
             >
@@ -986,6 +1006,8 @@ export default function Home() {
               className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                 activeTab === 'management'
                   ? 'bg-amber-600 text-white shadow-md'
+                  : activeTab === 'visualizer'
+                  ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/70'
                   : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700/50'
               }`}
             >
@@ -993,13 +1015,15 @@ export default function Home() {
               <span>Ders Ekle & Düzenle</span>
             </button>
 
-            <div className="w-px bg-slate-700 self-stretch mx-0.5" />
+            <div className={`w-px self-stretch mx-0.5 ${activeTab === 'visualizer' ? 'bg-slate-300' : 'bg-slate-700'}`} />
 
             <button
               onClick={() => setActiveTab('selection')}
               className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                 activeTab === 'selection'
                   ? 'bg-indigo-600 text-white shadow-md'
+                  : activeTab === 'visualizer'
+                  ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/70'
                   : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700/50'
               }`}
             >
@@ -1011,6 +1035,8 @@ export default function Home() {
               className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                 activeTab === 'schedule'
                   ? 'bg-indigo-600 text-white shadow-md'
+                  : activeTab === 'visualizer'
+                  ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/70'
                   : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700/50'
               }`}
             >
@@ -1023,20 +1049,22 @@ export default function Home() {
               )}
             </button>
 
-            <div className="w-px bg-slate-700 self-stretch mx-0.5" />
+            <div className={`w-px self-stretch mx-0.5 ${activeTab === 'visualizer' ? 'bg-slate-300' : 'bg-slate-700'}`} />
 
             <button
               onClick={() => setActiveTab('visualizer')}
               className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                 activeTab === 'visualizer'
-                  ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md shadow-emerald-900/30'
+                  ? 'bg-slate-900 text-white shadow-md'
                   : 'text-emerald-400 hover:text-emerald-200 hover:bg-emerald-950/40 border border-emerald-800/40'
               }`}
             >
               <FileText className="w-4 h-4" />
               <span>PDF Program Görselleştir</span>
               {visualizerData && (
-                <span className="ml-1 px-2 py-0.5 text-xs bg-emerald-500/30 rounded-full text-emerald-300">
+                <span className={`ml-1 px-2 py-0.5 text-xs rounded-full ${
+                  activeTab === 'visualizer' ? 'bg-slate-800 text-slate-200' : 'bg-emerald-500/30 text-emerald-300'
+                }`}>
                   {visualizerData.courses_summary?.length || 0}
                 </span>
               )}
@@ -2441,39 +2469,39 @@ export default function Home() {
             {!visualizerData ? (
               /* Henüz Belge Yüklenmedi -> Resmi Doküman Yükleme Alanı */
               <div className="space-y-6">
-                <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8 shadow-xl relative overflow-hidden">
+                <div className="bg-white border border-slate-200 rounded-2xl p-8 shadow-sm relative overflow-hidden">
                   <div className="max-w-3xl space-y-3 relative z-10">
-                    <div className="inline-flex items-center gap-2 px-3 py-1 bg-slate-800 border border-slate-700 rounded-lg text-slate-300 text-xs font-semibold">
-                      <GraduationCap className="w-4 h-4 text-amber-400" />
+                    <div className="inline-flex items-center gap-2 px-3 py-1 bg-slate-100 border border-slate-200 rounded-lg text-slate-700 text-xs font-semibold">
+                      <GraduationCap className="w-4 h-4 text-amber-500" />
                       <span>Yıldız Teknik Üniversitesi — Öğrenci Ders Programı Sistemi</span>
                     </div>
 
-                    <h2 className="text-2xl sm:text-3xl font-bold text-slate-100 tracking-tight">
-                      Öğrenci Haftalık Ders Programı <span className="text-indigo-400">Çizelgesi</span>
+                    <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
+                      Öğrenci Haftalık Ders Programı <span className="text-indigo-600">Çizelgesi</span>
                     </h2>
 
-                    <p className="text-sm text-slate-400 leading-relaxed">
-                      OBS / USIS sistemi üzerinden temin ettiğiniz resmi <span className="font-mono text-slate-200 font-semibold bg-slate-800 px-2 py-0.5 rounded border border-slate-700">Report.pdf</span> (Öğrenci Ders Programı) belgesini sisteme yükleyiniz. Belgedeki ders kodları, şube numaraları, teori ve laboratuvar derslikleri ile öğretim elemanları otomatik olarak çözümlenerek haftalık akademik çizelge formatında görselleştirilecektir.
+                    <p className="text-sm text-slate-600 leading-relaxed">
+                      OBS / USIS sistemi üzerinden temin ettiğiniz resmi <span className="font-mono text-slate-800 font-semibold bg-slate-100 px-2 py-0.5 rounded border border-slate-200">Report.pdf</span> (Öğrenci Ders Programı) belgesini sisteme yükleyiniz. Belgedeki ders kodları, şube numaraları, teori ve laboratuvar derslikleri ile öğretim elemanları otomatik olarak çözümlenerek haftalık akademik çizelge formatında görselleştirilecektir.
                     </p>
                   </div>
                 </div>
 
                 {/* Yükleme Alanı */}
-                <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8 shadow-xl text-center space-y-6">
+                <div className="bg-white border border-slate-200 rounded-2xl p-8 shadow-sm text-center space-y-6">
                   {visualizerError && (
-                    <div className="flex items-center gap-3 p-4 bg-rose-950/60 border border-rose-800/80 rounded-xl text-rose-200 text-sm max-w-xl mx-auto text-left">
-                      <AlertCircle className="w-5 h-5 text-rose-400 flex-shrink-0" />
+                    <div className="flex items-center gap-3 p-4 bg-rose-50 border border-rose-200 rounded-xl text-rose-800 text-sm max-w-xl mx-auto text-left">
+                      <AlertCircle className="w-5 h-5 text-rose-600 flex-shrink-0" />
                       <div className="flex-1">
                         <p className="font-bold">Belge Ayrıştırma Hatası</p>
-                        <p className="text-xs text-rose-300 mt-0.5">{visualizerError}</p>
+                        <p className="text-xs text-rose-600 mt-0.5">{visualizerError}</p>
                       </div>
                     </div>
                   )}
 
                   <label className={`block border-2 border-dashed rounded-2xl p-10 transition-all cursor-pointer max-w-2xl mx-auto ${
                     visualizerPdfUploading
-                      ? 'border-indigo-500 bg-indigo-950/20'
-                      : 'border-slate-700 hover:border-slate-500 hover:bg-slate-950/40'
+                      ? 'border-indigo-500 bg-indigo-50/50'
+                      : 'border-slate-300 hover:border-slate-400 bg-slate-50 hover:bg-slate-100/70'
                   }`}>
                     <input
                       type="file"
@@ -2485,19 +2513,19 @@ export default function Home() {
 
                     {visualizerPdfUploading ? (
                       <div className="py-8 flex flex-col items-center justify-center space-y-3">
-                        <RefreshCw className="w-9 h-9 text-indigo-400 animate-spin" />
+                        <RefreshCw className="w-9 h-9 text-indigo-600 animate-spin" />
                         <div className="space-y-1">
-                          <p className="text-sm font-bold text-slate-200">Belge Analiz Ediliyor...</p>
-                          <p className="text-xs text-slate-400">Ders programı kayıtları, derslikler ve öğretim üyeleri eşleştirilmektedir</p>
+                          <p className="text-sm font-bold text-slate-800">Belge Analiz Ediliyor...</p>
+                          <p className="text-xs text-slate-500">Ders programı kayıtları, derslikler ve öğretim üyeleri eşleştirilmektedir</p>
                         </div>
                       </div>
                     ) : (
                       <div className="space-y-4">
-                        <div className="w-14 h-14 bg-slate-800 border border-slate-700 rounded-xl flex items-center justify-center mx-auto text-slate-300 shadow">
+                        <div className="w-14 h-14 bg-slate-100 border border-slate-200 rounded-xl flex items-center justify-center mx-auto text-slate-600 shadow-sm">
                           <FileText className="w-7 h-7" />
                         </div>
                         <div className="space-y-1">
-                          <p className="text-sm font-bold text-slate-200">
+                          <p className="text-sm font-bold text-slate-800">
                             Öğrenci Ders Programı Dokümanını (Report.pdf) Seçiniz
                           </p>
                           <p className="text-xs text-slate-500">
@@ -2505,7 +2533,7 @@ export default function Home() {
                           </p>
                         </div>
                         <div className="pt-2">
-                          <span className="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-xl shadow transition-all">
+                          <span className="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-xl shadow-sm transition-all">
                             <Upload className="w-4 h-4" />
                             <span>PDF Belgesi Yükle</span>
                           </span>
@@ -2516,28 +2544,28 @@ export default function Home() {
 
                   {/* Resmi Bilgi Kartları */}
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-3xl mx-auto pt-2">
-                    <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 text-left space-y-1">
-                      <div className="text-slate-200 font-bold text-xs flex items-center gap-1.5">
-                        <Calendar className="w-4 h-4 text-indigo-400" />
+                    <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 text-left space-y-1">
+                      <div className="text-slate-800 font-bold text-xs flex items-center gap-1.5">
+                        <Calendar className="w-4 h-4 text-indigo-600" />
                         Haftalık Akademik Çizelge
                       </div>
-                      <p className="text-[11px] text-slate-400">Ders saatleri bloklar halinde haftalık resmi şablona yerleştirilir.</p>
+                      <p className="text-[11px] text-slate-500">Ders saatleri bloklar halinde haftalık resmi şablona yerleştirilir.</p>
                     </div>
 
-                    <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 text-left space-y-1">
-                      <div className="text-slate-200 font-bold text-xs flex items-center gap-1.5">
-                        <Building2 className="w-4 h-4 text-indigo-400" />
+                    <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 text-left space-y-1">
+                      <div className="text-slate-800 font-bold text-xs flex items-center gap-1.5">
+                        <Building2 className="w-4 h-4 text-indigo-600" />
                         Derslik ve Laboratuvarlar
                       </div>
-                      <p className="text-[11px] text-slate-400">Teorik derslikler ve LAB ortamları açık ve net şekilde belirtilir.</p>
+                      <p className="text-[11px] text-slate-500">Teorik derslikler ve LAB ortamları açık ve net şekilde belirtilir.</p>
                     </div>
 
-                    <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 text-left space-y-1">
-                      <div className="text-slate-200 font-bold text-xs flex items-center gap-1.5">
-                        <User className="w-4 h-4 text-indigo-400" />
+                    <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 text-left space-y-1">
+                      <div className="text-slate-800 font-bold text-xs flex items-center gap-1.5">
+                        <User className="w-4 h-4 text-indigo-600" />
                         Öğretim Elemanları
                       </div>
-                      <p className="text-[11px] text-slate-400">Dersi veren öğretim üyelerinin unvan ve isimleri eksiksiz gösterilir.</p>
+                      <p className="text-[11px] text-slate-500">Dersi veren öğretim üyelerinin unvan ve isimleri eksiksiz gösterilir.</p>
                     </div>
                   </div>
                 </div>
