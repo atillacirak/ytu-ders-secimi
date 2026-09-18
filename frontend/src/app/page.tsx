@@ -2786,13 +2786,18 @@ export default function Home() {
                             const skipCells: Record<string, Set<number>> = {};
                             VIS_DAYS.forEach(d => { skipCells[d] = new Set(); });
 
+                            const SLOT_HEIGHT = 46;
+
                             return VISUALIZER_HOURS.map((hour, hrIdx) => {
                               const nextHour = `${parseInt(hour.split(':')[0], 10)}:50`;
                               const hourLabel = `${hour} - ${nextHour}`;
 
                               return (
-                                <tr key={hour} className="border-b border-slate-300 h-[37px]">
-                                  <td className="p-1 border-r border-slate-300 text-center font-mono text-[9.5px] text-slate-600 bg-slate-50 align-middle whitespace-nowrap">
+                                <tr key={hour} className="border-b border-slate-300" style={{ height: `${SLOT_HEIGHT}px` }}>
+                                  <td
+                                    className="p-1 border-r border-slate-300 text-center font-mono text-[9.5px] text-slate-600 bg-slate-50 align-middle whitespace-nowrap"
+                                    style={{ height: `${SLOT_HEIGHT}px` }}
+                                  >
                                     {hourLabel}
                                   </td>
 
@@ -2806,7 +2811,8 @@ export default function Home() {
                                       return (
                                         <td
                                           key={day}
-                                          className={`p-0.5 border-r border-slate-300 h-[37px] align-top ${
+                                          style={{ height: `${SLOT_HEIGHT}px` }}
+                                          className={`p-0.5 border-r border-slate-300 align-top ${
                                             isLastCol ? 'border-r-0' : ''
                                           }`}
                                         />
@@ -2846,22 +2852,22 @@ export default function Home() {
                                       <td
                                         key={day}
                                         rowSpan={span}
-                                        style={{ height: `${span * 37}px` }}
+                                        style={{ height: `${span * SLOT_HEIGHT}px` }}
                                         className={`p-0.5 border-r border-slate-300 align-top h-full ${
                                           isLastCol ? 'border-r-0' : ''
                                         }`}
                                       >
-                                        <div className={`h-full w-full p-1.5 rounded border ${palette.bg} ${palette.border} flex flex-col justify-between space-y-1 transition-all shadow-xs overflow-hidden`}>
+                                        <div className={`h-full w-full p-1.5 rounded border ${palette.bg} ${palette.border} flex flex-col justify-between ${span === 1 ? 'space-y-0.5' : 'space-y-1'} transition-all shadow-xs overflow-hidden`}>
                                           <div className="space-y-0.5 min-w-0">
                                             {/* Başlık, Şube Bilgisi ve Online Kayıt Simgesi */}
                                             <div className="flex items-center justify-between gap-1 min-w-0">
-                                              <span className={`font-mono font-bold text-[11px] truncate ${palette.accent}`}>
+                                              <span className={`font-mono font-bold text-[10.5px] truncate ${palette.accent}`}>
                                                 {it.code} {it.section ? `(Şb. ${it.section})` : ''}
                                               </span>
 
                                               {isOnline && (
                                                 <span
-                                                  className={`inline-flex items-center gap-0.5 px-1 py-0.5 rounded border text-[8px] font-mono shrink-0 shadow-2xs ${
+                                                  className={`inline-flex items-center gap-0.5 px-1 py-0.5 rounded border text-[7.5px] font-mono shrink-0 shadow-2xs ${
                                                     isMonochrome
                                                       ? 'bg-white border-slate-300 text-slate-800'
                                                       : 'bg-rose-50/80 border-rose-300 text-rose-600'
@@ -2881,19 +2887,19 @@ export default function Home() {
                                             </div>
 
                                             {/* Ders Adı */}
-                                            <h4 className={`text-[10px] font-semibold ${palette.text} leading-tight line-clamp-2 break-words`}>
+                                            <h4 className={`text-[9.5px] font-semibold ${palette.text} leading-tight ${span === 1 ? 'line-clamp-1' : 'line-clamp-2'} break-words`}>
                                               {it.name}
                                             </h4>
                                           </div>
 
                                           {/* Alt Bilgi: Saat ve Derslik Rozeti */}
-                                          <div className="pt-0.5 border-t border-slate-200/80 text-[8.5px] text-slate-600 space-y-1 min-w-0">
+                                          <div className="pt-0.5 border-t border-slate-200/80 text-[8px] text-slate-600 space-y-0.5 min-w-0">
                                             <p className="font-mono text-slate-500 text-[8px] whitespace-nowrap">
                                               {it.start_time} - {it.end_time}
                                             </p>
                                             {it.classroom ? (
                                               <div
-                                                className={`inline-block max-w-full px-1.5 py-0.5 rounded border text-[8px] font-mono font-medium shadow-2xs ${palette.badge}`}
+                                                className={`inline-block max-w-full px-1 py-0.2 rounded border text-[7.5px] font-mono font-medium shadow-2xs ${palette.badge}`}
                                                 title={it.classroom}
                                               >
                                                 <span className="truncate block">
