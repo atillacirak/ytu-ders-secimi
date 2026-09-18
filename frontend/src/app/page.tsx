@@ -2728,16 +2728,21 @@ export default function Home() {
                               return parseInt(parts[0], 10) * 60 + parseInt(parts[1], 10);
                             };
 
-                            // Sade, Kurumsal ve Baskıya Uygun Ofis Renk Paletleri (Açık Kağıt Üzerinde)
+                            // Sade, Kurumsal ve Baskıya Uygun Ofis Renk Paletleri (Açık Kağıt Üzerinde, Canlı ve Ayırt Edici)
                             const CLEAN_OFFICE_PALETTES = [
                               { bg: 'bg-blue-50/90', border: 'border-blue-200/90', text: 'text-blue-950', accent: 'text-blue-700', badge: 'bg-white text-blue-800 border-blue-200' },
                               { bg: 'bg-emerald-50/90', border: 'border-emerald-200/90', text: 'text-emerald-950', accent: 'text-emerald-800', badge: 'bg-white text-emerald-800 border-emerald-200' },
                               { bg: 'bg-rose-50/90', border: 'border-rose-200/90', text: 'text-rose-950', accent: 'text-rose-800', badge: 'bg-white text-rose-800 border-rose-200' },
                               { bg: 'bg-amber-50/90', border: 'border-amber-200/90', text: 'text-amber-950', accent: 'text-amber-800', badge: 'bg-white text-amber-800 border-amber-200' },
+                              { bg: 'bg-indigo-50/90', border: 'border-indigo-200/90', text: 'text-indigo-950', accent: 'text-indigo-800', badge: 'bg-white text-indigo-800 border-indigo-200' },
                               { bg: 'bg-teal-50/90', border: 'border-teal-200/90', text: 'text-teal-950', accent: 'text-teal-800', badge: 'bg-white text-teal-800 border-teal-200' },
-                              { bg: 'bg-slate-100', border: 'border-slate-300', text: 'text-slate-900', accent: 'text-slate-800', badge: 'bg-white text-slate-800 border-slate-300' },
                               { bg: 'bg-purple-50/90', border: 'border-purple-200/90', text: 'text-purple-950', accent: 'text-purple-800', badge: 'bg-white text-purple-800 border-purple-200' },
-                              { bg: 'bg-stone-100', border: 'border-stone-300', text: 'text-stone-900', accent: 'text-stone-800', badge: 'bg-white text-stone-800 border-stone-300' },
+                              { bg: 'bg-sky-50/90', border: 'border-sky-200/90', text: 'text-sky-950', accent: 'text-sky-800', badge: 'bg-white text-sky-800 border-sky-200' },
+                              { bg: 'bg-orange-50/90', border: 'border-orange-200/90', text: 'text-orange-950', accent: 'text-orange-800', badge: 'bg-white text-orange-800 border-orange-200' },
+                              { bg: 'bg-violet-50/90', border: 'border-violet-200/90', text: 'text-violet-950', accent: 'text-violet-800', badge: 'bg-white text-violet-800 border-violet-200' },
+                              { bg: 'bg-cyan-50/90', border: 'border-cyan-200/90', text: 'text-cyan-950', accent: 'text-cyan-800', badge: 'bg-white text-cyan-800 border-cyan-200' },
+                              { bg: 'bg-lime-50/90', border: 'border-lime-200/90', text: 'text-lime-950', accent: 'text-lime-800', badge: 'bg-white text-lime-800 border-lime-200' },
+                              { bg: 'bg-fuchsia-50/90', border: 'border-fuchsia-200/90', text: 'text-fuchsia-950', accent: 'text-fuchsia-800', badge: 'bg-white text-fuchsia-800 border-fuchsia-200' },
                             ];
 
                             const MONOCHROME_PALETTE = {
