@@ -2899,7 +2899,7 @@ export default function Home() {
                                             </p>
                                             {it.classroom ? (
                                               <div
-                                                className={`inline-block max-w-full px-2 py-0.5 rounded-md border text-[10.5px] font-mono font-bold shadow-2xs ${palette.badge}`}
+                                                className={`inline-block max-w-full px-2 py-0.5 rounded-md border text-[11.5px] font-mono font-bold shadow-2xs ${palette.badge}`}
                                                 title={it.classroom}
                                               >
                                                 <span className="truncate block">
