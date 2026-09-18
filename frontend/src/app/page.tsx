@@ -223,10 +223,10 @@ export default function Home() {
     try {
       const dataUrl = await toPng(visualizerScheduleRef.current, {
         cacheBust: true,
-        backgroundColor: '#0b0f19',
+        backgroundColor: '#ffffff',
         pixelRatio: 2, // A4 yüksek çözünürlük & netlik
         style: {
-          padding: '24px'
+          padding: '20px'
         }
       });
       const link = document.createElement('a');
@@ -945,7 +945,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans">
       {/* Top Header */}
-      <header className="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-50">
+      <header className="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-50 no-print">
         <div className="max-w-7xl mx-auto px-4 py-4 flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center space-x-3">
             <div className="bg-indigo-600 p-2.5 rounded-xl shadow-lg shadow-indigo-600/30">
@@ -2543,7 +2543,7 @@ export default function Home() {
               /* Belge Yüklendi -> Resmi Çizelge Görünümü */
               <div className="space-y-6">
                 {/* Üst Yönetim Paneli */}
-                <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4">
+                <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4 no-print">
                   <div className="flex flex-wrap items-center justify-between gap-4">
                     {/* Öğrenci Resmi Bilgi Alanı */}
                     <div className="flex items-center space-x-3.5">
@@ -2663,33 +2663,34 @@ export default function Home() {
                 {visualizerViewMode === 'table' && (
                   <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-2xl space-y-4 overflow-x-auto">
                     <div
+                      id="visualizer-a4-document"
                       ref={visualizerScheduleRef}
-                      className="a4-print-target bg-[#0b0f19] p-6 rounded-xl border border-slate-800 space-y-3.5 w-full mx-auto"
-                      style={{ minWidth: '1020px', maxWidth: '1160px' }}
+                      className="a4-print-target bg-white text-slate-900 p-5 rounded-xl border border-slate-200 shadow-2xl space-y-2.5 w-full mx-auto"
+                      style={{ minWidth: '980px', maxWidth: '1120px' }}
                     >
                       {/* Resmi Kurumsal Belge Başlığı */}
-                      <div className="border-b-2 border-slate-800/90 pb-3 flex items-center justify-between">
-                        <div className="space-y-1">
+                      <div className="border-b border-slate-300 pb-2.5 flex items-center justify-between">
+                        <div className="space-y-0.5">
                           <div className="flex items-center gap-2">
-                            <span className="font-black text-sm tracking-wider uppercase text-slate-100">
+                            <span className="font-black text-sm tracking-wide uppercase text-slate-950">
                               YILDIZ TEKNİK ÜNİVERSİTESİ
                             </span>
-                            <span className="text-xs text-slate-500 font-semibold">•</span>
-                            <span className="text-xs text-slate-400 font-medium">
+                            <span className="text-xs text-slate-400 font-semibold">•</span>
+                            <span className="text-xs text-slate-600 font-semibold">
                               Öğrenci İşleri Daire Başkanlığı
                             </span>
                           </div>
-                          <h3 className="text-base font-bold text-slate-200">
+                          <h3 className="text-sm font-bold text-slate-800">
                             Öğrenci Haftalık Ders Programı Çizelgesi
                           </h3>
                         </div>
 
-                        <div className="text-right text-xs space-y-0.5 bg-slate-950/80 px-3.5 py-1.5 rounded-lg border border-slate-800">
-                          <p className="font-bold text-slate-100 font-mono text-sm">
+                        <div className="text-right text-xs space-y-0.5 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-lg">
+                          <p className="font-bold text-slate-900 font-mono text-xs">
                             {visualizerData.student_name}
                           </p>
-                          <p className="text-slate-400 font-mono text-[11px]">
-                            Öğrenci No: <span className="text-slate-200 font-semibold">{visualizerData.student_id}</span>
+                          <p className="text-slate-600 font-mono text-[11px]">
+                            Öğrenci No: <span className="text-slate-900 font-bold">{visualizerData.student_id}</span>
                           </p>
                           <p className="text-slate-500 text-[10px] font-mono">
                             {visualizerData.term ? `${visualizerData.term} Yarıyılı` : ''} • A4 Format
@@ -2698,16 +2699,16 @@ export default function Home() {
                       </div>
 
                       {/* Resmi Tablo Gövdesi */}
-                      <table className="w-full border-collapse text-xs select-none table-fixed">
+                      <table className="w-full border-collapse text-xs select-none table-fixed border border-slate-300">
                         <thead>
-                          <tr className="border-b border-slate-800 text-slate-400 bg-[#0e1422]">
-                            <th className="p-2 w-20 text-center font-bold text-[11px] border-r border-slate-800 uppercase tracking-wider">
+                          <tr className="border-b border-slate-300 text-slate-700 bg-slate-100">
+                            <th className="p-1.5 w-20 text-center font-bold text-[10.5px] border-r border-slate-300 uppercase tracking-wider">
                               Saat
                             </th>
                             {['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma'].map((day, dIdx) => (
                               <th
                                 key={day}
-                                className={`p-2 text-center font-bold text-[11px] border-r border-slate-800 uppercase tracking-wider text-slate-200 ${
+                                className={`p-1.5 text-center font-bold text-[11px] border-r border-slate-300 uppercase tracking-wider text-slate-800 ${
                                   dIdx === 4 ? 'border-r-0' : ''
                                 }`}
                               >
@@ -2729,25 +2730,25 @@ export default function Home() {
                               return parseInt(parts[0], 10) * 60 + parseInt(parts[1], 10);
                             };
 
-                            // Resmi Mat Ofis Renk Paletleri (Neon içermez, şık kurumsal tonlar)
-                            const OFFICE_PALETTES = [
-                              { bg: 'bg-[#121a2d]', border: 'border-[#243556]', text: 'text-slate-100', accent: 'text-sky-300', badge: 'bg-[#0b101c] text-sky-200 border-[#243556]' },
-                              { bg: 'bg-[#14221c]', border: 'border-[#233f32]', text: 'text-slate-100', accent: 'text-emerald-300', badge: 'bg-[#0d1612] text-emerald-200 border-[#233f32]' },
-                              { bg: 'bg-[#24171d]', border: 'border-[#462330]', text: 'text-slate-100', accent: 'text-rose-300', badge: 'bg-[#180e13] text-rose-200 border-[#462330]' },
-                              { bg: 'bg-[#241e17]', border: 'border-[#463623]', text: 'text-slate-100', accent: 'text-amber-300', badge: 'bg-[#17120d] text-amber-200 border-[#463623]' },
-                              { bg: 'bg-[#122325]', border: 'border-[#1e4145]', text: 'text-slate-100', accent: 'text-teal-300', badge: 'bg-[#0b1718] text-teal-200 border-[#1e4145]' },
-                              { bg: 'bg-[#1c222c]', border: 'border-[#333d4e]', text: 'text-slate-100', accent: 'text-blue-200', badge: 'bg-[#11141b] text-blue-100 border-[#333d4e]' },
-                              { bg: 'bg-[#1f1929]', border: 'border-[#3b2b4d]', text: 'text-slate-100', accent: 'text-purple-300', badge: 'bg-[#140f1a] text-purple-200 border-[#3b2b4d]' },
-                              { bg: 'bg-[#1f2124]', border: 'border-[#383c42]', text: 'text-slate-100', accent: 'text-stone-300', badge: 'bg-[#131416] text-stone-200 border-[#383c42]' },
+                            // Sade, Kurumsal ve Baskıya Uygun Ofis Renk Paletleri (Açık Kağıt Üzerinde)
+                            const CLEAN_OFFICE_PALETTES = [
+                              { bg: 'bg-blue-50/90', border: 'border-blue-200/90', text: 'text-blue-950', accent: 'text-blue-700', badge: 'bg-white text-blue-800 border-blue-200' },
+                              { bg: 'bg-emerald-50/90', border: 'border-emerald-200/90', text: 'text-emerald-950', accent: 'text-emerald-800', badge: 'bg-white text-emerald-800 border-emerald-200' },
+                              { bg: 'bg-rose-50/90', border: 'border-rose-200/90', text: 'text-rose-950', accent: 'text-rose-800', badge: 'bg-white text-rose-800 border-rose-200' },
+                              { bg: 'bg-amber-50/90', border: 'border-amber-200/90', text: 'text-amber-950', accent: 'text-amber-800', badge: 'bg-white text-amber-800 border-amber-200' },
+                              { bg: 'bg-teal-50/90', border: 'border-teal-200/90', text: 'text-teal-950', accent: 'text-teal-800', badge: 'bg-white text-teal-800 border-teal-200' },
+                              { bg: 'bg-slate-100', border: 'border-slate-300', text: 'text-slate-900', accent: 'text-slate-800', badge: 'bg-white text-slate-800 border-slate-300' },
+                              { bg: 'bg-purple-50/90', border: 'border-purple-200/90', text: 'text-purple-950', accent: 'text-purple-800', badge: 'bg-white text-purple-800 border-purple-200' },
+                              { bg: 'bg-stone-100', border: 'border-stone-300', text: 'text-stone-900', accent: 'text-stone-800', badge: 'bg-white text-stone-800 border-stone-300' },
                             ];
 
                             const getCourseColor = (code: string) => {
                               const codes = (visualizerData.courses_summary || []).map((c: any) => c.code);
                               const idx = codes.indexOf(code);
-                              if (idx !== -1) return OFFICE_PALETTES[idx % OFFICE_PALETTES.length];
+                              if (idx !== -1) return CLEAN_OFFICE_PALETTES[idx % CLEAN_OFFICE_PALETTES.length];
                               let hash = 0;
                               for (let i = 0; i < code.length; i++) hash = code.charCodeAt(i) + ((hash << 5) - hash);
-                              return OFFICE_PALETTES[Math.abs(hash) % OFFICE_PALETTES.length];
+                              return CLEAN_OFFICE_PALETTES[Math.abs(hash) % CLEAN_OFFICE_PALETTES.length];
                             };
 
                             const grid: Record<string, Record<number, any>> = {};
@@ -2776,8 +2777,8 @@ export default function Home() {
                               const hourLabel = `${hour} - ${nextHour}`;
 
                               return (
-                                <tr key={hour} className="border-b border-slate-800/60 h-[50px]">
-                                  <td className="p-1.5 border-r border-slate-800 text-center font-mono text-[10px] text-slate-400 bg-[#0e1422] align-middle whitespace-nowrap">
+                                <tr key={hour} className="border-b border-slate-300 h-[37px]">
+                                  <td className="p-1 border-r border-slate-300 text-center font-mono text-[9.5px] text-slate-600 bg-slate-50 align-middle whitespace-nowrap">
                                     {hourLabel}
                                   </td>
 
@@ -2791,7 +2792,7 @@ export default function Home() {
                                       return (
                                         <td
                                           key={day}
-                                          className={`p-1 border-r border-slate-800/60 h-[50px] align-top ${
+                                          className={`p-0.5 border-r border-slate-300 h-[37px] align-top ${
                                             isLastCol ? 'border-r-0' : ''
                                           }`}
                                         />
@@ -2816,38 +2817,38 @@ export default function Home() {
                                       <td
                                         key={day}
                                         rowSpan={span}
-                                        style={{ height: `${span * 50}px` }}
-                                        className={`p-1 border-r border-slate-800/60 align-top h-full ${
+                                        style={{ height: `${span * 37}px` }}
+                                        className={`p-0.5 border-r border-slate-300 align-top h-full ${
                                           isLastCol ? 'border-r-0' : ''
                                         }`}
                                       >
-                                        <div className={`h-full w-full p-2 rounded-lg border ${palette.bg} ${palette.border} flex flex-col justify-between space-y-1 transition-all`}>
+                                        <div className={`h-full w-full p-1.5 rounded border ${palette.bg} ${palette.border} flex flex-col justify-between space-y-0.5 transition-all shadow-xs`}>
                                           <div className="space-y-0.5">
                                             {/* Başlık ve Şube / Derslik Bilgisi */}
                                             <div className="flex items-center justify-between gap-1 min-w-0">
-                                              <span className={`font-mono font-bold text-xs whitespace-nowrap ${palette.accent}`}>
+                                              <span className={`font-mono font-bold text-[11px] whitespace-nowrap ${palette.accent}`}>
                                                 {it.code} {it.section ? `(Şb. ${it.section})` : ''}
                                               </span>
 
-                                              <span className={`text-[9.5px] font-mono px-1.5 py-0.5 rounded border whitespace-nowrap shrink-0 ${palette.badge}`}>
+                                              <span className={`text-[8.5px] font-mono px-1 py-0.2 rounded border whitespace-nowrap shrink-0 shadow-2xs font-semibold ${palette.badge}`}>
                                                 {it.is_lab ? `LAB (${it.classroom})` : it.classroom || 'Derslik'}
                                               </span>
                                             </div>
 
                                             {/* Ders Adı */}
-                                            <h4 className={`text-[10.5px] font-semibold ${palette.text} leading-tight line-clamp-2`}>
+                                            <h4 className={`text-[10px] font-semibold ${palette.text} leading-tight line-clamp-2`}>
                                               {it.name}
                                             </h4>
                                           </div>
 
                                           {/* Alt Bilgi: Öğretim Elemanı ve Saat */}
-                                          <div className="pt-1 border-t border-slate-800/80 space-y-0.5 text-[9.5px] text-slate-400">
+                                          <div className="pt-0.5 border-t border-slate-200/80 space-y-0 text-[8.5px] text-slate-600">
                                             {fullInst && (
-                                              <p className="truncate text-slate-300 font-medium" title={fullInst}>
+                                              <p className="truncate font-medium" title={fullInst}>
                                                 {fullInst}
                                               </p>
                                             )}
-                                            <p className="font-mono text-slate-500 text-[9px]">
+                                            <p className="font-mono text-slate-500 text-[8px]">
                                               {it.start_time} - {it.end_time}
                                             </p>
                                           </div>
@@ -2863,9 +2864,9 @@ export default function Home() {
                       </table>
 
                       {/* Resmi A4 Belge Altlığı */}
-                      <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between text-[10px] text-slate-500 font-mono">
+                      <div className="pt-1.5 border-t border-slate-300 flex items-center justify-between text-[9px] text-slate-500 font-mono">
                         <div className="flex items-center gap-2">
-                          <span>YTÜ OBS/USIS Haftalık Ders Programı Çizelgesi</span>
+                          <span>Yıldız Teknik Üniversitesi • Haftalık Ders Programı Çizelgesi (OBS/USIS)</span>
                           <span>•</span>
                           <span>A4 Standart Formatı</span>
                         </div>
@@ -3320,7 +3321,7 @@ export default function Home() {
       )}
 
       {/* Footer */}
-      <footer className="border-t border-slate-800 py-4 text-center text-xs text-slate-500 bg-slate-950">
+      <footer className="border-t border-slate-800 py-4 text-center text-xs text-slate-500 bg-slate-950 no-print">
         YTÜ Ders Seçimi & Program Oluşturucu © 2026 - Yıldız Technical University
       </footer>
     </div>
