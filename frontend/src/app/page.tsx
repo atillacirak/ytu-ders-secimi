@@ -249,8 +249,7 @@ export default function Home() {
         }
       });
       const link = document.createElement('a');
-      const studentNameClean = (visualizerData?.student_name || 'Ogrenci').replace(/[^a-zA-Z0-9çğıöşüÇĞİÖŞÜ_]/g, '_');
-      link.download = `YTU_A4_Ders_Programi_${studentNameClean}_${new Date().toISOString().slice(0, 10)}.png`;
+      link.download = `YTU_A4_Ders_Programi_${new Date().toISOString().slice(0, 10)}.png`;
       link.href = dataUrl;
       link.click();
     } catch (err) {
@@ -2533,24 +2532,17 @@ export default function Home() {
                 {/* Üst Yönetim Paneli */}
                 <div className="bg-white border border-slate-200 rounded-xl p-4 sm:p-5 shadow-xs space-y-4 no-print text-slate-900">
                   <div className="flex flex-wrap items-center justify-between gap-4">
-                    {/* Öğrenci Resmi Bilgi Alanı */}
+                    {/* Program Başlık Alanı */}
                     <div className="flex items-center space-x-3.5">
                       <div className="w-10 h-10 bg-slate-100 border border-slate-200 rounded-lg flex items-center justify-center text-[#002855] font-bold text-base shadow-2xs">
-                        <GraduationCap className="w-5 h-5 text-[#002855]" />
+                        <Calendar className="w-5 h-5 text-[#002855]" />
                       </div>
                       <div>
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <h2 className="text-sm sm:text-base font-bold text-slate-900">
-                            {visualizerData.student_name || 'Öğrenci Ders Programı'}
-                          </h2>
-                          {visualizerData.student_id && (
-                            <span className="font-mono text-xs font-bold px-2 py-0.5 bg-slate-100 border border-slate-200 text-slate-700 rounded-md">
-                              No: {visualizerData.student_id}
-                            </span>
-                          )}
-                        </div>
+                        <h2 className="text-sm sm:text-base font-bold text-slate-900">
+                          Haftalık Ders Programı
+                        </h2>
                         <p className="text-xs text-slate-500 font-medium mt-0.5">
-                          {visualizerData.term ? `${visualizerData.term} Öğretim Yarıyılı` : 'Haftalık Ders Programı'}
+                          {visualizerData.term ? `${visualizerData.term} Öğretim Yarıyılı` : 'Görsel Çizelge'}
                         </p>
                       </div>
                     </div>
@@ -2695,19 +2687,13 @@ export default function Home() {
                           </h3>
                         </div>
 
-                        <div className="text-right text-xs space-y-0.5 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-lg">
-                          <p className="font-bold text-slate-900 font-mono text-xs">
-                            {visualizerData.student_name}
-                          </p>
-                          <p className="text-slate-600 font-mono text-[11px]">
-                            Öğrenci No: <span className="text-slate-900 font-bold">{visualizerData.student_id}</span>
-                          </p>
-                          {visualizerData.term && (
-                            <p className="text-slate-500 text-[10px] font-mono">
+                        {visualizerData.term && (
+                          <div className="text-right text-xs bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-lg">
+                            <p className="text-slate-700 text-[11px] font-mono font-semibold">
                               {visualizerData.term} Yarıyılı
                             </p>
-                          )}
-                        </div>
+                          </div>
+                        )}
                       </div>
 
                       {/* Resmi Tablo Gövdesi */}
