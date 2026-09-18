@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "YTÜ Öğrenci Ders Programı Çizelgesi | Yıldız Teknik Üniversitesi",
-  description: "Yıldız Teknik Üniversitesi Öğrenci Bilgi Sistemi (OBS / USIS) haftalık ders programı çizelgeleme ve A4 çıktı servisi.",
+  description: "Yıldız Teknik Üniversitesi Öğrenci Bilgi Sistemi (OBS) haftalık ders programı çizelgeleme ve A4 çıktı servisi.",
   icons: {
     icon: "/favicon.svg",
   },

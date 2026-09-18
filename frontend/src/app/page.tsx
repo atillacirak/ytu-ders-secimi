@@ -960,7 +960,7 @@ export default function Home() {
                   YILDIZ TEKNİK ÜNİVERSİTESİ
                 </h1>
                 <span className="hidden sm:inline-block px-2 py-0.5 bg-slate-100 border border-slate-200 text-slate-700 text-[11px] font-mono rounded font-semibold">
-                  OBS / USIS
+                  OBS
                 </span>
               </div>
               <p className="text-xs text-slate-500 font-medium">
@@ -2388,11 +2388,11 @@ export default function Home() {
             {!visualizerData ? (
               /* Henüz Belge Yüklenmedi -> Resmi Doküman Yükleme Alanı */
               <div className="space-y-6">
-                <div className="bg-white border border-slate-200 rounded-xl p-6 sm:p-8 shadow-xs relative overflow-hidden">
-                  <div className="max-w-3xl space-y-3 relative z-10">
+                <div className="bg-white border border-slate-200 rounded-xl p-6 sm:p-8 shadow-xs relative overflow-hidden space-y-4">
+                  <div className="max-w-3xl space-y-2 relative z-10">
                     <div className="inline-flex items-center gap-2 px-3 py-1 bg-slate-50 border border-slate-200 rounded-lg text-slate-700 text-xs font-semibold">
                       <GraduationCap className="w-4 h-4 text-amber-500" />
-                      <span>Yıldız Teknik Üniversitesi — Öğrenci Bilgi Sistemi (OBS / USIS)</span>
+                      <span>Yıldız Teknik Üniversitesi — Öğrenci Bilgi Sistemi (OBS)</span>
                     </div>
 
                     <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
@@ -2400,8 +2400,30 @@ export default function Home() {
                     </h2>
 
                     <p className="text-sm text-slate-600 leading-relaxed">
-                      OBS / USIS sistemi üzerinden temin ettiğiniz resmi <span className="font-mono text-slate-800 font-semibold bg-slate-100 px-2 py-0.5 rounded border border-slate-200">Report.pdf</span> (Öğrenci Ders Programı) belgesini sisteme yükleyiniz. Belgedeki ders kodları, şube numaraları, teori ve laboratuvar derslikleri ile öğretim elemanları otomatik olarak çözümlenerek resmi A4 haftalık akademik çizelge formatında görselleştirilecektir.
+                      OBS sistemi üzerinden temin ettiğiniz resmi <span className="font-mono text-slate-800 font-semibold bg-slate-100 px-2 py-0.5 rounded border border-slate-200">Report.pdf</span> (Öğrenci Ders Programı) belgesini sisteme yükleyiniz. Belgedeki ders kodları, şube numaraları, teori ve laboratuvar derslikleri ile öğretim elemanları otomatik olarak çözümlenerek resmi A4 haftalık akademik çizelge formatında görselleştirilecektir.
                     </p>
+                  </div>
+
+                  {/* OBS Belge Alma Talimatı */}
+                  <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-2.5 text-left">
+                    <div className="flex items-center gap-2 text-xs font-bold text-slate-800">
+                      <FileText className="w-4 h-4 text-[#002855]" />
+                      <span>OBS Üzerinden Ders Programı PDF'i Nasıl Alınır?</span>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-1">
+                      <div className="flex items-start gap-2.5 text-xs text-slate-600 bg-white p-3 rounded-lg border border-slate-200">
+                        <span className="w-5 h-5 rounded-full bg-[#002855] text-white flex items-center justify-center font-bold text-[11px] shrink-0 mt-0.5">1</span>
+                        <span><strong>OBS</strong> sistemine giriş yapınız ve <strong>Ders Programı</strong> ekranını açınız.</span>
+                      </div>
+                      <div className="flex items-start gap-2.5 text-xs text-slate-600 bg-white p-3 rounded-lg border border-slate-200">
+                        <span className="w-5 h-5 rounded-full bg-[#002855] text-white flex items-center justify-center font-bold text-[11px] shrink-0 mt-0.5">2</span>
+                        <span>Sayfadaki <strong>"Yazdır"</strong> butonunu seçip açılan ekranda <strong>"Save / Kaydet"</strong> tuşuna basarak PDF belgesini indiriniz.</span>
+                      </div>
+                      <div className="flex items-start gap-2.5 text-xs text-slate-600 bg-white p-3 rounded-lg border border-slate-200">
+                        <span className="w-5 h-5 rounded-full bg-[#002855] text-white flex items-center justify-center font-bold text-[11px] shrink-0 mt-0.5">3</span>
+                        <span>İndirdiğiniz bu <strong>Report.pdf</strong> dosyasını aşağıdaki alana yükleyiniz.</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
@@ -2816,7 +2838,7 @@ export default function Home() {
                       {/* Resmi A4 Belge Altlığı */}
                       <div className="pt-1.5 border-t border-slate-300 flex items-center justify-between text-[9px] text-slate-500 font-mono">
                         <div className="flex items-center gap-2">
-                          <span>Yıldız Teknik Üniversitesi • Haftalık Ders Programı Çizelgesi (OBS/USIS)</span>
+                          <span>Yıldız Teknik Üniversitesi • Haftalık Ders Programı Çizelgesi (OBS)</span>
                           <span>•</span>
                           <span>A4 Standart Formatı</span>
                         </div>
@@ -3277,7 +3299,7 @@ export default function Home() {
             T.C. Yıldız Teknik Üniversitesi — Öğrenci Ders Programı Belge Çözümleme Portalı
           </p>
           <p className="text-[11px] text-slate-400">
-            OBS / USIS sistemi üzerinden temin edilen resmi Report.pdf formatıyla tam uyumludur. A4 standartlarına göre çıktı üretir.
+            OBS sistemi üzerinden temin edilen resmi Report.pdf formatıyla tam uyumludur. A4 standartlarına göre çıktı üretir.
           </p>
         </div>
       </footer>
