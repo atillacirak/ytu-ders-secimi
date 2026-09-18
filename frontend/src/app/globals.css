@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 :root {
-  --background: #020617;
-  --foreground: #f8fafc;
+  --background: #f8fafc;
+  --foreground: #0f172a;
 }
 
 @theme inline {
@@ -19,31 +19,29 @@ body {
   overflow-x: hidden;
 }
 
-/* Custom Modern Ultra-Sleek Scrollbars */
+/* Institutional Clean Scrollbars */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #090d16;
-  border-radius: 9999px;
+  background: #f1f5f9;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, #4f46e5 0%, #0284c7 100%);
-  border-radius: 9999px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: #cbd5e1;
+  border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(180deg, #6366f1 0%, #38bdf8 100%);
+  background: #94a3b8;
 }
 
 /* Firefox Scrollbar */
 * {
   scrollbar-width: thin;
-  scrollbar-color: #4f46e5 #090d16;
+  scrollbar-color: #cbd5e1 #f1f5f9;
 }
 
 /* A4 Print Styles */

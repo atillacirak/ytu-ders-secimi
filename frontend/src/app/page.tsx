@@ -112,7 +112,7 @@ const TIME_SLOTS = [
 export default function Home() {
   const [isMounted, setIsMounted] = useState(false);
 
-  const [activeTab, setActiveTab] = useState<'intibak' | 'management' | 'selection' | 'schedule' | 'visualizer'>('selection');
+  const [activeTab, setActiveTab] = useState<'intibak' | 'management' | 'selection' | 'schedule' | 'visualizer'>('visualizer');
   const [courseCategoryTab, setCourseCategoryTab] = useState<'mandatory' | 'dept_elective' | 'social_elective' | 'curriculum'>('mandatory');
   const [selectedFaculty, setSelectedFaculty] = useState<string>('EEF');
   const [selectedDept, setSelectedDept] = useState<string>('BLM');
@@ -946,129 +946,48 @@ export default function Home() {
 
 
   return (
-    <div className={`min-h-screen flex flex-col font-sans transition-colors duration-200 ${
-      activeTab === 'visualizer' ? 'bg-white text-slate-900' : 'bg-slate-950 text-slate-100'
-    }`}>
-      {/* Top Header */}
-      <header className={`border-b sticky top-0 z-50 no-print transition-colors duration-200 ${
-        activeTab === 'visualizer'
-          ? 'bg-white/95 border-slate-200 text-slate-900 shadow-xs backdrop-blur'
-          : 'border-slate-800 bg-slate-900/80 backdrop-blur text-slate-100'
-      }`}>
-        <div className="max-w-7xl mx-auto px-4 py-4 flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center space-x-3">
-            <div className={`p-2.5 rounded-xl shadow-lg ${
-              activeTab === 'visualizer' ? 'bg-slate-900 shadow-slate-900/10' : 'bg-indigo-600 shadow-indigo-600/30'
-            }`}>
-              <BookOpen className="w-6 h-6 text-white" />
+    <div className="min-h-screen flex flex-col font-sans bg-slate-100/80 text-slate-900 transition-colors duration-200">
+      {/* Top Header — Kurumsal YTÜ Portalı */}
+      <header className="border-b border-slate-200 bg-white sticky top-0 z-50 no-print shadow-xs">
+        <div className="max-w-7xl mx-auto px-4 py-3.5 flex flex-wrap items-center justify-between gap-4">
+          <div className="flex items-center space-x-3.5">
+            <div className="w-10 h-10 rounded-lg bg-[#002855] flex items-center justify-center text-white shadow-xs">
+              <GraduationCap className="w-5 h-5 text-amber-400" />
             </div>
             <div>
-              <h1 className={`text-xl font-bold ${
-                activeTab === 'visualizer'
-                  ? 'text-slate-900'
-                  : 'bg-gradient-to-r from-indigo-400 to-cyan-400 bg-clip-text text-transparent'
-              }`}>
-                YTÜ Ders Seçimi & Program Oluşturucu
-              </h1>
-              <p className={`text-xs ${activeTab === 'visualizer' ? 'text-slate-500' : 'text-slate-400'}`}>
-                Yıldız Technical University Schedule Builder
+              <div className="flex items-center gap-2">
+                <h1 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight">
+                  YILDIZ TEKNİK ÜNİVERSİTESİ
+                </h1>
+                <span className="hidden sm:inline-block px-2 py-0.5 bg-slate-100 border border-slate-200 text-slate-700 text-[11px] font-mono rounded font-semibold">
+                  OBS / USIS
+                </span>
+              </div>
+              <p className="text-xs text-slate-500 font-medium">
+                Öğrenci Haftalık Ders Programı Çizelgesi Portalı
               </p>
             </div>
           </div>
 
-          {/* Top Stage Tabs Navigation */}
-          <div className={`flex p-1.5 rounded-xl border gap-1 flex-wrap ${
-            activeTab === 'visualizer'
-              ? 'bg-slate-100 border-slate-200'
-              : 'bg-slate-800/80 border-slate-700'
-          }`}>
-            <button
-              onClick={() => setActiveTab('intibak')}
-              className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                activeTab === 'intibak'
-                  ? 'bg-rose-700 text-white shadow-md'
-                  : activeTab === 'visualizer'
-                  ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/70'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700/50'
-              }`}
-            >
-              <Shuffle className="w-4 h-4" />
-              <span>İntibak Dersleri</span>
-              {excludedCourses.length > 0 && (
-                <span className="ml-1 px-2 py-0.5 text-xs bg-rose-500/30 rounded-full text-rose-300">
-                  {excludedCourses.length}
-                </span>
-              )}
-            </button>
+          {/* Kurumsal Bilgi & Durum Alanı */}
+          <div className="flex items-center gap-3">
+            <div className="hidden sm:flex items-center gap-2 text-xs font-medium text-slate-600 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-lg">
+              <Building2 className="w-4 h-4 text-slate-500" />
+              <span>Öğrenci İşleri Daire Başkanlığı</span>
+            </div>
 
-            <button
-              onClick={() => setActiveTab('management')}
-              className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                activeTab === 'management'
-                  ? 'bg-amber-600 text-white shadow-md'
-                  : activeTab === 'visualizer'
-                  ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/70'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700/50'
-              }`}
-            >
-              <Sparkles className="w-4 h-4" />
-              <span>Ders Ekle & Düzenle</span>
-            </button>
-
-            <div className={`w-px self-stretch mx-0.5 ${activeTab === 'visualizer' ? 'bg-slate-300' : 'bg-slate-700'}`} />
-
-            <button
-              onClick={() => setActiveTab('selection')}
-              className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                activeTab === 'selection'
-                  ? 'bg-indigo-600 text-white shadow-md'
-                  : activeTab === 'visualizer'
-                  ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/70'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700/50'
-              }`}
-            >
-              <Layers className="w-4 h-4" />
-              <span>1. Aşama: Bölüm & Ders Seçimi</span>
-            </button>
-            <button
-              onClick={() => setActiveTab('schedule')}
-              className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                activeTab === 'schedule'
-                  ? 'bg-indigo-600 text-white shadow-md'
-                  : activeTab === 'visualizer'
-                  ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/70'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700/50'
-              }`}
-            >
-              <Calendar className="w-4 h-4" />
-              <span>2. Aşama: Haftalık Çizelge</span>
-              {selectedCourses.length > 0 && (
-                <span className="ml-1 px-2 py-0.5 text-xs bg-indigo-500/30 rounded-full text-indigo-300">
-                  {selectedCourses.length}
-                </span>
-              )}
-            </button>
-
-            <div className={`w-px self-stretch mx-0.5 ${activeTab === 'visualizer' ? 'bg-slate-300' : 'bg-slate-700'}`} />
-
-            <button
-              onClick={() => setActiveTab('visualizer')}
-              className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                activeTab === 'visualizer'
-                  ? 'bg-slate-900 text-white shadow-md'
-                  : 'text-emerald-400 hover:text-emerald-200 hover:bg-emerald-950/40 border border-emerald-800/40'
-              }`}
-            >
-              <FileText className="w-4 h-4" />
-              <span>PDF Program Görselleştir</span>
-              {visualizerData && (
-                <span className={`ml-1 px-2 py-0.5 text-xs rounded-full ${
-                  activeTab === 'visualizer' ? 'bg-slate-800 text-slate-200' : 'bg-emerald-500/30 text-emerald-300'
-                }`}>
-                  {visualizerData.courses_summary?.length || 0}
-                </span>
-              )}
-            </button>
+            {visualizerData && (
+              <label className="flex items-center space-x-1.5 px-3.5 py-1.5 bg-[#002855] hover:bg-[#001f42] text-white text-xs font-semibold rounded-lg shadow-xs transition-all cursor-pointer">
+                <Upload className="w-3.5 h-3.5" />
+                <span>Yeni Belge Yükle</span>
+                <input
+                  type="file"
+                  accept=".pdf"
+                  onChange={handleVisualizerPdfUpload}
+                  className="hidden"
+                />
+              </label>
+            )}
           </div>
         </div>
       </header>
@@ -2469,25 +2388,25 @@ export default function Home() {
             {!visualizerData ? (
               /* Henüz Belge Yüklenmedi -> Resmi Doküman Yükleme Alanı */
               <div className="space-y-6">
-                <div className="bg-white border border-slate-200 rounded-2xl p-8 shadow-sm relative overflow-hidden">
+                <div className="bg-white border border-slate-200 rounded-xl p-6 sm:p-8 shadow-xs relative overflow-hidden">
                   <div className="max-w-3xl space-y-3 relative z-10">
-                    <div className="inline-flex items-center gap-2 px-3 py-1 bg-slate-100 border border-slate-200 rounded-lg text-slate-700 text-xs font-semibold">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 bg-slate-50 border border-slate-200 rounded-lg text-slate-700 text-xs font-semibold">
                       <GraduationCap className="w-4 h-4 text-amber-500" />
-                      <span>Yıldız Teknik Üniversitesi — Öğrenci Ders Programı Sistemi</span>
+                      <span>Yıldız Teknik Üniversitesi — Öğrenci Bilgi Sistemi (OBS / USIS)</span>
                     </div>
 
-                    <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
-                      Öğrenci Haftalık Ders Programı <span className="text-indigo-600">Çizelgesi</span>
+                    <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
+                      Öğrenci Haftalık Ders Programı <span className="text-[#002855]">Çizelgesi</span>
                     </h2>
 
                     <p className="text-sm text-slate-600 leading-relaxed">
-                      OBS / USIS sistemi üzerinden temin ettiğiniz resmi <span className="font-mono text-slate-800 font-semibold bg-slate-100 px-2 py-0.5 rounded border border-slate-200">Report.pdf</span> (Öğrenci Ders Programı) belgesini sisteme yükleyiniz. Belgedeki ders kodları, şube numaraları, teori ve laboratuvar derslikleri ile öğretim elemanları otomatik olarak çözümlenerek haftalık akademik çizelge formatında görselleştirilecektir.
+                      OBS / USIS sistemi üzerinden temin ettiğiniz resmi <span className="font-mono text-slate-800 font-semibold bg-slate-100 px-2 py-0.5 rounded border border-slate-200">Report.pdf</span> (Öğrenci Ders Programı) belgesini sisteme yükleyiniz. Belgedeki ders kodları, şube numaraları, teori ve laboratuvar derslikleri ile öğretim elemanları otomatik olarak çözümlenerek resmi A4 haftalık akademik çizelge formatında görselleştirilecektir.
                     </p>
                   </div>
                 </div>
 
                 {/* Yükleme Alanı */}
-                <div className="bg-white border border-slate-200 rounded-2xl p-8 shadow-sm text-center space-y-6">
+                <div className="bg-white border border-slate-200 rounded-xl p-6 sm:p-8 shadow-xs text-center space-y-6">
                   {visualizerError && (
                     <div className="flex items-center gap-3 p-4 bg-rose-50 border border-rose-200 rounded-xl text-rose-800 text-sm max-w-xl mx-auto text-left">
                       <AlertCircle className="w-5 h-5 text-rose-600 flex-shrink-0" />
@@ -2498,10 +2417,10 @@ export default function Home() {
                     </div>
                   )}
 
-                  <label className={`block border-2 border-dashed rounded-2xl p-10 transition-all cursor-pointer max-w-2xl mx-auto ${
+                  <label className={`block border-2 border-dashed rounded-xl p-10 transition-all cursor-pointer max-w-2xl mx-auto ${
                     visualizerPdfUploading
-                      ? 'border-indigo-500 bg-indigo-50/50'
-                      : 'border-slate-300 hover:border-slate-400 bg-slate-50 hover:bg-slate-100/70'
+                      ? 'border-[#002855] bg-blue-50/40'
+                      : 'border-slate-300 hover:border-[#002855] bg-slate-50/70 hover:bg-slate-100/70'
                   }`}>
                     <input
                       type="file"
@@ -2513,15 +2432,15 @@ export default function Home() {
 
                     {visualizerPdfUploading ? (
                       <div className="py-8 flex flex-col items-center justify-center space-y-3">
-                        <RefreshCw className="w-9 h-9 text-indigo-600 animate-spin" />
+                        <RefreshCw className="w-8 h-8 text-[#002855] animate-spin" />
                         <div className="space-y-1">
                           <p className="text-sm font-bold text-slate-800">Belge Analiz Ediliyor...</p>
-                          <p className="text-xs text-slate-500">Ders programı kayıtları, derslikler ve öğretim üyeleri eşleştirilmektedir</p>
+                          <p className="text-xs text-slate-500">Ders kayıtları, derslikler ve öğretim üyeleri eşleştirilmektedir</p>
                         </div>
                       </div>
                     ) : (
                       <div className="space-y-4">
-                        <div className="w-14 h-14 bg-slate-100 border border-slate-200 rounded-xl flex items-center justify-center mx-auto text-slate-600 shadow-sm">
+                        <div className="w-14 h-14 bg-slate-100 border border-slate-200 rounded-xl flex items-center justify-center mx-auto text-[#002855] shadow-xs">
                           <FileText className="w-7 h-7" />
                         </div>
                         <div className="space-y-1">
@@ -2533,7 +2452,7 @@ export default function Home() {
                           </p>
                         </div>
                         <div className="pt-2">
-                          <span className="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-xl shadow-sm transition-all">
+                          <span className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#002855] hover:bg-[#001f42] text-white text-xs font-semibold rounded-lg shadow-xs transition-all">
                             <Upload className="w-4 h-4" />
                             <span>PDF Belgesi Yükle</span>
                           </span>
@@ -2546,7 +2465,7 @@ export default function Home() {
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-3xl mx-auto pt-2">
                     <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 text-left space-y-1">
                       <div className="text-slate-800 font-bold text-xs flex items-center gap-1.5">
-                        <Calendar className="w-4 h-4 text-indigo-600" />
+                        <Calendar className="w-4 h-4 text-[#002855]" />
                         Haftalık Akademik Çizelge
                       </div>
                       <p className="text-[11px] text-slate-500">Ders saatleri bloklar halinde haftalık resmi şablona yerleştirilir.</p>
@@ -2554,7 +2473,7 @@ export default function Home() {
 
                     <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 text-left space-y-1">
                       <div className="text-slate-800 font-bold text-xs flex items-center gap-1.5">
-                        <Building2 className="w-4 h-4 text-indigo-600" />
+                        <Building2 className="w-4 h-4 text-[#002855]" />
                         Derslik ve Laboratuvarlar
                       </div>
                       <p className="text-[11px] text-slate-500">Teorik derslikler ve LAB ortamları açık ve net şekilde belirtilir.</p>
@@ -2562,7 +2481,7 @@ export default function Home() {
 
                     <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 text-left space-y-1">
                       <div className="text-slate-800 font-bold text-xs flex items-center gap-1.5">
-                        <User className="w-4 h-4 text-indigo-600" />
+                        <User className="w-4 h-4 text-[#002855]" />
                         Öğretim Elemanları
                       </div>
                       <p className="text-[11px] text-slate-500">Dersi veren öğretim üyelerinin unvan ve isimleri eksiksiz gösterilir.</p>
@@ -2574,16 +2493,16 @@ export default function Home() {
               /* Belge Yüklendi -> Resmi Çizelge Görünümü */
               <div className="space-y-6">
                 {/* Üst Yönetim Paneli */}
-                <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-4 no-print text-slate-900">
+                <div className="bg-white border border-slate-200 rounded-xl p-4 sm:p-5 shadow-xs space-y-4 no-print text-slate-900">
                   <div className="flex flex-wrap items-center justify-between gap-4">
                     {/* Öğrenci Resmi Bilgi Alanı */}
                     <div className="flex items-center space-x-3.5">
-                      <div className="w-11 h-11 bg-slate-100 border border-slate-200 rounded-xl flex items-center justify-center text-slate-700 font-bold text-base shadow-sm">
-                        <GraduationCap className="w-6 h-6 text-indigo-600" />
+                      <div className="w-10 h-10 bg-slate-100 border border-slate-200 rounded-lg flex items-center justify-center text-[#002855] font-bold text-base shadow-2xs">
+                        <GraduationCap className="w-5 h-5 text-[#002855]" />
                       </div>
                       <div>
                         <div className="flex items-center gap-2 flex-wrap">
-                          <h2 className="text-base font-bold text-slate-900">
+                          <h2 className="text-sm sm:text-base font-bold text-slate-900">
                             {visualizerData.student_name || 'Öğrenci Ders Programı'}
                           </h2>
                           {visualizerData.student_id && (
@@ -2601,12 +2520,12 @@ export default function Home() {
                     {/* Eylem Butonları */}
                     <div className="flex items-center gap-2 flex-wrap">
                       {/* Görünüm Seçici */}
-                      <div className="bg-slate-100 p-1 rounded-xl border border-slate-200 flex items-center gap-1">
+                      <div className="bg-slate-100 p-1 rounded-lg border border-slate-200 flex items-center gap-1">
                         <button
                           onClick={() => setVisualizerViewMode('table')}
-                          className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                          className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer ${
                             visualizerViewMode === 'table'
-                              ? 'bg-slate-900 text-white shadow-sm'
+                              ? 'bg-[#002855] text-white shadow-2xs'
                               : 'text-slate-600 hover:text-slate-900'
                           }`}
                         >
@@ -2615,9 +2534,9 @@ export default function Home() {
                         </button>
                         <button
                           onClick={() => setVisualizerViewMode('cards')}
-                          className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                          className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer ${
                             visualizerViewMode === 'cards'
-                              ? 'bg-slate-900 text-white shadow-sm'
+                              ? 'bg-[#002855] text-white shadow-2xs'
                               : 'text-slate-600 hover:text-slate-900'
                           }`}
                         >
@@ -2626,9 +2545,9 @@ export default function Home() {
                         </button>
                         <button
                           onClick={() => setVisualizerViewMode('summary')}
-                          className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                          className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer ${
                             visualizerViewMode === 'summary'
-                              ? 'bg-slate-900 text-white shadow-sm'
+                              ? 'bg-[#002855] text-white shadow-2xs'
                               : 'text-slate-600 hover:text-slate-900'
                           }`}
                         >
@@ -2639,22 +2558,22 @@ export default function Home() {
 
                       <button
                         onClick={handleExportVisualizerPNG}
-                        className="flex items-center space-x-1.5 px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-xl shadow transition-all cursor-pointer"
+                        className="flex items-center space-x-1.5 px-3.5 py-1.5 bg-[#002855] hover:bg-[#001f42] text-white text-xs font-semibold rounded-lg shadow-2xs transition-all cursor-pointer"
                       >
                         <Download className="w-3.5 h-3.5" />
-                        <span>PNG Olarak Kaydet</span>
+                        <span>PNG Kaydet</span>
                       </button>
 
                       <button
                         onClick={() => window.print()}
-                        className="flex items-center space-x-1.5 px-3 py-2 bg-white hover:bg-slate-100 text-slate-700 text-xs font-medium rounded-xl border border-slate-300 transition-all cursor-pointer shadow-xs"
+                        className="flex items-center space-x-1.5 px-3 py-1.5 bg-white hover:bg-slate-50 text-slate-700 text-xs font-medium rounded-lg border border-slate-300 transition-all cursor-pointer shadow-2xs"
                         title="Yazdır"
                       >
                         <Printer className="w-3.5 h-3.5" />
                         <span>Yazdır</span>
                       </button>
 
-                      <label className="flex items-center space-x-1.5 px-3 py-2 bg-white hover:bg-slate-100 text-slate-700 text-xs font-medium rounded-xl border border-slate-300 transition-all cursor-pointer shadow-xs">
+                      <label className="flex items-center space-x-1.5 px-3 py-1.5 bg-white hover:bg-slate-50 text-slate-700 text-xs font-medium rounded-lg border border-slate-300 transition-all cursor-pointer shadow-2xs">
                         <Upload className="w-3.5 h-3.5 text-slate-500" />
                         <span>Yeni Belge</span>
                         <input
@@ -3352,8 +3271,15 @@ export default function Home() {
       )}
 
       {/* Footer */}
-      <footer className="border-t border-slate-800 py-4 text-center text-xs text-slate-500 bg-slate-950 no-print">
-        YTÜ Ders Seçimi & Program Oluşturucu © 2026 - Yıldız Technical University
+      <footer className="border-t border-slate-200 py-6 text-center text-xs text-slate-500 bg-white no-print">
+        <div className="max-w-7xl mx-auto px-4 space-y-1">
+          <p className="font-semibold text-slate-700">
+            T.C. Yıldız Teknik Üniversitesi — Öğrenci Ders Programı Belge Çözümleme Portalı
+          </p>
+          <p className="text-[11px] text-slate-400">
+            OBS / USIS sistemi üzerinden temin edilen resmi Report.pdf formatıyla tam uyumludur. A4 standartlarına göre çıktı üretir.
+          </p>
+        </div>
       </footer>
     </div>
   );

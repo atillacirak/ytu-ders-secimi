@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "YTÜ Ders Seçimi & Program Oluşturucu",
-  description: "Yıldız Teknik Üniversitesi çakışmasız ders programı ve akıllı ders seçim platformu.",
+  title: "YTÜ Öğrenci Ders Programı Çizelgesi | Yıldız Teknik Üniversitesi",
+  description: "Yıldız Teknik Üniversitesi Öğrenci Bilgi Sistemi (OBS / USIS) haftalık ders programı çizelgeleme ve A4 çıktı servisi.",
   icons: {
     icon: "/favicon.svg",
   },
