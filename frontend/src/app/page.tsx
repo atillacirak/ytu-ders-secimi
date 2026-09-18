@@ -223,14 +223,15 @@ export default function Home() {
     try {
       const dataUrl = await toPng(visualizerScheduleRef.current, {
         cacheBust: true,
-        backgroundColor: '#020617',
+        backgroundColor: '#0b0f19',
+        pixelRatio: 2, // A4 yüksek çözünürlük & netlik
         style: {
           padding: '24px'
         }
       });
       const link = document.createElement('a');
       const studentNameClean = (visualizerData?.student_name || 'Ogrenci').replace(/[^a-zA-Z0-9çğıöşüÇĞİÖŞÜ_]/g, '_');
-      link.download = `YTU_Ders_Programi_${studentNameClean}_${new Date().toISOString().slice(0, 10)}.png`;
+      link.download = `YTU_A4_Ders_Programi_${studentNameClean}_${new Date().toISOString().slice(0, 10)}.png`;
       link.href = dataUrl;
       link.click();
     } catch (err) {
@@ -2658,19 +2659,19 @@ export default function Home() {
                   </div>
                 </div>
 
-                {/* GÖRÜNÜM 1: HAFTALIK AKADEMİK ÇİZELGE (PNG ÇIKTISI) */}
+                {/* GÖRÜNÜM 1: HAFTALIK AKADEMİK ÇİZELGE (A4 & PNG ÇIKTISI) */}
                 {visualizerViewMode === 'table' && (
-                  <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-2xl space-y-4">
+                  <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-2xl space-y-4 overflow-x-auto">
                     <div
                       ref={visualizerScheduleRef}
-                      className="bg-slate-950 p-6 rounded-xl border border-slate-800/80 space-y-4 w-full"
-                      style={{ minWidth: '850px' }}
+                      className="a4-print-target bg-[#0b0f19] p-6 rounded-xl border border-slate-800 space-y-3.5 w-full mx-auto"
+                      style={{ minWidth: '1020px', maxWidth: '1160px' }}
                     >
                       {/* Resmi Kurumsal Belge Başlığı */}
-                      <div className="border-b-2 border-slate-800 pb-4 flex items-center justify-between">
+                      <div className="border-b-2 border-slate-800/90 pb-3 flex items-center justify-between">
                         <div className="space-y-1">
                           <div className="flex items-center gap-2">
-                            <span className="font-extrabold text-sm tracking-wider uppercase text-slate-100">
+                            <span className="font-black text-sm tracking-wider uppercase text-slate-100">
                               YILDIZ TEKNİK ÜNİVERSİTESİ
                             </span>
                             <span className="text-xs text-slate-500 font-semibold">•</span>
@@ -2678,20 +2679,20 @@ export default function Home() {
                               Öğrenci İşleri Daire Başkanlığı
                             </span>
                           </div>
-                          <h3 className="text-base font-bold text-slate-100">
-                            Haftalık Ders Programı Çizelgesi
+                          <h3 className="text-base font-bold text-slate-200">
+                            Öğrenci Haftalık Ders Programı Çizelgesi
                           </h3>
                         </div>
 
-                        <div className="text-right text-xs space-y-0.5">
-                          <p className="font-bold text-slate-200 font-mono">
+                        <div className="text-right text-xs space-y-0.5 bg-slate-950/80 px-3.5 py-1.5 rounded-lg border border-slate-800">
+                          <p className="font-bold text-slate-100 font-mono text-sm">
                             {visualizerData.student_name}
                           </p>
                           <p className="text-slate-400 font-mono text-[11px]">
-                            Öğrenci No: <span className="text-slate-300 font-semibold">{visualizerData.student_id}</span>
+                            Öğrenci No: <span className="text-slate-200 font-semibold">{visualizerData.student_id}</span>
                           </p>
-                          <p className="text-slate-500 text-[10px]">
-                            {visualizerData.term ? `${visualizerData.term} Yarıyılı` : ''} • {new Date().toLocaleDateString('tr-TR')}
+                          <p className="text-slate-500 text-[10px] font-mono">
+                            {visualizerData.term ? `${visualizerData.term} Yarıyılı` : ''} • A4 Format
                           </p>
                         </div>
                       </div>
@@ -2699,14 +2700,14 @@ export default function Home() {
                       {/* Resmi Tablo Gövdesi */}
                       <table className="w-full border-collapse text-xs select-none table-fixed">
                         <thead>
-                          <tr className="border-b border-slate-800 text-slate-400 bg-slate-900/60">
-                            <th className="p-2.5 w-24 text-center font-bold text-[11px] border-r border-slate-800 uppercase tracking-wider">
+                          <tr className="border-b border-slate-800 text-slate-400 bg-[#0e1422]">
+                            <th className="p-2 w-20 text-center font-bold text-[11px] border-r border-slate-800 uppercase tracking-wider">
                               Saat
                             </th>
                             {['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma'].map((day, dIdx) => (
                               <th
                                 key={day}
-                                className={`p-2.5 text-center font-bold text-[11px] border-r border-slate-800 uppercase tracking-wider text-slate-200 ${
+                                className={`p-2 text-center font-bold text-[11px] border-r border-slate-800 uppercase tracking-wider text-slate-200 ${
                                   dIdx === 4 ? 'border-r-0' : ''
                                 }`}
                               >
@@ -2728,25 +2729,25 @@ export default function Home() {
                               return parseInt(parts[0], 10) * 60 + parseInt(parts[1], 10);
                             };
 
-                            // Resmi ve dengeli akademik renk temaları (Mavi çubuk içermez, temiz ve uyumlu)
-                            const ACADEMIC_PALETTES = [
-                              { bg: 'bg-slate-900', border: 'border-slate-700', text: 'text-slate-100', accent: 'text-indigo-400', badge: 'bg-slate-800 text-slate-300 border-slate-700' },
-                              { bg: 'bg-emerald-950/40', border: 'border-emerald-800/80', text: 'text-emerald-100', accent: 'text-emerald-400', badge: 'bg-emerald-900/60 text-emerald-200 border-emerald-700/60' },
-                              { bg: 'bg-indigo-950/40', border: 'border-indigo-800/80', text: 'text-indigo-100', accent: 'text-indigo-400', badge: 'bg-indigo-900/60 text-indigo-200 border-indigo-700/60' },
-                              { bg: 'bg-amber-950/40', border: 'border-amber-800/80', text: 'text-amber-100', accent: 'text-amber-400', badge: 'bg-amber-900/60 text-amber-200 border-amber-700/60' },
-                              { bg: 'bg-purple-950/40', border: 'border-purple-800/80', text: 'text-purple-100', accent: 'text-purple-400', badge: 'bg-purple-900/60 text-purple-200 border-purple-700/60' },
-                              { bg: 'bg-teal-950/40', border: 'border-teal-800/80', text: 'text-teal-100', accent: 'text-teal-400', badge: 'bg-teal-900/60 text-teal-200 border-teal-700/60' },
-                              { bg: 'bg-rose-950/40', border: 'border-rose-800/80', text: 'text-rose-100', accent: 'text-rose-400', badge: 'bg-rose-900/60 text-rose-200 border-rose-700/60' },
-                              { bg: 'bg-cyan-950/40', border: 'border-cyan-800/80', text: 'text-cyan-100', accent: 'text-cyan-400', badge: 'bg-cyan-900/60 text-cyan-200 border-cyan-700/60' },
+                            // Resmi Mat Ofis Renk Paletleri (Neon içermez, şık kurumsal tonlar)
+                            const OFFICE_PALETTES = [
+                              { bg: 'bg-[#121a2d]', border: 'border-[#243556]', text: 'text-slate-100', accent: 'text-sky-300', badge: 'bg-[#0b101c] text-sky-200 border-[#243556]' },
+                              { bg: 'bg-[#14221c]', border: 'border-[#233f32]', text: 'text-slate-100', accent: 'text-emerald-300', badge: 'bg-[#0d1612] text-emerald-200 border-[#233f32]' },
+                              { bg: 'bg-[#24171d]', border: 'border-[#462330]', text: 'text-slate-100', accent: 'text-rose-300', badge: 'bg-[#180e13] text-rose-200 border-[#462330]' },
+                              { bg: 'bg-[#241e17]', border: 'border-[#463623]', text: 'text-slate-100', accent: 'text-amber-300', badge: 'bg-[#17120d] text-amber-200 border-[#463623]' },
+                              { bg: 'bg-[#122325]', border: 'border-[#1e4145]', text: 'text-slate-100', accent: 'text-teal-300', badge: 'bg-[#0b1718] text-teal-200 border-[#1e4145]' },
+                              { bg: 'bg-[#1c222c]', border: 'border-[#333d4e]', text: 'text-slate-100', accent: 'text-blue-200', badge: 'bg-[#11141b] text-blue-100 border-[#333d4e]' },
+                              { bg: 'bg-[#1f1929]', border: 'border-[#3b2b4d]', text: 'text-slate-100', accent: 'text-purple-300', badge: 'bg-[#140f1a] text-purple-200 border-[#3b2b4d]' },
+                              { bg: 'bg-[#1f2124]', border: 'border-[#383c42]', text: 'text-slate-100', accent: 'text-stone-300', badge: 'bg-[#131416] text-stone-200 border-[#383c42]' },
                             ];
 
                             const getCourseColor = (code: string) => {
                               const codes = (visualizerData.courses_summary || []).map((c: any) => c.code);
                               const idx = codes.indexOf(code);
-                              if (idx !== -1) return ACADEMIC_PALETTES[idx % ACADEMIC_PALETTES.length];
+                              if (idx !== -1) return OFFICE_PALETTES[idx % OFFICE_PALETTES.length];
                               let hash = 0;
                               for (let i = 0; i < code.length; i++) hash = code.charCodeAt(i) + ((hash << 5) - hash);
-                              return ACADEMIC_PALETTES[Math.abs(hash) % ACADEMIC_PALETTES.length];
+                              return OFFICE_PALETTES[Math.abs(hash) % OFFICE_PALETTES.length];
                             };
 
                             const grid: Record<string, Record<number, any>> = {};
@@ -2775,8 +2776,8 @@ export default function Home() {
                               const hourLabel = `${hour} - ${nextHour}`;
 
                               return (
-                                <tr key={hour} className="border-b border-slate-800/60 h-16">
-                                  <td className="p-2 border-r border-slate-800 text-center font-mono text-[11px] text-slate-400 bg-slate-950 align-middle">
+                                <tr key={hour} className="border-b border-slate-800/60 h-[50px]">
+                                  <td className="p-1.5 border-r border-slate-800 text-center font-mono text-[10px] text-slate-400 bg-[#0e1422] align-middle whitespace-nowrap">
                                     {hourLabel}
                                   </td>
 
@@ -2790,7 +2791,7 @@ export default function Home() {
                                       return (
                                         <td
                                           key={day}
-                                          className={`p-1 border-r border-slate-800/60 h-16 align-top ${
+                                          className={`p-1 border-r border-slate-800/60 h-[50px] align-top ${
                                             isLastCol ? 'border-r-0' : ''
                                           }`}
                                         />
@@ -2815,38 +2816,38 @@ export default function Home() {
                                       <td
                                         key={day}
                                         rowSpan={span}
-                                        style={{ height: `${span * 64}px` }}
+                                        style={{ height: `${span * 50}px` }}
                                         className={`p-1 border-r border-slate-800/60 align-top h-full ${
                                           isLastCol ? 'border-r-0' : ''
                                         }`}
                                       >
-                                        <div className={`h-full w-full p-2.5 rounded-lg border ${palette.bg} ${palette.border} flex flex-col justify-between space-y-1.5 transition-all`}>
-                                          <div className="space-y-1">
+                                        <div className={`h-full w-full p-2 rounded-lg border ${palette.bg} ${palette.border} flex flex-col justify-between space-y-1 transition-all`}>
+                                          <div className="space-y-0.5">
                                             {/* Başlık ve Şube / Derslik Bilgisi */}
-                                            <div className="flex items-center justify-between gap-1">
-                                              <span className={`font-mono font-bold text-xs ${palette.accent}`}>
+                                            <div className="flex items-center justify-between gap-1 min-w-0">
+                                              <span className={`font-mono font-bold text-xs whitespace-nowrap ${palette.accent}`}>
                                                 {it.code} {it.section ? `(Şb. ${it.section})` : ''}
                                               </span>
 
-                                              <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded border ${palette.badge}`}>
+                                              <span className={`text-[9.5px] font-mono px-1.5 py-0.5 rounded border whitespace-nowrap shrink-0 ${palette.badge}`}>
                                                 {it.is_lab ? `LAB (${it.classroom})` : it.classroom || 'Derslik'}
                                               </span>
                                             </div>
 
                                             {/* Ders Adı */}
-                                            <h4 className={`text-[11px] font-semibold ${palette.text} leading-snug line-clamp-2`}>
+                                            <h4 className={`text-[10.5px] font-semibold ${palette.text} leading-tight line-clamp-2`}>
                                               {it.name}
                                             </h4>
                                           </div>
 
                                           {/* Alt Bilgi: Öğretim Elemanı ve Saat */}
-                                          <div className="pt-1.5 border-t border-slate-800/80 space-y-0.5 text-[10px] text-slate-400">
+                                          <div className="pt-1 border-t border-slate-800/80 space-y-0.5 text-[9.5px] text-slate-400">
                                             {fullInst && (
                                               <p className="truncate text-slate-300 font-medium" title={fullInst}>
                                                 {fullInst}
                                               </p>
                                             )}
-                                            <p className="font-mono text-slate-500 text-[10px]">
+                                            <p className="font-mono text-slate-500 text-[9px]">
                                               {it.start_time} - {it.end_time}
                                             </p>
                                           </div>
@@ -2860,6 +2861,19 @@ export default function Home() {
                           })()}
                         </tbody>
                       </table>
+
+                      {/* Resmi A4 Belge Altlığı */}
+                      <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between text-[10px] text-slate-500 font-mono">
+                        <div className="flex items-center gap-2">
+                          <span>YTÜ OBS/USIS Haftalık Ders Programı Çizelgesi</span>
+                          <span>•</span>
+                          <span>A4 Standart Formatı</span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <span>Belge Tarihi: {new Date().toLocaleDateString('tr-TR')}</span>
+                          <span>Sayfa 1 / 1</span>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 )}
@@ -2892,10 +2906,10 @@ export default function Home() {
                                   className="p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-1.5"
                                 >
                                   <div className="flex items-center justify-between gap-2">
-                                    <span className="font-mono font-bold text-xs text-indigo-300">
-                                      {it.code} (Şb. {it.section})
+                                    <span className="font-mono font-bold text-xs text-sky-300 whitespace-nowrap">
+                                      {it.code} {it.section ? `(Şb. ${it.section})` : ''}
                                     </span>
-                                    <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-900 border border-slate-700 text-slate-300">
+                                    <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-900 border border-slate-700 text-slate-300 whitespace-nowrap shrink-0">
                                       {it.classroom}
                                     </span>
                                   </div>
@@ -2908,7 +2922,7 @@ export default function Home() {
                                     <span className="truncate max-w-[150px]" title={fullInst}>
                                       {fullInst || 'Öğretim Elemanı'}
                                     </span>
-                                    <span className="font-mono text-slate-300">
+                                    <span className="font-mono text-slate-300 whitespace-nowrap">
                                       {it.start_time} - {it.end_time}
                                     </span>
                                   </div>
@@ -2950,13 +2964,13 @@ export default function Home() {
                             const fullInst = getFullInstructorName(c.instructor);
                             return (
                               <tr key={idx} className="hover:bg-slate-800/20 transition-colors">
-                                <td className="p-2.5 font-mono font-bold text-indigo-300 whitespace-nowrap">
+                                <td className="p-2.5 font-mono font-bold text-sky-300 whitespace-nowrap">
                                   {c.code}
                                 </td>
                                 <td className="p-2.5 font-medium text-slate-100">
                                   {c.name}
                                 </td>
-                                <td className="p-2.5 font-mono text-slate-400">
+                                <td className="p-2.5 font-mono text-slate-400 whitespace-nowrap">
                                   Şb. {c.section}
                                 </td>
                                 <td className="p-2.5 text-slate-300">

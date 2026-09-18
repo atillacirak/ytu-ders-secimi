@@ -45,3 +45,31 @@ body {
   scrollbar-width: thin;
   scrollbar-color: #4f46e5 #090d16;
 }
+
+/* A4 Print Styles */
+@media print {
+  @page {
+    size: A4 landscape;
+    margin: 8mm;
+  }
+
+  body {
+    background: #090d16 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  header, footer, nav, .no-print {
+    display: none !important;
+  }
+
+  .a4-print-target {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+}
+
