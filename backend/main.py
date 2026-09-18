@@ -56,7 +56,6 @@ def get_departments():
         {'code': 'ELK', 'name': 'Elektrik Mühendisliği'},
         {'code': 'EHM', 'name': 'Elektronik ve Haberleşme Mühendisliği'},
         {'code': 'YZV', 'name': 'Yapay Zeka ve Veri Mühendisliği'},
-        {'code': 'KOM', 'name': 'Kontrol ve Otomasyon Mühendisliği'},
         {'code': 'MAK', 'name': 'Makine Mühendisliği'},
         {'code': 'END', 'name': 'Endüstri Mühendisliği'},
         {'code': 'MKT', 'name': 'Mekatronik Mühendisliği'},
@@ -173,36 +172,6 @@ async def upload_pdf(file: UploadFile = File(...), department: str = Query('BLM'
         return schedule
     except Exception as e:
         raise HTTPException(status_code=500, detail=f'PDF işlenirken hata oluştu: {str(e)}')
-
-@app.post('/api/parse-pdf-preview', response_model=DepartmentSchedule)
-async def parse_pdf_preview(file: UploadFile = File(...), department_name: str = Query('Bilinmeyen Bölüm')):
-    """
-    PDF'i parse eder ama DB'ye KAYDETMEZ.
-    Kullanicinin kendi bolumu listede yoksa gecici olarak kullanmak icin.
-    """
-    if not file.filename.endswith('.pdf'):
-        raise HTTPException(status_code=400, detail='Sadece PDF dosyalari yuklenebilir.')
-
-    import uuid
-    os.makedirs('temp_uploads', exist_ok=True)
-    tmp_name = f"preview_{uuid.uuid4().hex}.pdf"
-    file_path = os.path.join('temp_uploads', tmp_name)
-
-    with open(file_path, 'wb') as buffer:
-        shutil.copyfileobj(file.file, buffer)
-
-    try:
-        schedule = parse_ytu_pdf(file_path, department=department_name)
-        return schedule
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f'PDF islenirken hata olustu: {str(e)}')
-    finally:
-        try:
-            if os.path.exists(file_path):
-                # os.remove(file_path)
-                pass
-        except:
-            pass
 
 @app.get('/api/courses', response_model=List[Course])
 def get_courses(department: str = Query('BLM')):
@@ -608,3 +577,179 @@ def get_available_courses(req: AvailableCoursesRequest):
 
     conn.close()
     return available_codes
+
+
+@app.post('/api/parse-student-schedule')
+async def parse_student_schedule_endpoint(file: UploadFile = File(...)):
+    import tempfile
+    import pdfplumber
+    import re
+    
+    if not file.filename.lower().endswith('.pdf'):
+        raise HTTPException(status_code=400, detail="Lütfen geçerli bir PDF dosyası yükleyin.")
+
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
+        shutil.copyfileobj(file.file, tmp)
+        tmp_path = tmp.name
+
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+
+        student_title = ''
+        student_id = ''
+        student_name = ''
+        term = ''
+
+        schedule = {
+            'Pazartesi': [],
+            'Salı': [],
+            'Çarşamba': [],
+            'Perşembe': [],
+            'Cuma': [],
+            'Cumartesi': [],
+            'Pazar': []
+        }
+
+        item_regex = re.compile(r'(\d+)\s+([A-ZÇĞİÖŞÜ0-9_]{2,10})\s+(.*?)\s+(\d{1,2}[\.:]\d{2})\s+(\d{1,2}[\.:]\d{2}u?)')
+
+        with pdfplumber.open(tmp_path) as pdf:
+            for page in pdf.pages:
+                text = page.extract_text() or ''
+                for line in text.split('\n'):
+                    if 'Öğrenci Ders Programı' in line or 'renci Ders Program' in line:
+                        student_title = line.strip()
+                        m_hdr = re.search(r'/\s*([0-9]+)\s*/\s*(.*?)\s*-\s*([0-9]{4}\s*-\s*[0-9]{4}\s+[A-Za-zÇĞİÖŞÜçğıöşü]+)', student_title)
+                        if m_hdr:
+                            student_id = m_hdr.group(1).strip()
+                            student_name = m_hdr.group(2).strip()
+                            term = m_hdr.group(3).strip()
+                        else:
+                            parts = student_title.split('/')
+                            if len(parts) >= 3:
+                                student_id = parts[1].strip()
+                                student_name = parts[2].split('-')[0].strip()
+                        break
+
+                words = page.extract_words()
+                rows = {}
+                for w in words:
+                    if w['top'] < 80 and 'Pazartesi' not in w['text']:
+                        continue
+                    matched_y = None
+                    for ey in rows:
+                        if abs(ey - w['top']) <= 4.0:
+                            matched_y = ey
+                            break
+                    if matched_y is None:
+                        matched_y = w['top']
+                        rows[matched_y] = []
+                    rows[matched_y].append(w)
+
+                sorted_y = sorted(rows.keys())
+
+                for y_val in sorted_y:
+                    row_words = sorted(rows[y_val], key=lambda x: x['x0'])
+                    col_bounds = [
+                        (0, 225, 'Pazartesi' if y_val < 300 else 'Cuma'),
+                        (225, 425, 'Salı' if y_val < 300 else 'Cumartesi'),
+                        (425, 625, 'Çarşamba' if y_val < 300 else 'Pazar'),
+                        (625, 850, 'Perşembe' if y_val < 300 else None),
+                    ]
+
+                    for min_x, max_x, target_day in col_bounds:
+                        if not target_day: continue
+                        cell_words = [w for w in row_words if min_x <= w['x0'] < max_x]
+                        if not cell_words: continue
+                        cell_str = ' '.join([w['text'] for w in cell_words])
+                        
+                        m = item_regex.search(cell_str)
+                        if m:
+                            sec_no, code, classroom, start_t, end_t = m.groups()
+                            code = code.replace(' ', '').upper()
+                            start_t_clean = start_t.replace('.', ':')
+                            end_t_clean = end_t.replace('u', '').replace('.', ':')
+
+                            cursor.execute('SELECT name, instructor FROM courses WHERE code = ? LIMIT 1', (code,))
+                            c_row = cursor.fetchone()
+                            course_name = c_row['name'] if c_row else code
+
+                            cursor.execute('SELECT instructor FROM sections WHERE course_code = ? AND (section_id = ? OR section_id = ? OR section_id = ?) LIMIT 1',
+                                           (code, sec_no, f'Gr{sec_no}', f'Gr.{sec_no}'))
+                            sec_db = cursor.fetchone()
+                            instructor = sec_db['instructor'] if sec_db and sec_db['instructor'] else (c_row['instructor'] if c_row and c_row['instructor'] else '')
+
+                            schedule[target_day].append({
+                                'section': sec_no,
+                                'code': code,
+                                'name': course_name,
+                                'classroom': classroom.strip(),
+                                'instructor': instructor,
+                                'start_time': start_t_clean,
+                                'end_time': end_t_clean,
+                                'is_lab': 'LAB' in classroom.upper()
+                            })
+
+        conn.close()
+
+        # Merge consecutive hours
+        merged_schedule = {}
+        courses_summary_map = {}
+
+        for day, items in schedule.items():
+            if not items:
+                merged_schedule[day] = []
+                continue
+            items.sort(key=lambda x: x['start_time'])
+            merged = []
+            for it in items:
+                if merged and merged[-1]['code'] == it['code'] and merged[-1]['section'] == it['section'] and merged[-1]['classroom'] == it['classroom']:
+                    merged[-1]['end_time'] = it['end_time']
+                else:
+                    merged.append(it.copy())
+            merged_schedule[day] = merged
+
+            for it in merged:
+                ckey = (it['code'], it['section'])
+                if ckey not in courses_summary_map:
+                    courses_summary_map[ckey] = {
+                        'code': it['code'],
+                        'name': it['name'],
+                        'section': it['section'],
+                        'instructor': it['instructor'],
+                        'classrooms': set(),
+                        'time_slots': []
+                    }
+                courses_summary_map[ckey]['classrooms'].add(it['classroom'])
+                courses_summary_map[ckey]['time_slots'].append({
+                    'day': day,
+                    'start_time': it['start_time'],
+                    'end_time': it['end_time'],
+                    'classroom': it['classroom'],
+                    'is_lab': it['is_lab']
+                })
+
+        summary_list = []
+        for ckey, cinfo in courses_summary_map.items():
+            cinfo['classrooms'] = sorted(list(cinfo['classrooms']))
+            summary_list.append(cinfo)
+
+        return {
+            'status': 'success',
+            'student_id': student_id,
+            'student_name': student_name,
+            'term': term,
+            'title': student_title,
+            'schedule': merged_schedule,
+            'courses_summary': summary_list
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"PDF ayrıştırılırken hata oluştu: {str(e)}")
+    finally:
+        if os.path.exists(tmp_path):
+            try:
+                os.remove(tmp_path)
+            except:
+                pass
+

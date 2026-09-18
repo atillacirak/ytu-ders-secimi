@@ -5,7 +5,8 @@ import {
   BookOpen, Calendar, CheckCircle, Clock, Trash2, Plus, Filter, 
   Search, AlertCircle, ArrowRight, RefreshCw, Upload, Sparkles, Layers,
   ChevronRight, ChevronLeft, Laptop, Building2, User, Award, BookmarkCheck,
-  GraduationCap, LayoutGrid, XCircle, Shuffle, Globe, Star, TrendingUp, Download
+  GraduationCap, LayoutGrid, XCircle, Shuffle, Globe, Star, TrendingUp, Download,
+  FileText, Printer, Eye, Share2
 } from 'lucide-react';
 import { toPng } from 'html-to-image';
 import { getFullInstructorName, INSTRUCTOR_MAP } from '../utils/instructors';
@@ -74,7 +75,6 @@ const FACULTIES: Faculty[] = [
       { code: 'ELK', name: 'Elektrik Mühendisliği' },
       { code: 'EHM', name: 'Elektronik ve Haberleşme Mühendisliği' },
       { code: 'YZV', name: 'Yapay Zeka ve Veri Mühendisliği' },
-      { code: 'KOM', name: 'Kontrol ve Otomasyon Mühendisliği' },
     ]
   },
   {
@@ -98,14 +98,6 @@ const FACULTIES: Faculty[] = [
       { code: 'MET', name: 'Metalurji ve Malzeme Mühendisliği (%30 İngilizce)' },
       { code: 'MET_ENG', name: 'Metalurji ve Malzeme Mühendisliği (%100 İngilizce)' },
     ]
-  },
-  {
-    id: 'STF',
-    name: 'Sanat ve Tasarım Fakültesi',
-    departments: [
-      { code: 'ILT', name: 'İletişim ve Tasarımı' },
-      { code: 'FVP', name: 'Fotoğraf ve Video' },
-    ]
   }
 ];
 
@@ -118,12 +110,9 @@ const TIME_SLOTS = [
 ];
 
 export default function Home() {
-  const [facultiesList, setFacultiesList] = useState<Faculty[]>(FACULTIES);
-  const [localCurriculums, setLocalCurriculums] = useState<Record<string, Course[]>>({});
-
   const [isMounted, setIsMounted] = useState(false);
 
-  const [activeTab, setActiveTab] = useState<'intibak' | 'management' | 'selection' | 'schedule'>('selection');
+  const [activeTab, setActiveTab] = useState<'intibak' | 'management' | 'selection' | 'schedule' | 'visualizer'>('selection');
   const [courseCategoryTab, setCourseCategoryTab] = useState<'mandatory' | 'dept_elective' | 'social_elective' | 'curriculum'>('mandatory');
   const [selectedFaculty, setSelectedFaculty] = useState<string>('EEF');
   const [selectedDept, setSelectedDept] = useState<string>('BLM');
@@ -142,6 +131,19 @@ export default function Home() {
   const [selectedScheduleIdx, setSelectedScheduleIdx] = useState(0);
   const [hiddenCourses, setHiddenCourses] = useState<string[]>([]);
 
+  // PDF Schedule Visualizer state
+  const [visualizerPdfUploading, setVisualizerPdfUploading] = useState(false);
+  const [visualizerData, setVisualizerData] = useState<{
+    student_id: string;
+    student_name: string;
+    term: string;
+    title: string;
+    schedule: Record<string, any[]>;
+    courses_summary: any[];
+  } | null>(null);
+  const [visualizerError, setVisualizerError] = useState<string | null>(null);
+  const [visualizerViewMode, setVisualizerViewMode] = useState<'table' | 'cards' | 'summary'>('table');
+  const visualizerScheduleRef = useRef<HTMLDivElement>(null);
   
   const scheduleRef = useRef<HTMLDivElement>(null);
   const [isManageModalOpen, setIsManageModalOpen] = useState(false);
@@ -160,25 +162,6 @@ export default function Home() {
     avoid_early_mornings: false
   });
 
-  // --- PDF Preview Modal State ---
-  const [showPdfModal, setShowPdfModal] = useState(false);
-  const [pdfModalFile, setPdfModalFile] = useState<File | null>(null);
-  
-  const [pdfModalFacMode, setPdfModalFacMode] = useState<'select' | 'new'>('select');
-  const [pdfModalSelectedFac, setPdfModalSelectedFac] = useState(FACULTIES[0].id);
-  const [pdfModalCustomFac, setPdfModalCustomFac] = useState('');
-  
-  const [pdfModalDeptMode, setPdfModalDeptMode] = useState<'select' | 'new'>('select');
-  const [pdfModalSelectedDept, setPdfModalSelectedDept] = useState(FACULTIES[0].departments[0].code);
-  const [pdfModalCustomDept, setPdfModalCustomDept] = useState('');
-
-
-  const [pdfModalParsing, setPdfModalParsing] = useState(false);
-  const [pdfModalCourses, setPdfModalCourses] = useState<any[]>([]);
-  const [pdfModalSelected, setPdfModalSelected] = useState<Set<string>>(new Set());
-  const [pdfModalError, setPdfModalError] = useState('');
-  const pdfModalInputRef = useRef<HTMLInputElement>(null);
-
   const handleExportPNG = async () => {
     if (!scheduleRef.current) return;
     try {
@@ -191,6 +174,63 @@ export default function Home() {
       });
       const link = document.createElement('a');
       link.download = `YTU_Ders_Programi_${selectedDept}_${new Date().toISOString().slice(0, 10)}.png`;
+      link.href = dataUrl;
+      link.click();
+    } catch (err) {
+      console.error('PNG export error:', err);
+      alert('PNG görseli oluşturulurken hata oluştu.');
+    }
+  };
+
+  const handleVisualizerPdfUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setVisualizerPdfUploading(true);
+    setVisualizerError(null);
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const res = await fetch(`${API_BASE}/api/parse-student-schedule`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.detail || 'PDF ayrıştırılamadı. Lütfen geçerli bir Öğrenci Ders Programı (Report.pdf) yükleyin.');
+      }
+
+      const data = await res.json();
+      if (data && data.schedule) {
+        setVisualizerData(data);
+      } else {
+        throw new Error('PDF dosyasında ders programı bilgisi bulunamadı.');
+      }
+    } catch (err: any) {
+      console.error('Visualizer PDF upload error:', err);
+      setVisualizerError(err.message || 'PDF yüklenirken bir hata oluştu.');
+    } finally {
+      setVisualizerPdfUploading(false);
+      e.target.value = '';
+    }
+  };
+
+  const handleExportVisualizerPNG = async () => {
+    if (!visualizerScheduleRef.current) return;
+    try {
+      const dataUrl = await toPng(visualizerScheduleRef.current, {
+        cacheBust: true,
+        backgroundColor: '#020617',
+        style: {
+          padding: '24px'
+        }
+      });
+      const link = document.createElement('a');
+      const studentNameClean = (visualizerData?.student_name || 'Ogrenci').replace(/[^a-zA-Z0-9çğıöşüÇĞİÖŞÜ_]/g, '_');
+      link.download = `YTU_Ders_Programi_${studentNameClean}_${new Date().toISOString().slice(0, 10)}.png`;
       link.href = dataUrl;
       link.click();
     } catch (err) {
@@ -416,10 +456,6 @@ export default function Home() {
 
 
   const fetchCurriculum = async (deptCode: string) => {
-    if (localCurriculums[deptCode]) {
-      setCurriculum(localCurriculums[deptCode]);
-      return;
-    }
     setLoading(true);
     try {
       const res = await fetch(`${API_BASE}/api/curriculum/${deptCode}`);
@@ -709,129 +745,6 @@ export default function Home() {
     setManualCode('');
   };
 
-  // --- PDF Preview Modal Handlers ---
-  const handlePdfModalParse = async () => {
-    if (!pdfModalFile) return;
-    setPdfModalParsing(true);
-    setPdfModalError('');
-    setPdfModalCourses([]);
-    setPdfModalSelected(new Set());
-
-    const formData = new FormData();
-    formData.append('file', pdfModalFile);
-
-    try {
-      const resolvedFac = pdfModalFacMode === 'select' 
-        ? (facultiesList.find(f => f.id === pdfModalSelectedFac)?.name || pdfModalSelectedFac)
-        : pdfModalCustomFac;
-      const resolvedDept = pdfModalDeptMode === 'select'
-        ? (facultiesList.find(f => f.id === pdfModalSelectedFac)?.departments.find(d => d.code === pdfModalSelectedDept)?.name || pdfModalSelectedDept)
-        : pdfModalCustomDept;
-      
-      const fullDeptName = (resolvedFac ? resolvedFac + ' / ' : '') + resolvedDept;
-      const deptParam = encodeURIComponent(fullDeptName || 'Bölümüm');
-
-      const res = await fetch(`${API_BASE}/api/parse-pdf-preview?department_name=${deptParam}`, {
-        method: 'POST',
-        body: formData,
-      });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({ detail: 'Bilinmeyen hata' }));
-        setPdfModalError(err.detail || 'PDF işlenirken hata oluştu.');
-        return;
-      }
-      const data = await res.json();
-      const courses = data.courses || [];
-      setPdfModalCourses(courses);
-      setPdfModalSelected(new Set(courses.map((c: any) => c.code)));
-      if (courses.length === 0) {
-        setPdfModalError("PDF'den ders bulunamadı. Lütfen YTÜ ders programı PDF'i yüklediğinizden emin olun.");
-      }
-    } catch (e) {
-      setPdfModalError('Sunucuya bağlanılamadı. Backend çalışıyor mu?');
-    } finally {
-      setPdfModalParsing(false);
-    }
-  };
-
-  const handlePdfModalAddSelected = () => {
-    const toAdd: Course[] = [];
-    const newCurriculum: Course[] = [];
-
-    pdfModalCourses.forEach((item: any) => {
-      const sections = (item.sections || []).map((sec: any) => ({
-        section_id: sec.section_id,
-        section_no: sec.section_id,
-        instructor: sec.instructor || 'PDF Kaynaklı',
-        time_slots: sec.time_slots || [],
-      }));
-
-      const allSlots: string[] = [];
-      sections.forEach((sec: any) => {
-        (sec.time_slots || []).forEach((ts: any) => {
-          allSlots.push(`${ts.day} ${ts.start_time}-${ts.end_time}`);
-        });
-      });
-
-      const parsedCourse: Course = {
-        id: `pdf_${Date.now()}_${item.code}`,
-        code: item.code,
-        name: item.name || item.code,
-        credits: item.credits || 3,
-        ects: item.ects || 5,
-        year: item.year || 1,
-        is_elective: item.is_elective || false,
-        instructor: item.instructor || 'PDF Kaynaklı',
-        is_online: item.is_online || false,
-        days: allSlots.join(', '),
-        sections: sections,
-      };
-
-      newCurriculum.push(parsedCourse);
-
-      if (pdfModalSelected.has(item.code) && !selectedCourses.find(c => c.code === item.code)) {
-        toAdd.push(parsedCourse);
-      }
-    });
-
-    let finalFacId = pdfModalSelectedFac;
-    let finalDeptCode = pdfModalSelectedDept;
-
-    if (pdfModalFacMode === 'new' && pdfModalCustomFac.trim()) {
-      finalFacId = 'CUSTOM_FAC_' + Date.now();
-      const newFac = {
-        id: finalFacId,
-        name: pdfModalCustomFac.trim(),
-        departments: []
-      };
-      setFacultiesList(prev => [...prev, newFac]);
-    }
-
-    if (pdfModalDeptMode === 'new' && pdfModalCustomDept.trim()) {
-      finalDeptCode = 'CUSTOM_DEPT_' + Date.now();
-      setFacultiesList(prev => {
-        const copy = [...prev];
-        const facIndex = copy.findIndex(f => f.id === finalFacId);
-        if (facIndex !== -1) {
-          copy[facIndex].departments.push({ code: finalDeptCode, name: pdfModalCustomDept.trim() });
-        }
-        return copy;
-      });
-    }
-
-    setLocalCurriculums(prev => ({ ...prev, [finalDeptCode]: newCurriculum }));
-    setCurriculum(newCurriculum);
-    setSelectedFaculty(finalFacId);
-    setSelectedDept(finalDeptCode);
-
-    setSelectedCourses(prev => [...prev, ...toAdd]);
-    setShowPdfModal(false);
-    setPdfModalFile(null);
-    setPdfModalCourses([]);
-    setPdfModalSelected(new Set());
-    setPdfModalError('');
-  };
-
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -993,11 +906,7 @@ export default function Home() {
   const baseFilteredCurriculum = curriculum.filter(course => {
     const matchesSearch = course.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
                           course.name.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    // Convert course.year to number for safe comparison, since yearFilter is a number
-    const cYear = typeof course.year === 'string' ? parseInt(course.year, 10) : course.year;
-    const matchesYear = yearFilter === 'ALL' || cYear === yearFilter;
-    
+    const matchesYear = isSocialElective(course) || yearFilter === 'ALL' || course.year === yearFilter;
     const notExcluded = !excludedCourses.includes(course.code);
     const matchesAvailable = showOnlyAvailable 
       ? (selectedCourses.length === 0 ? true : availableCodes.has(course.code))
@@ -1109,6 +1018,25 @@ export default function Home() {
                 </span>
               )}
             </button>
+
+            <div className="w-px bg-slate-700 self-stretch mx-0.5" />
+
+            <button
+              onClick={() => setActiveTab('visualizer')}
+              className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                activeTab === 'visualizer'
+                  ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md shadow-emerald-900/30'
+                  : 'text-emerald-400 hover:text-emerald-200 hover:bg-emerald-950/40 border border-emerald-800/40'
+              }`}
+            >
+              <FileText className="w-4 h-4" />
+              <span>PDF Program Görselleştir</span>
+              {visualizerData && (
+                <span className="ml-1 px-2 py-0.5 text-xs bg-emerald-500/30 rounded-full text-emerald-300">
+                  {visualizerData.courses_summary?.length || 0}
+                </span>
+              )}
+            </button>
           </div>
         </div>
       </header>
@@ -1177,19 +1105,19 @@ export default function Home() {
                   onChange={e => {
                     const newFacId = e.target.value;
                     setSelectedFaculty(newFacId);
-                    const fac = facultiesList.find(f => f.id === newFacId);
+                    const fac = FACULTIES.find(f => f.id === newFacId);
                     if (fac && fac.departments.length > 0) setSelectedDept(fac.departments[0].code);
                   }}
                   className="bg-slate-950/80 border border-slate-700/80 hover:border-rose-500/50 rounded-xl px-4 py-3 text-xs font-semibold text-slate-100 focus:outline-none focus:ring-2 focus:ring-rose-500 w-full transition-all"
                 >
-                  {facultiesList.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
+                  {FACULTIES.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
                 </select>
                 <select
                   value={selectedDept}
                   onChange={e => setSelectedDept(e.target.value)}
                   className="bg-slate-950/80 border border-slate-700/80 hover:border-rose-500/50 rounded-xl px-4 py-3 text-xs font-semibold text-rose-300 focus:outline-none focus:ring-2 focus:ring-rose-500 w-full transition-all"
                 >
-                  {facultiesList.find(f => f.id === selectedFaculty)?.departments.map(d => (
+                  {FACULTIES.find(f => f.id === selectedFaculty)?.departments.map(d => (
                     <option key={d.code} value={d.code}>{d.code} - {d.name}</option>
                   ))}
                 </select>
@@ -1334,19 +1262,19 @@ export default function Home() {
                   onChange={e => {
                     const newFacId = e.target.value;
                     setSelectedFaculty(newFacId);
-                    const fac = facultiesList.find(f => f.id === newFacId);
+                    const fac = FACULTIES.find(f => f.id === newFacId);
                     if (fac && fac.departments.length > 0) setSelectedDept(fac.departments[0].code);
                   }}
                   className="bg-slate-950 border border-slate-700/80 rounded-xl px-3 py-2 text-xs font-semibold text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500"
                 >
-                  {facultiesList.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
+                  {FACULTIES.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
                 </select>
                 <select
                   value={selectedDept}
                   onChange={e => setSelectedDept(e.target.value)}
                   className="bg-slate-950 border border-slate-700/80 rounded-xl px-3 py-2 text-xs font-semibold text-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-500"
                 >
-                  {facultiesList.find(f => f.id === selectedFaculty)?.departments.map(d => (
+                  {FACULTIES.find(f => f.id === selectedFaculty)?.departments.map(d => (
                     <option key={d.code} value={d.code}>{d.code} - {d.name}</option>
                   ))}
                 </select>
@@ -1469,7 +1397,7 @@ export default function Home() {
                     <Building2 className="w-4 h-4 text-indigo-400" /> Akademik Program Seçimi
                   </span>
                   <span className="text-xs text-slate-400 font-medium">
-                    {facultiesList.find(f => f.id === selectedFaculty)?.name} → {facultiesList.find(f => f.id === selectedFaculty)?.departments.find(d => d.code === selectedDept)?.name}
+                    {FACULTIES.find(f => f.id === selectedFaculty)?.name} → {FACULTIES.find(f => f.id === selectedFaculty)?.departments.find(d => d.code === selectedDept)?.name}
                   </span>
                 </div>
 
@@ -1484,14 +1412,14 @@ export default function Home() {
                       onChange={(e) => {
                         const newFacId = e.target.value;
                         setSelectedFaculty(newFacId);
-                        const fac = facultiesList.find(f => f.id === newFacId);
+                        const fac = FACULTIES.find(f => f.id === newFacId);
                         if (fac && fac.departments.length > 0) {
                           setSelectedDept(fac.departments[0].code);
                         }
                       }}
                       className="bg-slate-950/80 border border-slate-700/80 hover:border-indigo-500/50 rounded-xl px-4 py-3 text-xs font-semibold text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full transition-all shadow-inner"
                     >
-                      {facultiesList.map(f => (
+                      {FACULTIES.map(f => (
                         <option key={f.id} value={f.id}>
                           {f.name}
                         </option>
@@ -1509,7 +1437,7 @@ export default function Home() {
                       onChange={(e) => setSelectedDept(e.target.value)}
                       className="bg-slate-950/80 border border-slate-700/80 hover:border-indigo-500/50 rounded-xl px-4 py-3 text-xs font-semibold text-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full transition-all shadow-inner"
                     >
-                      {facultiesList.find(f => f.id === selectedFaculty)?.departments.map(d => (
+                      {FACULTIES.find(f => f.id === selectedFaculty)?.departments.map(d => (
                         <option key={d.code} value={d.code}>
                           {d.code} - {d.name}
                         </option>
@@ -1521,26 +1449,6 @@ export default function Home() {
                     </select>
                   </div>
                 </div>
-              </div>
-
-              {/* "Bölümüm Listede Yok" Banner */}
-              <div className="flex items-center justify-between bg-indigo-950/30 border border-indigo-800/40 rounded-xl px-4 py-2.5">
-                <div className="flex items-center gap-2 text-xs text-slate-400">
-                  <Upload className="w-3.5 h-3.5 text-indigo-400 flex-shrink-0" />
-                  <span>Bölümün listede yok mu? Ders programı PDF&apos;ini yükle, dersleri otomatik algıla.</span>
-                </div>
-                <button
-                  onClick={() => {
-                    setShowPdfModal(true);
-                    setPdfModalCourses([]);
-                    setPdfModalFile(null);
-                    setPdfModalError('');
-                  }}
-                  className="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold px-3 py-1.5 rounded-lg transition-all shadow-lg shadow-indigo-600/20 ml-3 flex-shrink-0"
-                >
-                  <Upload className="w-3 h-3" />
-                  PDF Yükle
-                </button>
               </div>
 
               {/* Main Course Listing Card with Search & Filters placed AT THE VERY TOP */}
@@ -1775,10 +1683,10 @@ export default function Home() {
                                         title={lockedSections[course.code] ? `Seçili: Şube ${lockedSections[course.code]}` : 'Otomatik Seçim'}
                                       >
                                         <option value="">(Otomatik Seçim - En iyi şube)</option>
-                                        {course.sections.map((s: any, idx: number) => {
+                                        {course.sections.map((s: any) => {
                                           const timeStr = getSectionScheduleStr(s);
                                           return (
-                                            <option key={`${s.section_id}_${idx}`} value={s.section_id}>
+                                            <option key={s.section_id} value={s.section_id}>
                                               Şube {s.section_id} | {s.instructor || 'Bilinmiyor'} ({timeStr})
                                             </option>
                                           );
@@ -1847,21 +1755,9 @@ export default function Home() {
                     </div>
                     <h2 className="text-base font-semibold text-slate-200">Ders Sepetim</h2>
                   </div>
-                  <div className="flex items-center gap-2">
-                    {selectedCourses.length > 0 && (
-                      <button
-                        onClick={() => setSelectedCourses([])}
-                        className="text-[10px] bg-red-950/40 text-red-400 hover:bg-red-900/60 px-2 py-1 rounded-md border border-red-900/50 transition-colors flex items-center"
-                        title="Sepeti tamamen temizle"
-                      >
-                        <Trash2 className="w-3 h-3 mr-1" />
-                        Temizle
-                      </button>
-                    )}
-                    <span className="text-xs px-2.5 py-0.5 bg-emerald-950 text-emerald-400 border border-emerald-800/60 rounded-full font-mono">
-                      {selectedCourses.length} Ders
-                    </span>
-                  </div>
+                  <span className="text-xs px-2.5 py-0.5 bg-emerald-950 text-emerald-400 border border-emerald-800/60 rounded-full font-mono">
+                    {selectedCourses.length} Ders
+                  </span>
                 </div>
 
                 {/* Total Credits & AKTS Summary Badges */}
@@ -1937,8 +1833,8 @@ export default function Home() {
                                   className="w-full appearance-none bg-slate-900 border border-slate-700 hover:border-indigo-500/50 text-slate-300 rounded-md px-1.5 py-1 text-[10px] focus:outline-none focus:ring-1 focus:ring-indigo-500 transition-all cursor-pointer text-ellipsis overflow-hidden whitespace-nowrap"
                                 >
                                   <option value="">(Şube: Otomatik Seçim)</option>
-                                  {course.sections.map((s: any, idx: number) => (
-                                    <option key={`${s.section_id}_${idx}`} value={s.section_id}>
+                                  {course.sections.map((s: any) => (
+                                    <option key={s.section_id} value={s.section_id}>
                                       Şube {s.section_id} | {s.instructor || '?'} ({getSectionScheduleStr(s)})
                                     </option>
                                   ))}
@@ -2011,7 +1907,7 @@ export default function Home() {
               </div>
             </div>
           </div>
-        ) : (
+        ) : activeTab === 'schedule' ? (
           /* Stage 2: Weekly Schedule Timetable Grid */
           <div className="space-y-6">
             {/* Stage 2 Top Bar: Title + Combination Navigator */}
@@ -2533,6 +2429,575 @@ export default function Home() {
               </div>
             </div>
           </div>
+        ) : (
+          /* ══════════════════════════════════════════════════════════════════
+             PDF PROGRAM GÖRSELLEŞTİRME SEKMESİ (VISUALIZER)
+          ══════════════════════════════════════════════════════════════════ */
+          <div className="max-w-7xl mx-auto space-y-6 animate-fade-in">
+            {!visualizerData ? (
+              /* No PDF uploaded yet -> Upload Hero Box */
+              <div className="space-y-6">
+                <div className="bg-gradient-to-r from-emerald-950/60 via-slate-900 to-teal-950/60 border border-emerald-800/40 rounded-3xl p-8 shadow-2xl relative overflow-hidden">
+                  <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+                  
+                  <div className="max-w-2xl space-y-4 relative z-10">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 bg-emerald-950/80 border border-emerald-700/60 rounded-full text-emerald-300 text-xs font-semibold">
+                      <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                      <span>Yeni Özellik: PDF'ten Tek Tıkla Tabloya Dönüştür</span>
+                    </div>
+
+                    <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-100 tracking-tight">
+                      Öğrenci Ders Programı <span className="bg-gradient-to-r from-emerald-400 to-teal-300 bg-clip-text text-transparent">Görselleştirici</span>
+                    </h2>
+
+                    <p className="text-sm text-slate-300 leading-relaxed">
+                      YTÜ USIS / OBS sisteminizden aldığınız <span className="font-mono text-emerald-300 font-semibold bg-emerald-950/70 px-1.5 py-0.5 rounded border border-emerald-800/50">Report.pdf</span> (Öğrenci Ders Programı) dosyasını buraya yükleyin. Sistem derslerinizi, şubelerinizi, dersliklerinizi (LAB ve Teori) ve hocalarınızı otomatik ayrıştırarak renkli, modern haftalık ders tablosuna dönüştürsün.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Dropzone Card */}
+                <div className="bg-slate-900 border border-slate-800 rounded-3xl p-8 shadow-xl text-center space-y-6">
+                  {visualizerError && (
+                    <div className="flex items-center gap-3 p-4 bg-rose-950/60 border border-rose-700/60 rounded-2xl text-rose-200 text-sm max-w-xl mx-auto text-left">
+                      <AlertCircle className="w-5 h-5 text-rose-400 flex-shrink-0" />
+                      <div className="flex-1">
+                        <p className="font-bold">Ayrıştırma Hatası</p>
+                        <p className="text-xs text-rose-300">{visualizerError}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  <label className={`block border-2 border-dashed rounded-3xl p-10 transition-all cursor-pointer max-w-2xl mx-auto ${
+                    visualizerPdfUploading
+                      ? 'border-emerald-500 bg-emerald-950/20'
+                      : 'border-slate-700 hover:border-emerald-500/70 hover:bg-slate-950/60'
+                  }`}>
+                    <input
+                      type="file"
+                      accept=".pdf"
+                      onChange={handleVisualizerPdfUpload}
+                      disabled={visualizerPdfUploading}
+                      className="hidden"
+                    />
+
+                    {visualizerPdfUploading ? (
+                      <div className="py-8 flex flex-col items-center justify-center space-y-4">
+                        <RefreshCw className="w-10 h-10 text-emerald-400 animate-spin" />
+                        <div className="space-y-1">
+                          <p className="text-base font-bold text-slate-200">PDF Analiz Ediliyor...</p>
+                          <p className="text-xs text-slate-400">Dersler, sınıflar ve öğretim üyeleri eşleştiriliyor</p>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        <div className="w-16 h-16 bg-gradient-to-tr from-emerald-600/30 to-teal-600/30 border border-emerald-500/40 rounded-2xl flex items-center justify-center mx-auto text-emerald-400 shadow-lg shadow-emerald-950">
+                          <Upload className="w-8 h-8" />
+                        </div>
+                        <div className="space-y-1.5">
+                          <p className="text-base font-bold text-slate-200">
+                            Öğrenci Ders Programı PDF Dosyasını Seçin veya Sürükleyin
+                          </p>
+                          <p className="text-xs text-slate-400">
+                            Yalnızca <span className="text-emerald-400 font-mono">.pdf</span> formatındaki OBS/USIS ders programı çıktısı desteklenir
+                          </p>
+                        </div>
+                        <div className="pt-2">
+                          <span className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-bold rounded-xl shadow-lg shadow-emerald-900/40 transition-all">
+                            <FileText className="w-4 h-4" />
+                            <span>PDF Dosyası Yükle</span>
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                  </label>
+
+                  {/* Feature Pills */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-3xl mx-auto pt-4">
+                    <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800 text-left space-y-1">
+                      <div className="text-emerald-400 font-bold text-xs flex items-center gap-1.5">
+                        <Sparkles className="w-4 h-4" />
+                        Renkli & Otomatik Tablo
+                      </div>
+                      <p className="text-[11px] text-slate-400">Her ders için farklı renkler ve saat blokları oluşturulur.</p>
+                    </div>
+
+                    <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800 text-left space-y-1">
+                      <div className="text-teal-400 font-bold text-xs flex items-center gap-1.5">
+                        <Building2 className="w-4 h-4" />
+                        Sınıflar & Lablar
+                      </div>
+                      <p className="text-[11px] text-slate-400">Teori amfileri, online dersler ve BLM LAB yerleri net belirtilir.</p>
+                    </div>
+
+                    <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800 text-left space-y-1">
+                      <div className="text-indigo-400 font-bold text-xs flex items-center gap-1.5">
+                        <User className="w-4 h-4" />
+                        Öğretim Üyeleri
+                      </div>
+                      <p className="text-[11px] text-slate-400">Hocaların unvan ve tam adları veritabanından otomatik getirilir.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              /* PDF successfully parsed -> Visualizer View */
+              <div className="space-y-6">
+                {/* Visualizer Top Bar / Header */}
+                <div className="bg-gradient-to-r from-slate-900 via-emerald-950/30 to-slate-900 border border-emerald-800/40 rounded-3xl p-6 shadow-2xl space-y-4">
+                  <div className="flex flex-wrap items-center justify-between gap-4">
+                    {/* Left: Student Identity */}
+                    <div className="flex items-center space-x-4">
+                      <div className="w-12 h-12 bg-gradient-to-tr from-emerald-600 to-teal-500 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-emerald-950 font-bold text-lg">
+                        {visualizerData.student_name ? visualizerData.student_name.charAt(0) : 'Ö'}
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h2 className="text-lg font-bold text-slate-100">
+                            {visualizerData.student_name || 'Öğrenci Ders Programı'}
+                          </h2>
+                          {visualizerData.student_id && (
+                            <span className="font-mono text-xs font-bold px-2 py-0.5 bg-slate-800 border border-slate-700 text-slate-300 rounded-lg">
+                              {visualizerData.student_id}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-emerald-400 font-medium mt-0.5">
+                          {visualizerData.term ? `${visualizerData.term} Dönemi` : 'Haftalık Ders Programı'}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Right: Quick Action Buttons */}
+                    <div className="flex items-center gap-2.5 flex-wrap">
+                      {/* View mode switcher */}
+                      <div className="bg-slate-950 p-1 rounded-xl border border-slate-800 flex items-center gap-1">
+                        <button
+                          onClick={() => setVisualizerViewMode('table')}
+                          className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                            visualizerViewMode === 'table'
+                              ? 'bg-emerald-600 text-white shadow'
+                              : 'text-slate-400 hover:text-slate-200'
+                          }`}
+                        >
+                          <Calendar className="w-3.5 h-3.5 inline mr-1" />
+                          Haftalık Tablo
+                        </button>
+                        <button
+                          onClick={() => setVisualizerViewMode('cards')}
+                          className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                            visualizerViewMode === 'cards'
+                              ? 'bg-emerald-600 text-white shadow'
+                              : 'text-slate-400 hover:text-slate-200'
+                          }`}
+                        >
+                          <LayoutGrid className="w-3.5 h-3.5 inline mr-1" />
+                          Günlük Kartlar
+                        </button>
+                        <button
+                          onClick={() => setVisualizerViewMode('summary')}
+                          className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                            visualizerViewMode === 'summary'
+                              ? 'bg-emerald-600 text-white shadow'
+                              : 'text-slate-400 hover:text-slate-200'
+                          }`}
+                        >
+                          <Building2 className="w-3.5 h-3.5 inline mr-1" />
+                          Derslik & Hoca Özeti
+                        </button>
+                      </div>
+
+                      <button
+                        onClick={handleExportVisualizerPNG}
+                        className="flex items-center space-x-1.5 px-4 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-bold rounded-xl shadow-lg shadow-emerald-950 transition-all cursor-pointer"
+                      >
+                        <Download className="w-3.5 h-3.5" />
+                        <span>PNG İndir</span>
+                      </button>
+
+                      <button
+                        onClick={() => window.print()}
+                        className="flex items-center space-x-1.5 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium rounded-xl border border-slate-700 transition-all cursor-pointer"
+                        title="Yazdır"
+                      >
+                        <Printer className="w-3.5 h-3.5" />
+                        <span>Yazdır</span>
+                      </button>
+
+                      <label className="flex items-center space-x-1.5 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium rounded-xl border border-slate-700 transition-all cursor-pointer">
+                        <Upload className="w-3.5 h-3.5 text-emerald-400" />
+                        <span>Yeni PDF</span>
+                        <input
+                          type="file"
+                          accept=".pdf"
+                          onChange={handleVisualizerPdfUpload}
+                          className="hidden"
+                        />
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* Summary Badges Pill */}
+                  <div className="flex items-center gap-3 pt-3 border-t border-slate-800/80 flex-wrap text-xs">
+                    <span className="px-3 py-1 bg-slate-950 rounded-lg border border-slate-800 text-slate-300 flex items-center gap-1.5 font-medium">
+                      <BookOpen className="w-3.5 h-3.5 text-emerald-400" />
+                      Toplam <strong className="text-white">{visualizerData.courses_summary?.length || 0}</strong> Ders
+                    </span>
+
+                    <span className="px-3 py-1 bg-slate-950 rounded-lg border border-slate-800 text-slate-300 flex items-center gap-1.5 font-medium">
+                      <Clock className="w-3.5 h-3.5 text-teal-400" />
+                      Haftalık <strong className="text-white">
+                        {visualizerData.courses_summary?.reduce((acc: number, c: any) => {
+                          const slotsCount = c.time_slots?.length || 0;
+                          return acc + slotsCount;
+                        }, 0)}
+                      </strong> Saat Ders
+                    </span>
+
+                    <span className="px-3 py-1 bg-slate-950 rounded-lg border border-slate-800 text-slate-300 flex items-center gap-1.5 font-medium">
+                      <Building2 className="w-3.5 h-3.5 text-indigo-400" />
+                      Farklı Derslikler: <strong className="text-white">
+                        {Array.from(new Set(visualizerData.courses_summary?.flatMap((c: any) => c.classrooms || []) || [])).join(', ') || 'Belirtilmedi'}
+                      </strong>
+                    </span>
+                  </div>
+                </div>
+
+                {/* VIEW 1: WEEKLY TIMETABLE GRID */}
+                {visualizerViewMode === 'table' && (
+                  <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl space-y-4">
+                    <div ref={visualizerScheduleRef} className="bg-slate-950 p-6 rounded-2xl border border-slate-800 space-y-4 overflow-x-auto">
+                      {/* Printable Banner inside image export */}
+                      <div className="flex items-center justify-between border-b border-slate-800/80 pb-4">
+                        <div className="flex items-center space-x-3">
+                          <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white font-black text-base shadow">
+                            YTÜ
+                          </div>
+                          <div>
+                            <h3 className="text-base font-bold text-slate-100">
+                              Yıldız Teknik Üniversitesi — Haftalık Ders Programı
+                            </h3>
+                            <p className="text-xs text-slate-400">
+                              {visualizerData.student_name} ({visualizerData.student_id}) • {visualizerData.term ? `${visualizerData.term} Dönemi` : 'Ders Programı'}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="text-right font-mono text-xs text-slate-500">
+                          {new Date().toLocaleDateString('tr-TR')}
+                        </div>
+                      </div>
+
+                      {/* Timetable Table */}
+                      <div className="overflow-x-auto">
+                        <table className="w-full border-collapse text-xs select-none min-w-[700px]">
+                          <thead>
+                            <tr className="border-b border-slate-800 text-slate-400">
+                              <th className="p-3 w-24 text-center font-semibold bg-slate-950/90 border-r border-slate-800">
+                                Saat
+                              </th>
+                              {['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma'].map(day => (
+                                <th key={day} className="p-3 text-center font-bold text-slate-200 border-r border-slate-800 last:border-r-0">
+                                  {day}
+                                </th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {(() => {
+                              const VISUALIZER_HOURS = [
+                                '08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00'
+                              ];
+
+                              const VIS_DAYS = ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma'];
+
+                              const toMinutes = (timeStr: string) => {
+                                const parts = timeStr.replace('.', ':').split(':');
+                                return parseInt(parts[0], 10) * 60 + parseInt(parts[1], 10);
+                              };
+
+                              const COLOR_PALETTES = [
+                                { bg: 'bg-indigo-950/90', border: 'border-indigo-500', text: 'text-indigo-100', accent: 'text-indigo-300', badge: 'bg-indigo-900/90 text-indigo-200 border border-indigo-600', icon: 'text-indigo-400' },
+                                { bg: 'bg-emerald-950/90', border: 'border-emerald-500', text: 'text-emerald-100', accent: 'text-emerald-300', badge: 'bg-emerald-900/90 text-emerald-200 border border-emerald-600', icon: 'text-emerald-400' },
+                                { bg: 'bg-purple-950/90', border: 'border-purple-500', text: 'text-purple-100', accent: 'text-purple-300', badge: 'bg-purple-900/90 text-purple-200 border border-purple-600', icon: 'text-purple-400' },
+                                { bg: 'bg-amber-950/90', border: 'border-amber-500', text: 'text-amber-100', accent: 'text-amber-300', badge: 'bg-amber-900/90 text-amber-200 border border-amber-600', icon: 'text-amber-400' },
+                                { bg: 'bg-rose-950/90', border: 'border-rose-500', text: 'text-rose-100', accent: 'text-rose-300', badge: 'bg-rose-900/90 text-rose-200 border border-rose-600', icon: 'text-rose-400' },
+                                { bg: 'bg-cyan-950/90', border: 'border-cyan-500', text: 'text-cyan-100', accent: 'text-cyan-300', badge: 'bg-cyan-900/90 text-cyan-200 border border-cyan-600', icon: 'text-cyan-400' },
+                                { bg: 'bg-teal-950/90', border: 'border-teal-500', text: 'text-teal-100', accent: 'text-teal-300', badge: 'bg-teal-900/90 text-teal-200 border border-teal-600', icon: 'text-teal-400' },
+                                { bg: 'bg-fuchsia-950/90', border: 'border-fuchsia-500', text: 'text-fuchsia-100', accent: 'text-fuchsia-300', badge: 'bg-fuchsia-900/90 text-fuchsia-200 border border-fuchsia-600', icon: 'text-fuchsia-400' },
+                                { bg: 'bg-sky-950/90', border: 'border-sky-500', text: 'text-sky-100', accent: 'text-sky-300', badge: 'bg-sky-900/90 text-sky-200 border border-sky-600', icon: 'text-sky-400' },
+                                { bg: 'bg-orange-950/90', border: 'border-orange-500', text: 'text-orange-100', accent: 'text-orange-300', badge: 'bg-orange-900/90 text-orange-200 border border-orange-600', icon: 'text-orange-400' },
+                              ];
+
+                              const getCourseColor = (code: string) => {
+                                const codes = (visualizerData.courses_summary || []).map((c: any) => c.code);
+                                const idx = codes.indexOf(code);
+                                if (idx !== -1) return COLOR_PALETTES[idx % COLOR_PALETTES.length];
+                                let hash = 0;
+                                for (let i = 0; i < code.length; i++) hash = code.charCodeAt(i) + ((hash << 5) - hash);
+                                return COLOR_PALETTES[Math.abs(hash) % COLOR_PALETTES.length];
+                              };
+
+                              // Precompute which course runs on (day, hourIdx)
+                              const grid: Record<string, Record<number, any>> = {};
+                              VIS_DAYS.forEach(d => { grid[d] = {}; });
+
+                              VIS_DAYS.forEach(day => {
+                                const items = visualizerData.schedule[day] || [];
+                                items.forEach((it: any) => {
+                                  const startM = toMinutes(it.start_time);
+                                  const endM = toMinutes(it.end_time);
+
+                                  VISUALIZER_HOURS.forEach((hr, hrIdx) => {
+                                    const hrM = toMinutes(hr);
+                                    if (hrM >= startM && hrM < endM) {
+                                      grid[day][hrIdx] = it;
+                                    }
+                                  });
+                                });
+                              });
+
+                              const skipCells: Record<string, Set<number>> = {};
+                              VIS_DAYS.forEach(d => { skipCells[d] = new Set(); });
+
+                              return VISUALIZER_HOURS.map((hour, hrIdx) => {
+                                const nextHour = `${parseInt(hour.split(':')[0], 10)}:50`;
+                                const hourLabel = `${hour} - ${nextHour}`;
+
+                                return (
+                                  <tr key={hour} className="border-b border-slate-800/60 hover:bg-slate-800/20 h-20">
+                                    <td className="p-2 border-r border-slate-800 text-center font-mono text-slate-500 bg-slate-950/40 h-20 align-middle">
+                                      {hourLabel}
+                                    </td>
+
+                                    {VIS_DAYS.map(day => {
+                                      if (skipCells[day].has(hrIdx)) return null;
+
+                                      const it = grid[day][hrIdx];
+                                      if (!it) {
+                                        return <td key={day} className="p-1 border-r border-slate-800/60 last:border-r-0 h-20 align-top" />;
+                                      }
+
+                                      // calculate span
+                                      let span = 1;
+                                      while (
+                                        hrIdx + span < VISUALIZER_HOURS.length &&
+                                        grid[day][hrIdx + span]?.code === it.code &&
+                                        grid[day][hrIdx + span]?.section === it.section &&
+                                        grid[day][hrIdx + span]?.classroom === it.classroom
+                                      ) {
+                                        skipCells[day].add(hrIdx + span);
+                                        span++;
+                                      }
+
+                                      const palette = getCourseColor(it.code);
+                                      const fullInst = getFullInstructorName(it.instructor);
+
+                                      return (
+                                        <td
+                                          key={day}
+                                          rowSpan={span}
+                                          style={{ height: `${span * 80}px` }}
+                                          className="p-1.5 border-r border-slate-800/60 last:border-r-0 align-top h-full"
+                                        >
+                                          <div className={`h-full w-full p-3 rounded-2xl border ${palette.bg} ${palette.border} shadow-lg flex flex-col justify-between transition-all hover:brightness-110 space-y-2`}>
+                                            <div className="space-y-1.5">
+                                              {/* Top Badges */}
+                                              <div className="flex items-center justify-between gap-1 flex-wrap">
+                                                <span className={`font-mono font-extrabold text-xs ${palette.accent}`}>
+                                                  {it.code} {it.section ? `(Şb. ${it.section})` : ''}
+                                                </span>
+
+                                                <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-lg flex items-center gap-1 ${
+                                                  it.is_lab
+                                                    ? 'bg-emerald-900/90 text-emerald-200 border border-emerald-600'
+                                                    : it.classroom.toLowerCase().includes('online')
+                                                    ? 'bg-cyan-900/90 text-cyan-200 border border-cyan-600'
+                                                    : palette.badge
+                                                }`}>
+                                                  {it.is_lab ? '🔬' : it.classroom.toLowerCase().includes('online') ? '💻' : '📍'} {it.classroom || 'Derslik'}
+                                                </span>
+                                              </div>
+
+                                              {/* Course Title */}
+                                              <h4 className={`text-xs font-bold ${palette.text} leading-tight line-clamp-2`}>
+                                                {it.name}
+                                              </h4>
+                                            </div>
+
+                                            {/* Bottom Info: Instructor & Time */}
+                                            <div className="pt-2 border-t border-slate-700/50 space-y-1 text-[10px] text-slate-300">
+                                              {fullInst && (
+                                                <div className="flex items-center gap-1 truncate" title={fullInst}>
+                                                  <User className={`w-3 h-3 flex-shrink-0 ${palette.icon}`} />
+                                                  <span className="truncate font-medium">{fullInst}</span>
+                                                </div>
+                                              )}
+                                              <div className="flex items-center gap-1 text-slate-400 font-mono">
+                                                <Clock className="w-3 h-3 flex-shrink-0 text-slate-500" />
+                                                <span>{it.start_time} - {it.end_time}</span>
+                                              </div>
+                                            </div>
+                                          </div>
+                                        </td>
+                                      );
+                                    })}
+                                  </tr>
+                                );
+                              });
+                            })()}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* VIEW 2: DAILY CARDS BREAKDOWN */}
+                {visualizerViewMode === 'cards' && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                    {['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi', 'Pazar'].map(day => {
+                      const dayItems = visualizerData.schedule[day] || [];
+                      if (dayItems.length === 0) return null;
+
+                      return (
+                        <div key={day} className="bg-slate-900 border border-slate-800 rounded-3xl p-5 shadow-xl space-y-4">
+                          <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                            <h3 className="font-bold text-slate-100 text-sm flex items-center gap-2">
+                              <Calendar className="w-4 h-4 text-emerald-400" />
+                              {day}
+                            </h3>
+                            <span className="text-xs px-2 py-0.5 bg-slate-800 rounded-full text-slate-400 font-mono font-semibold">
+                              {dayItems.length} Ders
+                            </span>
+                          </div>
+
+                          <div className="space-y-3">
+                            {dayItems.map((it: any, idx: number) => {
+                              const fullInst = getFullInstructorName(it.instructor);
+                              return (
+                                <div
+                                  key={idx}
+                                  className="p-3.5 rounded-2xl bg-slate-950 border border-slate-800/80 hover:border-emerald-500/40 transition-all space-y-2"
+                                >
+                                  <div className="flex items-center justify-between gap-2">
+                                    <span className="font-mono font-bold text-xs text-emerald-400">
+                                      {it.code} (Şb. {it.section})
+                                    </span>
+                                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-lg bg-slate-900 border border-slate-700 text-slate-300">
+                                      {it.classroom}
+                                    </span>
+                                  </div>
+
+                                  <h4 className="text-xs font-semibold text-slate-200">
+                                    {it.name}
+                                  </h4>
+
+                                  <div className="flex items-center justify-between text-[11px] text-slate-400 pt-1 border-t border-slate-900">
+                                    <span className="flex items-center gap-1 truncate max-w-[160px]" title={fullInst}>
+                                      <User className="w-3 h-3 text-slate-500 flex-shrink-0" />
+                                      {fullInst || 'Öğretim Üyesi'}
+                                    </span>
+                                    <span className="flex items-center gap-1 font-mono text-emerald-300">
+                                      <Clock className="w-3 h-3" />
+                                      {it.start_time} - {it.end_time}
+                                    </span>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* VIEW 3: SUMMARY TABLE (COURSES & CLASSROOMS) */}
+                {visualizerViewMode === 'summary' && (
+                  <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl space-y-4">
+                    <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                      <div>
+                        <h3 className="text-base font-bold text-slate-100 flex items-center gap-2">
+                          <Building2 className="w-5 h-5 text-emerald-400" />
+                          Kayıtlı Dersler & Derslikler Özeti
+                        </h3>
+                        <p className="text-xs text-slate-400">Tüm dersler, şubeler, derslikler ve öğretim üyeleri dökümü</p>
+                      </div>
+                    </div>
+
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left text-xs text-slate-300 border-collapse">
+                        <thead>
+                          <tr className="border-b border-slate-800 text-slate-400 uppercase tracking-wider text-[10px]">
+                            <th className="p-3">Ders Kodu</th>
+                            <th className="p-3">Ders Adı</th>
+                            <th className="p-3">Şube</th>
+                            <th className="p-3">Öğretim Elemanı</th>
+                            <th className="p-3">Derslik(ler)</th>
+                            <th className="p-3">Haftalık Saatler</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-800/60">
+                          {visualizerData.courses_summary?.map((c: any, idx: number) => {
+                            const fullInst = getFullInstructorName(c.instructor);
+                            return (
+                              <tr key={idx} className="hover:bg-slate-800/30 transition-colors">
+                                <td className="p-3 font-mono font-bold text-emerald-400 whitespace-nowrap">
+                                  {c.code}
+                                </td>
+                                <td className="p-3 font-semibold text-slate-100">
+                                  {c.name}
+                                </td>
+                                <td className="p-3 font-mono">
+                                  Şb. {c.section}
+                                </td>
+                                <td className="p-3">
+                                  <span className="flex items-center gap-1.5">
+                                    <User className="w-3.5 h-3.5 text-slate-500 flex-shrink-0" />
+                                    <span>{fullInst || c.instructor || 'Bölüm Öğretim Üyesi'}</span>
+                                  </span>
+                                </td>
+                                <td className="p-3">
+                                  <div className="flex items-center gap-1.5 flex-wrap">
+                                    {c.classrooms?.map((cr: string, cidx: number) => (
+                                      <span
+                                        key={cidx}
+                                        className={`px-2 py-0.5 rounded-lg border text-[11px] font-mono ${
+                                          cr.toUpperCase().includes('LAB')
+                                            ? 'bg-emerald-950/80 border-emerald-700/60 text-emerald-300'
+                                            : cr.toLowerCase().includes('online')
+                                            ? 'bg-cyan-950/80 border-cyan-700/60 text-cyan-300'
+                                            : 'bg-slate-950 border-slate-700 text-slate-300'
+                                        }`}
+                                      >
+                                        {cr}
+                                      </span>
+                                    ))}
+                                  </div>
+                                </td>
+                                <td className="p-3 font-mono text-slate-400">
+                                  <div className="space-y-0.5">
+                                    {c.time_slots?.map((ts: any, tidx: number) => (
+                                      <div key={tidx} className="flex items-center gap-1">
+                                        <span className="font-semibold text-slate-300">{ts.day}:</span>
+                                        <span>{ts.start_time} - {ts.end_time}</span>
+                                        {ts.is_lab && <span className="text-[10px] text-emerald-400">(Lab)</span>}
+                                      </div>
+                                    ))}
+                                  </div>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         )}
       </main>
 
@@ -2586,7 +3051,7 @@ export default function Home() {
                   onChange={e => setManageFormData(prev => ({ ...prev, department_code: e.target.value }))}
                   className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500"
                 >
-                  {facultiesList.flatMap(f => f.departments).map(d => (
+                  {FACULTIES.flatMap(f => f.departments).map(d => (
                     <option key={d.code} value={d.code}>{d.code} - {d.name}</option>
                   ))}
                 </select>
@@ -2841,292 +3306,6 @@ export default function Home() {
                 Kaydet & Veritabanına İşle
               </button>
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* PDF Preview Modal */}
-      {showPdfModal && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
-          onClick={(e) => { if (e.target === e.currentTarget) setShowPdfModal(false); }}
-        >
-          <div className="bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col">
-            {/* Header */}
-            <div className="flex items-center justify-between p-5 border-b border-slate-800">
-              <div className="flex items-center gap-2">
-                <Upload className="w-5 h-5 text-indigo-400" />
-                <h2 className="text-sm font-bold text-white">PDF&apos;den Ders Yükle</h2>
-                <span className="text-xs text-slate-500 font-normal">— DB&apos;ye kaydedilmez</span>
-              </div>
-              <button
-                onClick={() => setShowPdfModal(false)}
-                className="text-slate-400 hover:text-white transition-colors"
-              >
-                <XCircle className="w-5 h-5" />
-              </button>
-            </div>
-
-            {/* Body */}
-            <div className="p-5 space-y-4 overflow-y-auto flex-1">
-              {/* Fakülte + Bölüm */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-slate-300 flex items-center gap-1">
-                    <Building2 className="w-3 h-3 text-slate-400" />
-                    Fakülte Adı
-                  </label>
-                  {pdfModalFacMode === 'select' ? (
-                    <select
-                      value={pdfModalSelectedFac}
-                      onChange={(e) => {
-                        if (e.target.value === 'NEW') {
-                          setPdfModalFacMode('new');
-                        } else {
-                          setPdfModalSelectedFac(e.target.value);
-                          const fac = facultiesList.find(f => f.id === e.target.value);
-                          if (fac && fac.departments.length > 0) {
-                            setPdfModalSelectedDept(fac.departments[0].code);
-                            setPdfModalDeptMode('select');
-                          }
-                        }
-                      }}
-                      className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-xs text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    >
-                      {facultiesList.map(f => (
-                        <option key={f.id} value={f.id}>{f.name}</option>
-                      ))}
-                      <option value="NEW" className="text-indigo-400 font-bold">+ Yeni Fakülte Ekle...</option>
-                    </select>
-                  ) : (
-                    <div className="flex gap-2">
-                      <input
-                        type="text"
-                        value={pdfModalCustomFac}
-                        onChange={(e) => setPdfModalCustomFac(e.target.value)}
-                        placeholder="Fakülte adı..."
-                        className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                      />
-                      <button
-                        onClick={() => { setPdfModalFacMode('select'); setPdfModalCustomFac(''); }}
-                        className="px-3 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs whitespace-nowrap transition-colors"
-                      >
-                        İptal
-                      </button>
-                    </div>
-                  )}
-                </div>
-                
-                <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-slate-300 flex items-center gap-1">
-                    <GraduationCap className="w-3 h-3 text-slate-400" />
-                    Bölüm Adı
-                  </label>
-                  {pdfModalDeptMode === 'select' ? (
-                    <select
-                      value={pdfModalSelectedDept}
-                      onChange={(e) => {
-                        if (e.target.value === 'NEW') setPdfModalDeptMode('new');
-                        else setPdfModalSelectedDept(e.target.value);
-                      }}
-                      className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-xs text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    >
-                      {(facultiesList.find(f => f.id === pdfModalSelectedFac)?.departments || []).map(d => (
-                        <option key={d.code} value={d.code}>{d.name}</option>
-                      ))}
-                      <option value="NEW" className="text-indigo-400 font-bold">+ Yeni Bölüm Ekle...</option>
-                    </select>
-                  ) : (
-                    <div className="flex gap-2">
-                      <input
-                        type="text"
-                        value={pdfModalCustomDept}
-                        onChange={(e) => setPdfModalCustomDept(e.target.value)}
-                        placeholder="Bölüm adı..."
-                        className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                      />
-                      <button
-                        onClick={() => { setPdfModalDeptMode('select'); setPdfModalCustomDept(''); }}
-                        className="px-3 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs whitespace-nowrap transition-colors"
-                      >
-                        İptal
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Drag & Drop / Dosya seçimi */}
-              <div
-                className={`border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-all ${
-                  pdfModalFile
-                    ? 'border-indigo-500/60 bg-indigo-950/20'
-                    : 'border-slate-700 hover:border-indigo-500/50 hover:bg-slate-800/30'
-                }`}
-                onClick={() => pdfModalInputRef.current?.click()}
-                onDragOver={(e) => e.preventDefault()}
-                onDrop={(e) => {
-                  e.preventDefault();
-                  const file = e.dataTransfer.files?.[0];
-                  if (file && file.name.endsWith('.pdf')) {
-                    setPdfModalFile(file);
-                    setPdfModalCourses([]);
-                    setPdfModalError('');
-                  }
-                }}
-              >
-                <input
-                  ref={pdfModalInputRef}
-                  type="file"
-                  accept=".pdf"
-                  className="hidden"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) {
-                      setPdfModalFile(file);
-                      setPdfModalCourses([]);
-                      setPdfModalError('');
-                    }
-                  }}
-                />
-                {pdfModalFile ? (
-                  <div className="space-y-1">
-                    <CheckCircle className="w-8 h-8 text-indigo-400 mx-auto" />
-                    <p className="text-xs font-semibold text-indigo-300">{pdfModalFile.name}</p>
-                    <p className="text-xs text-slate-500">{(pdfModalFile.size / 1024).toFixed(0)} KB</p>
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    <Upload className="w-8 h-8 text-slate-500 mx-auto" />
-                    <p className="text-xs text-slate-400">PDF&apos;i buraya sürükle veya <span className="text-indigo-400 font-semibold">tıkla seç</span></p>
-                    <p className="text-xs text-slate-600">YTÜ ders programı tablosu içeren PDF</p>
-                  </div>
-                )}
-              </div>
-
-              {/* Parse butonu */}
-              {pdfModalFile && pdfModalCourses.length === 0 && !pdfModalParsing && !pdfModalError && (
-                <button
-                  onClick={handlePdfModalParse}
-                  className="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold py-2.5 rounded-xl transition-all shadow-lg shadow-indigo-600/20"
-                >
-                  <Sparkles className="w-4 h-4" />
-                  Dersleri Tespit Et
-                </button>
-              )}
-
-              {/* Parsing spinner */}
-              {pdfModalParsing && (
-                <div className="flex items-center justify-center gap-2 text-xs text-indigo-400 py-2">
-                  <RefreshCw className="w-4 h-4 animate-spin" />
-                  PDF analiz ediliyor...
-                </div>
-              )}
-
-              {/* Error */}
-              {pdfModalError && (
-                <div className="flex items-start gap-2 bg-red-950/30 border border-red-800/40 rounded-xl p-3">
-                  <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
-                  <p className="text-xs text-red-300">{pdfModalError}</p>
-                </div>
-              )}
-
-              {/* Ders listesi önizlemesi */}
-              {pdfModalCourses.length > 0 && (
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <p className="text-xs font-semibold text-slate-300">
-                      {pdfModalCourses.length} ders tespit edildi
-                    </p>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => setPdfModalSelected(new Set(pdfModalCourses.map((c: any) => c.code)))}
-                        className="text-xs text-indigo-400 hover:text-indigo-300"
-                      >Tümünü seç</button>
-                      <span className="text-slate-600">|</span>
-                      <button
-                        onClick={() => setPdfModalSelected(new Set())}
-                        className="text-xs text-slate-400 hover:text-slate-300"
-                      >Temizle</button>
-                    </div>
-                  </div>
-                  <div className="space-y-1 max-h-52 overflow-y-auto pr-1">
-                    {pdfModalCourses.map((course: any) => {
-                      const isSelected = pdfModalSelected.has(course.code);
-                      const alreadyAdded = !!selectedCourses.find(c => c.code === course.code);
-                      const dayStr = (course.sections || [])
-                        .flatMap((s: any) => (s.time_slots || []).map((t: any) => `${t.day} ${t.start_time}-${t.end_time}`))
-                        .slice(0, 2).join(', ');
-                      return (
-                        <label
-                          key={course.code}
-                          className={`flex items-start gap-3 p-2.5 rounded-xl cursor-pointer transition-all ${
-                            alreadyAdded
-                              ? 'opacity-50 cursor-not-allowed bg-slate-800/20'
-                              : isSelected
-                              ? 'bg-indigo-950/40 border border-indigo-700/40'
-                              : 'bg-slate-800/30 border border-transparent hover:border-slate-700/60'
-                          }`}
-                        >
-                          <input
-                            type="checkbox"
-                            checked={isSelected && !alreadyAdded}
-                            disabled={alreadyAdded}
-                            onChange={() => {
-                              if (alreadyAdded) return;
-                              setPdfModalSelected(prev => {
-                                const next = new Set(prev);
-                                if (next.has(course.code)) next.delete(course.code);
-                                else next.add(course.code);
-                                return next;
-                              });
-                            }}
-                            className="mt-0.5 rounded bg-slate-800 border-slate-600 text-indigo-500 focus:ring-indigo-500 focus:ring-offset-slate-900"
-                          />
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2">
-                              <span className="text-xs font-bold text-indigo-300">{course.code}</span>
-                              {alreadyAdded && <span className="text-[10px] bg-emerald-900/40 text-emerald-400 px-1.5 py-0.5 rounded-full">Eklendi</span>}
-                            </div>
-                            <p className="text-xs text-slate-300 truncate">{course.name}</p>
-                            {dayStr && <p className="text-[10px] text-slate-500 mt-0.5">{dayStr}</p>}
-                          </div>
-                        </label>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Footer actions */}
-            {pdfModalCourses.length > 0 && (
-              <div className="flex items-center justify-between p-5 border-t border-slate-800 bg-slate-900/50">
-                <p className="text-xs text-slate-400">
-                  <span className="font-semibold text-white">{pdfModalSelected.size}</span> ders seçili
-                </p>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => setShowPdfModal(false)}
-                    className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition-all"
-                  >
-                    İptal
-                  </button>
-                  <button
-                    onClick={handlePdfModalAddSelected}
-                    disabled={pdfModalSelected.size === 0}
-                    className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-                      pdfModalSelected.size > 0
-                        ? 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/20'
-                        : 'bg-slate-800 text-slate-600 cursor-not-allowed'
-                    }`}
-                  >
-                    <Plus className="w-3.5 h-3.5" />
-                    Seçilenleri Ekle ({pdfModalSelected.size})
-                  </button>
-                </div>
-              </div>
-            )}
           </div>
         </div>
       )}
