@@ -957,7 +957,7 @@ export default function Home() {
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight">
-                  YILDIZ TEKNİK ÜNİVERSİTESİ
+                  YTÜ Program Görselleştirici
                 </h1>
                 <span className="hidden sm:inline-block px-2 py-0.5 bg-slate-100 border border-slate-200 text-slate-700 text-[11px] font-mono rounded font-semibold">
                   OBS
@@ -972,8 +972,8 @@ export default function Home() {
           {/* Kurumsal Bilgi & Durum Alanı */}
           <div className="flex items-center gap-3">
             <div className="hidden sm:flex items-center gap-2 text-xs font-medium text-slate-600 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-lg">
-              <Building2 className="w-4 h-4 text-slate-500" />
-              <span>Öğrenci İşleri Daire Başkanlığı</span>
+              <Sparkles className="w-4 h-4 text-amber-500" />
+              <span>Gönüllü Proje</span>
             </div>
 
             {visualizerData && (
@@ -2649,11 +2649,11 @@ export default function Home() {
                             </span>
                             <span className="text-xs text-slate-400 font-semibold">•</span>
                             <span className="text-xs text-slate-600 font-semibold">
-                              Öğrenci İşleri Daire Başkanlığı
+                              Haftalık Ders Programı Çizelgesi
                             </span>
                           </div>
-                          <h3 className="text-sm font-bold text-slate-800">
-                            Öğrenci Haftalık Ders Programı Çizelgesi
+                          <h3 className="text-xs font-medium text-slate-600">
+                            Öğrenci Bilgi Sistemi (OBS) • Gönüllü Proje
                           </h3>
                         </div>
 
@@ -3296,7 +3296,7 @@ export default function Home() {
       <footer className="border-t border-slate-200 py-6 text-center text-xs text-slate-500 bg-white no-print">
         <div className="max-w-7xl mx-auto px-4 space-y-1">
           <p className="font-semibold text-slate-700">
-            T.C. Yıldız Teknik Üniversitesi — Öğrenci Ders Programı Belge Çözümleme Portalı
+            YTÜ Program Görselleştirici — Gönüllü Öğrenci Projesi
           </p>
           <p className="text-[11px] text-slate-400">
             OBS sistemi üzerinden temin edilen resmi Report.pdf formatıyla tam uyumludur. A4 standartlarına göre çıktı üretir.
