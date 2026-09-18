@@ -2846,11 +2846,23 @@ export default function Home() {
                                       >
                                         <div className={`h-full w-full p-1.5 rounded border ${palette.bg} ${palette.border} flex flex-col justify-between space-y-1 transition-all shadow-xs overflow-hidden`}>
                                           <div className="space-y-0.5 min-w-0">
-                                            {/* Başlık ve Şube Bilgisi */}
+                                            {/* Başlık, Şube Bilgisi ve Online Kayıt Simgesi */}
                                             <div className="flex items-center justify-between gap-1 min-w-0">
                                               <span className={`font-mono font-bold text-[11px] truncate ${palette.accent}`}>
                                                 {it.code} {it.section ? `(Şb. ${it.section})` : ''}
                                               </span>
+
+                                              {isOnline && (
+                                                <span
+                                                  className="inline-flex items-center gap-0.5 text-rose-600 shrink-0"
+                                                  title="Online / Sanal Ders"
+                                                >
+                                                  <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0 animate-pulse" />
+                                                  <svg className="w-2.5 h-2.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.2">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" d="m15.75 10.5 4.72-4.72a.75.75 0 0 1 1.28.53v11.38a.75.75 0 0 1-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 0 0 2.25-2.25v-9a2.25 2.25 0 0 0-2.25-2.25h-9A2.25 2.25 0 0 0 2.25 7.5v9a2.25 2.25 0 0 0 2.25 2.25Z" />
+                                                  </svg>
+                                                </span>
+                                              )}
                                             </div>
 
                                             {/* Ders Adı */}
@@ -2866,20 +2878,12 @@ export default function Home() {
                                             </p>
                                             {it.classroom ? (
                                               <div
-                                                className={`inline-flex items-center justify-between max-w-full gap-1 px-1.5 py-0.5 rounded border text-[8px] font-mono font-medium shadow-2xs ${palette.badge}`}
-                                                title={`${it.classroom}${isOnline ? ' (Online / Sanal Ders)' : ''}`}
+                                                className={`inline-block max-w-full px-1.5 py-0.5 rounded border text-[8px] font-mono font-medium shadow-2xs ${palette.badge}`}
+                                                title={it.classroom}
                                               >
-                                                <span className="truncate">
+                                                <span className="truncate block">
                                                   {formatClassroomLabel(it.classroom, it.is_lab)}
                                                 </span>
-                                                {isOnline && (
-                                                  <span className="inline-flex items-center gap-0.5 text-rose-600 shrink-0 ml-0.5" title="Online / Sanal Ders">
-                                                    <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0 animate-pulse" />
-                                                    <svg className="w-2.5 h-2.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                                                      <path strokeLinecap="round" strokeLinejoin="round" d="m15.75 10.5 4.72-4.72a.75.75 0 0 1 1.28.53v11.38a.75.75 0 0 1-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 0 0 2.25-2.25v-9a2.25 2.25 0 0 0-2.25-2.25h-9A2.25 2.25 0 0 0 2.25 7.5v9a2.25 2.25 0 0 0 2.25 2.25Z" />
-                                                    </svg>
-                                                  </span>
-                                                )}
                                               </div>
                                             ) : null}
                                           </div>
