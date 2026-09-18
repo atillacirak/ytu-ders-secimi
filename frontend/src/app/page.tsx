@@ -2838,19 +2838,12 @@ export default function Home() {
                                           isLastCol ? 'border-r-0' : ''
                                         }`}
                                       >
-                                        <div className={`h-full w-full p-1.5 rounded border ${palette.bg} ${palette.border} flex flex-col justify-between space-y-0.5 transition-all shadow-xs overflow-hidden`}>
-                                          <div className="space-y-0.5">
-                                            {/* Başlık ve Şube / Derslik Bilgisi */}
+                                        <div className={`h-full w-full p-1.5 rounded border ${palette.bg} ${palette.border} flex flex-col justify-between space-y-1 transition-all shadow-xs overflow-hidden`}>
+                                          <div className="space-y-0.5 min-w-0">
+                                            {/* Başlık ve Şube Bilgisi */}
                                             <div className="flex items-center justify-between gap-1 min-w-0">
-                                              <span className={`font-mono font-bold text-[10.5px] whitespace-nowrap shrink-0 ${palette.accent}`}>
+                                              <span className={`font-mono font-bold text-[11px] truncate ${palette.accent}`}>
                                                 {it.code} {it.section ? `(Şb. ${it.section})` : ''}
-                                              </span>
-
-                                              <span
-                                                className={`text-[8px] font-mono px-1 py-0.5 rounded border truncate max-w-[85px] shrink shadow-2xs font-semibold ${palette.badge}`}
-                                                title={it.classroom || 'Derslik'}
-                                              >
-                                                {formatClassroomLabel(it.classroom, it.is_lab)}
                                               </span>
                                             </div>
 
@@ -2860,11 +2853,19 @@ export default function Home() {
                                             </h4>
                                           </div>
 
-                                          {/* Alt Bilgi: Saat */}
-                                          <div className="pt-0.5 border-t border-slate-200/80 text-[8.5px] text-slate-600">
+                                          {/* Alt Bilgi: Saat ve Derslik */}
+                                          <div className="pt-0.5 border-t border-slate-200/80 text-[8.5px] text-slate-600 space-y-0.5 min-w-0">
                                             <p className="font-mono text-slate-500 text-[8px] whitespace-nowrap">
                                               {it.start_time} - {it.end_time}
                                             </p>
+                                            {it.classroom ? (
+                                              <p
+                                                className="font-mono text-[8px] font-medium text-slate-700 truncate"
+                                                title={it.classroom}
+                                              >
+                                                {formatClassroomLabel(it.classroom, it.is_lab)}
+                                              </p>
+                                            ) : null}
                                           </div>
                                         </div>
                                       </td>
