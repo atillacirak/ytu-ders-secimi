@@ -2700,13 +2700,13 @@ export default function Home() {
                       <table className="w-full border-collapse text-xs select-none table-fixed border border-slate-300">
                         <thead>
                           <tr className="border-b border-slate-300 text-slate-700 bg-slate-100">
-                            <th className="p-2 w-24 text-center font-bold text-[11px] border-r border-slate-300 uppercase tracking-wider">
+                            <th className="p-2 w-24 text-center font-bold text-[11.5px] border-r border-slate-300 uppercase tracking-wider">
                               Saat
                             </th>
                             {['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma'].map((day, dIdx) => (
                               <th
                                 key={day}
-                                className={`p-2 text-center font-bold text-[12px] border-r border-slate-300 uppercase tracking-wider text-slate-800 ${
+                                className={`p-2 text-center font-bold text-[12.5px] border-r border-slate-300 uppercase tracking-wider text-slate-800 ${
                                   dIdx === 4 ? 'border-r-0' : ''
                                 }`}
                               >
@@ -2795,7 +2795,7 @@ export default function Home() {
                               return (
                                 <tr key={hour} className="border-b border-slate-300" style={{ height: `${SLOT_HEIGHT}px` }}>
                                   <td
-                                    className="p-1 border-r border-slate-300 text-center font-mono text-[10.5px] font-medium text-slate-600 bg-slate-50 align-middle whitespace-nowrap"
+                                    className="p-1 border-r border-slate-300 text-center font-mono text-[11px] font-medium text-slate-600 bg-slate-50 align-middle whitespace-nowrap"
                                     style={{ height: `${SLOT_HEIGHT}px` }}
                                   >
                                     {hourLabel}
@@ -2861,13 +2861,13 @@ export default function Home() {
                                           <div className="space-y-0.5 min-w-0">
                                             {/* Başlık, Şube Bilgisi ve Online Kayıt Simgesi */}
                                             <div className="flex items-center justify-between gap-1 min-w-0">
-                                              <span className={`font-mono font-bold text-[11.5px] truncate ${palette.accent}`}>
+                                              <span className={`font-mono font-bold text-[12px] truncate ${palette.accent}`}>
                                                 {it.code} {it.section ? `(Şb. ${it.section})` : ''}
                                               </span>
 
                                               {isOnline && (
                                                 <span
-                                                  className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded border text-[8.5px] font-mono shrink-0 shadow-2xs ${
+                                                  className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded border text-[9px] font-mono shrink-0 shadow-2xs ${
                                                     isMonochrome
                                                       ? 'bg-white border-slate-300 text-slate-800'
                                                       : 'bg-rose-50/80 border-rose-300 text-rose-600'
@@ -2887,19 +2887,19 @@ export default function Home() {
                                             </div>
 
                                             {/* Ders Adı */}
-                                            <h4 className={`text-[10.5px] font-semibold ${palette.text} leading-tight ${span === 1 ? 'line-clamp-1' : 'line-clamp-2'} break-words`}>
+                                            <h4 className={`text-[11px] font-semibold ${palette.text} leading-tight ${span === 1 ? 'line-clamp-1' : 'line-clamp-2'} break-words`}>
                                               {it.name}
                                             </h4>
                                           </div>
 
                                           {/* Alt Bilgi: Saat ve Derslik Rozeti */}
                                           <div className="pt-1 border-t border-slate-200/80 text-slate-600 space-y-1 min-w-0">
-                                            <p className="font-mono text-slate-500 text-[9px] font-medium whitespace-nowrap">
+                                            <p className="font-mono text-slate-500 text-[9.5px] font-medium whitespace-nowrap">
                                               {it.start_time} - {it.end_time}
                                             </p>
                                             {it.classroom ? (
                                               <div
-                                                className={`inline-block max-w-full px-2 py-0.5 rounded-md border text-[10px] font-mono font-bold shadow-2xs ${palette.badge}`}
+                                                className={`inline-block max-w-full px-2 py-0.5 rounded-md border text-[10.5px] font-mono font-bold shadow-2xs ${palette.badge}`}
                                                 title={it.classroom}
                                               >
                                                 <span className="truncate block">
