@@ -14,9 +14,39 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "YTÜ Program Görselleştirici",
-  description: "Yıldız Teknik Üniversitesi Öğrenci Bilgi Sistemi (OBS) haftalık ders programı çizelgeleme ve A4 çıktı servisi — Gönüllü Proje.",
+  description: "YTÜ OBS ders programı görselleştirme - gönüllü proje",
+  metadataBase: new URL("https://ytuprogram.vercel.app"),
+  openGraph: {
+    title: "YTÜ Program Görselleştirici",
+    description: "YTÜ OBS ders programı görselleştirme - gönüllü proje",
+    url: "https://ytuprogram.vercel.app",
+    siteName: "YTÜ Program Görselleştirici",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "YTÜ Program Görselleştirici - OBS Ders Programı Çizelgeleme",
+      },
+    ],
+    locale: "tr_TR",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "YTÜ Program Görselleştirici",
+    description: "YTÜ OBS ders programı görselleştirme - gönüllü proje",
+    images: ["/og-image.png"],
+  },
   icons: {
-    icon: "/favicon.svg",
+    icon: [
+      { url: "/favicon.svg", type: "image/svg+xml" },
+      { url: "/favicon.png", sizes: "64x64", type: "image/png" },
+      { url: "/icon.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: [
+      { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+    ],
   },
 };
 
