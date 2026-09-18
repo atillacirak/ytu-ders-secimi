@@ -2786,7 +2786,7 @@ export default function Home() {
                             const skipCells: Record<string, Set<number>> = {};
                             VIS_DAYS.forEach(d => { skipCells[d] = new Set(); });
 
-                            const SLOT_HEIGHT = 52;
+                            const SLOT_HEIGHT = 54;
 
                             return VISUALIZER_HOURS.map((hour, hrIdx) => {
                               const nextHour = `${parseInt(hour.split(':')[0], 10)}:50`;
@@ -2893,13 +2893,13 @@ export default function Home() {
                                           </div>
 
                                           {/* Alt Bilgi: Saat ve Derslik Rozeti */}
-                                          <div className="pt-1 border-t border-slate-200/80 text-[8.5px] text-slate-600 space-y-0.5 min-w-0">
-                                            <p className="font-mono text-slate-500 text-[8.5px] font-medium whitespace-nowrap">
+                                          <div className="pt-1 border-t border-slate-200/80 text-slate-600 space-y-1 min-w-0">
+                                            <p className="font-mono text-slate-500 text-[9px] font-medium whitespace-nowrap">
                                               {it.start_time} - {it.end_time}
                                             </p>
                                             {it.classroom ? (
                                               <div
-                                                className={`inline-block max-w-full px-1.5 py-0.5 rounded border text-[8.5px] font-mono font-medium shadow-2xs ${palette.badge}`}
+                                                className={`inline-block max-w-full px-2 py-0.5 rounded-md border text-[10px] font-mono font-bold shadow-2xs ${palette.badge}`}
                                                 title={it.classroom}
                                               >
                                                 <span className="truncate block">
