@@ -136,6 +136,7 @@ export default function Home() {
   const [visualizerData, setVisualizerData] = useState<{
     student_id: string;
     student_name: string;
+    department?: string;
     term: string;
     title: string;
     schedule: Record<string, any[]>;
@@ -2647,13 +2648,54 @@ export default function Home() {
                             <span className="font-black text-sm tracking-wide uppercase text-slate-950">
                               YILDIZ TEKNİK ÜNİVERSİTESİ
                             </span>
-                            <span className="text-xs text-slate-400 font-semibold">•</span>
-                            <span className="text-xs text-slate-600 font-semibold">
-                              Haftalık Ders Programı Çizelgesi
-                            </span>
+                            {(() => {
+                              if (visualizerData.department) {
+                                return (
+                                  <>
+                                    <span className="text-xs text-slate-400 font-semibold">•</span>
+                                    <span className="text-xs text-slate-600 font-semibold">{visualizerData.department}</span>
+                                  </>
+                                );
+                              }
+                              const deptCodes: Record<string, string> = {
+                                'BLM': 'Bilgisayar Mühendisliği',
+                                'BMD': 'Biyomedikal Mühendisliği',
+                                'ELK': 'Elektrik Mühendisliği',
+                                'EHM': 'Elektronik ve Haberleşme Mühendisliği',
+                                'YZV': 'Yapay Zeka ve Veri Mühendisliği',
+                                'MAK': 'Makine Mühendisliği',
+                                'END': 'Endüstri Mühendisliği',
+                                'MKT': 'Mekatronik Mühendisliği',
+                                'BIO': 'Biyomühendislik',
+                                'GDA': 'Gıda Mühendisliği',
+                                'KIM': 'Kimya Mühendisliği',
+                                'MAT': 'Matematik Mühendisliği',
+                                'MET': 'Metalurji ve Malzeme Mühendisliği',
+                                'INS': 'İnşaat Mühendisliği',
+                                'CEV': 'Çevre Mühendisliği',
+                                'HAR': 'Harita Mühendisliği',
+                                'MIM': 'Mimarlık',
+                                'SBP': 'Şehir ve Bölge Planlama',
+                                'IKT': 'İktisat',
+                                'ISL': 'İşletme',
+                                'SBL': 'Siyaset Bilimi ve Uluslararası İlişkiler',
+                              };
+                              for (const c of visualizerData.courses_summary || []) {
+                                const p = (c.code || '').replace(/[\d_].*$/, '').toUpperCase();
+                                if (deptCodes[p]) {
+                                  return (
+                                    <>
+                                      <span className="text-xs text-slate-400 font-semibold">•</span>
+                                      <span className="text-xs text-slate-600 font-semibold">{deptCodes[p]}</span>
+                                    </>
+                                  );
+                                }
+                              }
+                              return null;
+                            })()}
                           </div>
-                          <h3 className="text-xs font-medium text-slate-600">
-                            Öğrenci Bilgi Sistemi (OBS) • Gönüllü Proje
+                          <h3 className="text-xs font-semibold text-slate-600">
+                            Ders Programı - Gönüllü Proje
                           </h3>
                         </div>
 
@@ -2664,9 +2706,11 @@ export default function Home() {
                           <p className="text-slate-600 font-mono text-[11px]">
                             Öğrenci No: <span className="text-slate-900 font-bold">{visualizerData.student_id}</span>
                           </p>
-                          <p className="text-slate-500 text-[10px] font-mono">
-                            {visualizerData.term ? `${visualizerData.term} Yarıyılı` : ''} • A4 Format
-                          </p>
+                          {visualizerData.term && (
+                            <p className="text-slate-500 text-[10px] font-mono">
+                              {visualizerData.term} Yarıyılı
+                            </p>
+                          )}
                         </div>
                       </div>
 
@@ -2834,19 +2878,6 @@ export default function Home() {
                           })()}
                         </tbody>
                       </table>
-
-                      {/* Resmi A4 Belge Altlığı */}
-                      <div className="pt-1.5 border-t border-slate-300 flex items-center justify-between text-[9px] text-slate-500 font-mono">
-                        <div className="flex items-center gap-2">
-                          <span>Yıldız Teknik Üniversitesi • Haftalık Ders Programı Çizelgesi (OBS)</span>
-                          <span>•</span>
-                          <span>A4 Standart Formatı</span>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <span>Belge Tarihi: {new Date().toLocaleDateString('tr-TR')}</span>
-                          <span>Sayfa 1 / 1</span>
-                        </div>
-                      </div>
                     </div>
                   </div>
                 )}
@@ -3299,7 +3330,7 @@ export default function Home() {
             YTÜ Program Görselleştirici — Gönüllü Öğrenci Projesi
           </p>
           <p className="text-[11px] text-slate-400">
-            OBS sistemi üzerinden temin edilen resmi Report.pdf formatıyla tam uyumludur. A4 standartlarına göre çıktı üretir.
+            OBS sistemi üzerinden temin edilen resmi Report.pdf formatıyla tam uyumludur.
           </p>
         </div>
       </footer>

@@ -735,10 +735,76 @@ async def parse_student_schedule_endpoint(file: UploadFile = File(...)):
             cinfo['classrooms'] = sorted(list(cinfo['classrooms']))
             summary_list.append(cinfo)
 
+        dept_id_map = {
+            '011': 'Bilgisayar Mühendisliği',
+            '012': 'Elektrik Mühendisliği',
+            '013': 'Elektronik ve Haberleşme Mühendisliği',
+            '014': 'Biyomedikal Mühendisliği',
+            '015': 'Mekatronik Mühendisliği',
+            '016': 'Yapay Zeka ve Veri Mühendisliği',
+            '021': 'Makine Mühendisliği',
+            '022': 'Endüstri Mühendisliği',
+            '031': 'İnşaat Mühendisliği',
+            '032': 'Harita Mühendisliği',
+            '033': 'Çevre Mühendisliği',
+            '041': 'Kimya Mühendisliği',
+            '042': 'Matematik Mühendisliği',
+            '043': 'Metalurji ve Malzeme Mühendisliği',
+            '044': 'Biyomühendislik',
+            '045': 'Gıda Mühendisliği',
+            '051': 'Mimarlık',
+            '052': 'Şehir ve Bölge Planlama',
+            '061': 'İktisat',
+            '062': 'İşletme',
+            '063': 'Siyaset Bilimi ve Uluslararası İlişkiler',
+        }
+
+        dept_code_map = {
+            'BLM': 'Bilgisayar Mühendisliği',
+            'BMD': 'Biyomedikal Mühendisliği',
+            'ELK': 'Elektrik Mühendisliği',
+            'EHM': 'Elektronik ve Haberleşme Mühendisliği',
+            'YZV': 'Yapay Zeka ve Veri Mühendisliği',
+            'MAK': 'Makine Mühendisliği',
+            'END': 'Endüstri Mühendisliği',
+            'MKT': 'Mekatronik Mühendisliği',
+            'BIO': 'Biyomühendislik',
+            'GDA': 'Gıda Mühendisliği',
+            'KIM': 'Kimya Mühendisliği',
+            'MAT': 'Matematik Mühendisliği',
+            'MET': 'Metalurji ve Malzeme Mühendisliği',
+            'INS': 'İnşaat Mühendisliği',
+            'CEV': 'Çevre Mühendisliği',
+            'HAR': 'Harita Mühendisliği',
+            'MIM': 'Mimarlık',
+            'SBP': 'Şehir ve Bölge Planlama',
+            'IKT': 'İktisat',
+            'ISL': 'İşletme',
+            'SBL': 'Siyaset Bilimi ve Uluslararası İlişkiler',
+        }
+
+        department = ''
+        if len(student_id) >= 5:
+            sub = student_id[2:5]
+            if sub in dept_id_map:
+                department = dept_id_map[sub]
+
+        if not department and summary_list:
+            p_counts = {}
+            for c in summary_list:
+                p = re.sub(r'[\d_].*$', '', c['code']).upper()
+                if p not in ['ATA', 'TDB', 'ISG', 'İSG', 'ENF', 'YDY']:
+                    p_counts[p] = p_counts.get(p, 0) + 1
+            if p_counts:
+                top_p = max(p_counts.items(), key=lambda x: x[1])[0]
+                if top_p in dept_code_map:
+                    department = dept_code_map[top_p]
+
         return {
             'status': 'success',
             'student_id': student_id,
             'student_name': student_name,
+            'department': department,
             'term': term,
             'title': student_title,
             'schedule': merged_schedule,
