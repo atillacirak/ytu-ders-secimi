@@ -6,7 +6,7 @@ import {
   Search, AlertCircle, ArrowRight, RefreshCw, Upload, Sparkles, Layers,
   ChevronRight, ChevronLeft, Laptop, Building2, User, Award, BookmarkCheck,
   GraduationCap, LayoutGrid, XCircle, Shuffle, Globe, Star, TrendingUp, Download,
-  FileText, Printer, Eye, Share2
+  FileText, Printer, Eye, Share2, Palette
 } from 'lucide-react';
 import { toPng } from 'html-to-image';
 import { getFullInstructorName, INSTRUCTOR_MAP } from '../utils/instructors';
@@ -144,6 +144,7 @@ export default function Home() {
   } | null>(null);
   const [visualizerError, setVisualizerError] = useState<string | null>(null);
   const [visualizerViewMode, setVisualizerViewMode] = useState<'table' | 'cards' | 'summary'>('table');
+  const [visualizerColorMode, setVisualizerColorMode] = useState<'colored' | 'monochrome'>('colored');
   const visualizerScheduleRef = useRef<HTMLDivElement>(null);
   
   const scheduleRef = useRef<HTMLDivElement>(null);
@@ -2504,10 +2505,10 @@ export default function Home() {
 
                     <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 text-left space-y-1">
                       <div className="text-slate-800 font-bold text-xs flex items-center gap-1.5">
-                        <User className="w-4 h-4 text-[#002855]" />
-                        Öğretim Elemanları
+                        <Layers className="w-4 h-4 text-[#002855]" />
+                        Ders ve Şube Bilgileri
                       </div>
-                      <p className="text-[11px] text-slate-500">Dersi veren öğretim üyelerinin unvan ve isimleri eksiksiz gösterilir.</p>
+                      <p className="text-[11px] text-slate-500">Belgedeki tüm ders kodları ve şubeler çizelgeye eksiksiz yerleştirilir.</p>
                     </div>
                   </div>
                 </div>
@@ -2575,7 +2576,35 @@ export default function Home() {
                           }`}
                         >
                           <Building2 className="w-3.5 h-3.5 inline mr-1" />
-                          Derslik & Hoca Dökümü
+                          Ders Listesi & Derslikler
+                        </button>
+                      </div>
+
+                      {/* Renk Seçici (Renkli / Sade) */}
+                      <div className="bg-slate-100 p-1 rounded-lg border border-slate-200 flex items-center gap-1">
+                        <button
+                          onClick={() => setVisualizerColorMode('colored')}
+                          className={`px-2.5 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
+                            visualizerColorMode === 'colored'
+                              ? 'bg-[#002855] text-white shadow-2xs'
+                              : 'text-slate-600 hover:text-slate-900'
+                          }`}
+                          title="Renkli Görünüm"
+                        >
+                          <Palette className="w-3.5 h-3.5" />
+                          <span>Renkli</span>
+                        </button>
+                        <button
+                          onClick={() => setVisualizerColorMode('monochrome')}
+                          className={`px-2.5 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
+                            visualizerColorMode === 'monochrome'
+                              ? 'bg-[#002855] text-white shadow-2xs'
+                              : 'text-slate-600 hover:text-slate-900'
+                          }`}
+                          title="Standart Renksiz / Sade Görünüm"
+                        >
+                          <FileText className="w-3.5 h-3.5" />
+                          <span>Sade (Renksiz)</span>
                         </button>
                       </div>
 
@@ -2644,56 +2673,9 @@ export default function Home() {
                       {/* Resmi Kurumsal Belge Başlığı */}
                       <div className="border-b border-slate-300 pb-2.5 flex items-center justify-between">
                         <div className="space-y-0.5">
-                          <div className="flex items-center gap-2">
-                            <span className="font-black text-sm tracking-wide uppercase text-slate-950">
-                              YILDIZ TEKNİK ÜNİVERSİTESİ
-                            </span>
-                            {(() => {
-                              if (visualizerData.department) {
-                                return (
-                                  <>
-                                    <span className="text-xs text-slate-400 font-semibold">•</span>
-                                    <span className="text-xs text-slate-600 font-semibold">{visualizerData.department}</span>
-                                  </>
-                                );
-                              }
-                              const deptCodes: Record<string, string> = {
-                                'BLM': 'Bilgisayar Mühendisliği',
-                                'BMD': 'Biyomedikal Mühendisliği',
-                                'ELK': 'Elektrik Mühendisliği',
-                                'EHM': 'Elektronik ve Haberleşme Mühendisliği',
-                                'YZV': 'Yapay Zeka ve Veri Mühendisliği',
-                                'MAK': 'Makine Mühendisliği',
-                                'END': 'Endüstri Mühendisliği',
-                                'MKT': 'Mekatronik Mühendisliği',
-                                'BIO': 'Biyomühendislik',
-                                'GDA': 'Gıda Mühendisliği',
-                                'KIM': 'Kimya Mühendisliği',
-                                'MAT': 'Matematik Mühendisliği',
-                                'MET': 'Metalurji ve Malzeme Mühendisliği',
-                                'INS': 'İnşaat Mühendisliği',
-                                'CEV': 'Çevre Mühendisliği',
-                                'HAR': 'Harita Mühendisliği',
-                                'MIM': 'Mimarlık',
-                                'SBP': 'Şehir ve Bölge Planlama',
-                                'IKT': 'İktisat',
-                                'ISL': 'İşletme',
-                                'SBL': 'Siyaset Bilimi ve Uluslararası İlişkiler',
-                              };
-                              for (const c of visualizerData.courses_summary || []) {
-                                const p = (c.code || '').replace(/[\d_].*$/, '').toUpperCase();
-                                if (deptCodes[p]) {
-                                  return (
-                                    <>
-                                      <span className="text-xs text-slate-400 font-semibold">•</span>
-                                      <span className="text-xs text-slate-600 font-semibold">{deptCodes[p]}</span>
-                                    </>
-                                  );
-                                }
-                              }
-                              return null;
-                            })()}
-                          </div>
+                          <h2 className="font-black text-sm tracking-wide uppercase text-slate-950">
+                            YILDIZ TEKNİK ÜNİVERSİTESİ
+                          </h2>
                           <h3 className="text-xs font-semibold text-slate-600">
                             Ders Programı - Gönüllü Proje
                           </h3>
@@ -2758,7 +2740,18 @@ export default function Home() {
                               { bg: 'bg-stone-100', border: 'border-stone-300', text: 'text-stone-900', accent: 'text-stone-800', badge: 'bg-white text-stone-800 border-stone-300' },
                             ];
 
+                            const MONOCHROME_PALETTE = {
+                              bg: 'bg-slate-50',
+                              border: 'border-slate-300',
+                              text: 'text-slate-900',
+                              accent: 'text-slate-950 font-bold',
+                              badge: 'bg-white text-slate-800 border-slate-300 font-semibold'
+                            };
+
                             const getCourseColor = (code: string) => {
+                              if (visualizerColorMode === 'monochrome') {
+                                return MONOCHROME_PALETTE;
+                              }
                               const codes = (visualizerData.courses_summary || []).map((c: any) => c.code);
                               const idx = codes.indexOf(code);
                               if (idx !== -1) return CLEAN_OFFICE_PALETTES[idx % CLEAN_OFFICE_PALETTES.length];
@@ -2827,7 +2820,6 @@ export default function Home() {
                                     }
 
                                     const palette = getCourseColor(it.code);
-                                    const fullInst = getFullInstructorName(it.instructor);
 
                                     return (
                                       <td
@@ -2857,14 +2849,9 @@ export default function Home() {
                                             </h4>
                                           </div>
 
-                                          {/* Alt Bilgi: Öğretim Elemanı ve Saat */}
-                                          <div className="pt-0.5 border-t border-slate-200/80 space-y-0 text-[8.5px] text-slate-600">
-                                            {fullInst && (
-                                              <p className="truncate font-medium" title={fullInst}>
-                                                {fullInst}
-                                              </p>
-                                            )}
-                                            <p className="font-mono text-slate-500 text-[8px]">
+                                          {/* Alt Bilgi: Saat */}
+                                          <div className="pt-0.5 border-t border-slate-200/80 text-[8.5px] text-slate-600">
+                                            <p className="font-mono text-slate-500 text-[8.5px]">
                                               {it.start_time} - {it.end_time}
                                             </p>
                                           </div>
@@ -2923,12 +2910,10 @@ export default function Home() {
                                   </h4>
 
                                   <div className="flex items-center justify-between text-[10px] text-slate-500 pt-1 border-t border-slate-200">
-                                    <span className="truncate max-w-[150px] font-medium" title={fullInst}>
-                                      {fullInst || 'Öğretim Elemanı'}
-                                    </span>
-                                    <span className="font-mono text-slate-600 whitespace-nowrap">
+                                    <span className="font-mono text-slate-600 font-medium">
                                       {it.start_time} - {it.end_time}
                                     </span>
+                                    {it.is_lab && <span className="text-[10px] text-emerald-600 font-bold">Laboratuvar</span>}
                                   </div>
                                 </div>
                               );
@@ -2940,15 +2925,15 @@ export default function Home() {
                   </div>
                 )}
 
-                {/* GÖRÜNÜM 3: DERSLİK VE ÖĞRETİM ELEMANI DÖKÜMÜ */}
+                {/* GÖRÜNÜM 3: DERSLİK VE DERS LİSTESİ */}
                 {visualizerViewMode === 'summary' && (
                   <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4 text-slate-900">
                     <div className="border-b border-slate-100 pb-3">
                       <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                        <Building2 className="w-4 h-4 text-indigo-600" />
+                        <Building2 className="w-4 h-4 text-[#002855]" />
                         Kayıtlı Dersler ve Derslik Dağılımı Dökümü
                       </h3>
-                      <p className="text-xs text-slate-500 mt-0.5">Ders kodları, şubeler, öğretim elemanları ve derslik ortamları resmi listesi</p>
+                      <p className="text-xs text-slate-500 mt-0.5">Ders kodları, şubeler ve derslik ortamları listesi</p>
                     </div>
 
                     <div className="overflow-x-auto">
@@ -2958,14 +2943,12 @@ export default function Home() {
                             <th className="p-2.5">Ders Kodu</th>
                             <th className="p-2.5">Ders Adı</th>
                             <th className="p-2.5">Şube</th>
-                            <th className="p-2.5">Öğretim Elemanı</th>
                             <th className="p-2.5">Derslik / Ortam</th>
                             <th className="p-2.5">Ders Saatleri</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
                           {visualizerData.courses_summary?.map((c: any, idx: number) => {
-                            const fullInst = getFullInstructorName(c.instructor);
                             return (
                               <tr key={idx} className="hover:bg-slate-50 transition-colors">
                                 <td className="p-2.5 font-mono font-bold text-blue-700 whitespace-nowrap">
@@ -2976,9 +2959,6 @@ export default function Home() {
                                 </td>
                                 <td className="p-2.5 font-mono text-slate-600 whitespace-nowrap">
                                   Şb. {c.section}
-                                </td>
-                                <td className="p-2.5 text-slate-700">
-                                  {fullInst || c.instructor || 'Bölüm Öğretim Elemanı'}
                                 </td>
                                 <td className="p-2.5">
                                   <div className="flex items-center gap-1.5 flex-wrap">
