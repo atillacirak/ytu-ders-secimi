@@ -2829,6 +2829,12 @@ export default function Home() {
                                       return isLab ? `LAB (${clean})` : clean;
                                     };
 
+                                    const isOnline = Boolean(
+                                      it.is_online ||
+                                      (it.classroom && /sanal|online|uzaktan|uzem/i.test(it.classroom)) ||
+                                      (it.name && /uzaktan/i.test(it.name))
+                                    );
+
                                     return (
                                       <td
                                         key={day}
@@ -2853,18 +2859,28 @@ export default function Home() {
                                             </h4>
                                           </div>
 
-                                          {/* Alt Bilgi: Saat ve Derslik */}
-                                          <div className="pt-0.5 border-t border-slate-200/80 text-[8.5px] text-slate-600 space-y-0.5 min-w-0">
+                                          {/* Alt Bilgi: Saat ve Derslik Rozeti */}
+                                          <div className="pt-0.5 border-t border-slate-200/80 text-[8.5px] text-slate-600 space-y-1 min-w-0">
                                             <p className="font-mono text-slate-500 text-[8px] whitespace-nowrap">
                                               {it.start_time} - {it.end_time}
                                             </p>
                                             {it.classroom ? (
-                                              <p
-                                                className="font-mono text-[8px] font-medium text-slate-700 truncate"
-                                                title={it.classroom}
+                                              <div
+                                                className={`inline-flex items-center justify-between max-w-full gap-1 px-1.5 py-0.5 rounded border text-[8px] font-mono font-medium shadow-2xs ${palette.badge}`}
+                                                title={`${it.classroom}${isOnline ? ' (Online / Sanal Ders)' : ''}`}
                                               >
-                                                {formatClassroomLabel(it.classroom, it.is_lab)}
-                                              </p>
+                                                <span className="truncate">
+                                                  {formatClassroomLabel(it.classroom, it.is_lab)}
+                                                </span>
+                                                {isOnline && (
+                                                  <span className="inline-flex items-center gap-0.5 text-rose-600 shrink-0 ml-0.5" title="Online / Sanal Ders">
+                                                    <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0 animate-pulse" />
+                                                    <svg className="w-2.5 h-2.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                                                      <path strokeLinecap="round" strokeLinejoin="round" d="m15.75 10.5 4.72-4.72a.75.75 0 0 1 1.28.53v11.38a.75.75 0 0 1-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 0 0 2.25-2.25v-9a2.25 2.25 0 0 0-2.25-2.25h-9A2.25 2.25 0 0 0 2.25 7.5v9a2.25 2.25 0 0 0 2.25 2.25Z" />
+                                                    </svg>
+                                                  </span>
+                                                )}
+                                              </div>
                                             ) : null}
                                           </div>
                                         </div>
