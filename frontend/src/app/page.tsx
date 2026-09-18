@@ -226,7 +226,10 @@ export default function Home() {
         backgroundColor: '#ffffff',
         pixelRatio: 2, // A4 yüksek çözünürlük & netlik
         style: {
-          padding: '20px'
+          borderRadius: '0px',
+          border: 'none',
+          boxShadow: 'none',
+          margin: '0px',
         }
       });
       const link = document.createElement('a');
@@ -2665,7 +2668,7 @@ export default function Home() {
                     <div
                       id="visualizer-a4-document"
                       ref={visualizerScheduleRef}
-                      className="a4-print-target bg-white text-slate-900 p-5 rounded-xl border border-slate-200 space-y-2.5 w-full mx-auto"
+                      className="a4-print-target bg-white text-slate-900 p-6 space-y-3 w-full mx-auto rounded-none border-0"
                       style={{ minWidth: '980px', maxWidth: '1120px' }}
                     >
                       {/* Resmi Kurumsal Belge Başlığı */}
