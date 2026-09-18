@@ -2431,47 +2431,45 @@ export default function Home() {
           </div>
         ) : (
           /* ══════════════════════════════════════════════════════════════════
-             PDF PROGRAM GÖRSELLEŞTİRME SEKMESİ (VISUALIZER)
+             RESMİ ÖĞRENCİ DERS PROGRAMI ÇİZELGESİ (VISUALIZER)
           ══════════════════════════════════════════════════════════════════ */
           <div className="max-w-7xl mx-auto space-y-6 animate-fade-in">
             {!visualizerData ? (
-              /* No PDF uploaded yet -> Upload Hero Box */
+              /* Henüz Belge Yüklenmedi -> Resmi Doküman Yükleme Alanı */
               <div className="space-y-6">
-                <div className="bg-gradient-to-r from-emerald-950/60 via-slate-900 to-teal-950/60 border border-emerald-800/40 rounded-3xl p-8 shadow-2xl relative overflow-hidden">
-                  <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
-                  
-                  <div className="max-w-2xl space-y-4 relative z-10">
-                    <div className="inline-flex items-center gap-2 px-3 py-1 bg-emerald-950/80 border border-emerald-700/60 rounded-full text-emerald-300 text-xs font-semibold">
-                      <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-                      <span>Yeni Özellik: PDF'ten Tek Tıkla Tabloya Dönüştür</span>
+                <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8 shadow-xl relative overflow-hidden">
+                  <div className="max-w-3xl space-y-3 relative z-10">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 bg-slate-800 border border-slate-700 rounded-lg text-slate-300 text-xs font-semibold">
+                      <GraduationCap className="w-4 h-4 text-amber-400" />
+                      <span>Yıldız Teknik Üniversitesi — Öğrenci Ders Programı Sistemi</span>
                     </div>
 
-                    <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-100 tracking-tight">
-                      Öğrenci Ders Programı <span className="bg-gradient-to-r from-emerald-400 to-teal-300 bg-clip-text text-transparent">Görselleştirici</span>
+                    <h2 className="text-2xl sm:text-3xl font-bold text-slate-100 tracking-tight">
+                      Öğrenci Haftalık Ders Programı <span className="text-indigo-400">Çizelgesi</span>
                     </h2>
 
-                    <p className="text-sm text-slate-300 leading-relaxed">
-                      YTÜ USIS / OBS sisteminizden aldığınız <span className="font-mono text-emerald-300 font-semibold bg-emerald-950/70 px-1.5 py-0.5 rounded border border-emerald-800/50">Report.pdf</span> (Öğrenci Ders Programı) dosyasını buraya yükleyin. Sistem derslerinizi, şubelerinizi, dersliklerinizi (LAB ve Teori) ve hocalarınızı otomatik ayrıştırarak renkli, modern haftalık ders tablosuna dönüştürsün.
+                    <p className="text-sm text-slate-400 leading-relaxed">
+                      OBS / USIS sistemi üzerinden temin ettiğiniz resmi <span className="font-mono text-slate-200 font-semibold bg-slate-800 px-2 py-0.5 rounded border border-slate-700">Report.pdf</span> (Öğrenci Ders Programı) belgesini sisteme yükleyiniz. Belgedeki ders kodları, şube numaraları, teori ve laboratuvar derslikleri ile öğretim elemanları otomatik olarak çözümlenerek haftalık akademik çizelge formatında görselleştirilecektir.
                     </p>
                   </div>
                 </div>
 
-                {/* Dropzone Card */}
-                <div className="bg-slate-900 border border-slate-800 rounded-3xl p-8 shadow-xl text-center space-y-6">
+                {/* Yükleme Alanı */}
+                <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8 shadow-xl text-center space-y-6">
                   {visualizerError && (
-                    <div className="flex items-center gap-3 p-4 bg-rose-950/60 border border-rose-700/60 rounded-2xl text-rose-200 text-sm max-w-xl mx-auto text-left">
+                    <div className="flex items-center gap-3 p-4 bg-rose-950/60 border border-rose-800/80 rounded-xl text-rose-200 text-sm max-w-xl mx-auto text-left">
                       <AlertCircle className="w-5 h-5 text-rose-400 flex-shrink-0" />
                       <div className="flex-1">
-                        <p className="font-bold">Ayrıştırma Hatası</p>
-                        <p className="text-xs text-rose-300">{visualizerError}</p>
+                        <p className="font-bold">Belge Ayrıştırma Hatası</p>
+                        <p className="text-xs text-rose-300 mt-0.5">{visualizerError}</p>
                       </div>
                     </div>
                   )}
 
-                  <label className={`block border-2 border-dashed rounded-3xl p-10 transition-all cursor-pointer max-w-2xl mx-auto ${
+                  <label className={`block border-2 border-dashed rounded-2xl p-10 transition-all cursor-pointer max-w-2xl mx-auto ${
                     visualizerPdfUploading
-                      ? 'border-emerald-500 bg-emerald-950/20'
-                      : 'border-slate-700 hover:border-emerald-500/70 hover:bg-slate-950/60'
+                      ? 'border-indigo-500 bg-indigo-950/20'
+                      : 'border-slate-700 hover:border-slate-500 hover:bg-slate-950/40'
                   }`}>
                     <input
                       type="file"
@@ -2482,137 +2480,137 @@ export default function Home() {
                     />
 
                     {visualizerPdfUploading ? (
-                      <div className="py-8 flex flex-col items-center justify-center space-y-4">
-                        <RefreshCw className="w-10 h-10 text-emerald-400 animate-spin" />
+                      <div className="py-8 flex flex-col items-center justify-center space-y-3">
+                        <RefreshCw className="w-9 h-9 text-indigo-400 animate-spin" />
                         <div className="space-y-1">
-                          <p className="text-base font-bold text-slate-200">PDF Analiz Ediliyor...</p>
-                          <p className="text-xs text-slate-400">Dersler, sınıflar ve öğretim üyeleri eşleştiriliyor</p>
+                          <p className="text-sm font-bold text-slate-200">Belge Analiz Ediliyor...</p>
+                          <p className="text-xs text-slate-400">Ders programı kayıtları, derslikler ve öğretim üyeleri eşleştirilmektedir</p>
                         </div>
                       </div>
                     ) : (
                       <div className="space-y-4">
-                        <div className="w-16 h-16 bg-gradient-to-tr from-emerald-600/30 to-teal-600/30 border border-emerald-500/40 rounded-2xl flex items-center justify-center mx-auto text-emerald-400 shadow-lg shadow-emerald-950">
-                          <Upload className="w-8 h-8" />
+                        <div className="w-14 h-14 bg-slate-800 border border-slate-700 rounded-xl flex items-center justify-center mx-auto text-slate-300 shadow">
+                          <FileText className="w-7 h-7" />
                         </div>
-                        <div className="space-y-1.5">
-                          <p className="text-base font-bold text-slate-200">
-                            Öğrenci Ders Programı PDF Dosyasını Seçin veya Sürükleyin
+                        <div className="space-y-1">
+                          <p className="text-sm font-bold text-slate-200">
+                            Öğrenci Ders Programı Dokümanını (Report.pdf) Seçiniz
                           </p>
-                          <p className="text-xs text-slate-400">
-                            Yalnızca <span className="text-emerald-400 font-mono">.pdf</span> formatındaki OBS/USIS ders programı çıktısı desteklenir
+                          <p className="text-xs text-slate-500">
+                            Dosyayı bu alana sürükleyebilir veya tıklayarak dosya seçebilirsiniz
                           </p>
                         </div>
                         <div className="pt-2">
-                          <span className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-bold rounded-xl shadow-lg shadow-emerald-900/40 transition-all">
-                            <FileText className="w-4 h-4" />
-                            <span>PDF Dosyası Yükle</span>
+                          <span className="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-xl shadow transition-all">
+                            <Upload className="w-4 h-4" />
+                            <span>PDF Belgesi Yükle</span>
                           </span>
                         </div>
                       </div>
                     )}
                   </label>
 
-                  {/* Feature Pills */}
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-3xl mx-auto pt-4">
-                    <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800 text-left space-y-1">
-                      <div className="text-emerald-400 font-bold text-xs flex items-center gap-1.5">
-                        <Sparkles className="w-4 h-4" />
-                        Renkli & Otomatik Tablo
+                  {/* Resmi Bilgi Kartları */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-3xl mx-auto pt-2">
+                    <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 text-left space-y-1">
+                      <div className="text-slate-200 font-bold text-xs flex items-center gap-1.5">
+                        <Calendar className="w-4 h-4 text-indigo-400" />
+                        Haftalık Akademik Çizelge
                       </div>
-                      <p className="text-[11px] text-slate-400">Her ders için farklı renkler ve saat blokları oluşturulur.</p>
+                      <p className="text-[11px] text-slate-400">Ders saatleri bloklar halinde haftalık resmi şablona yerleştirilir.</p>
                     </div>
 
-                    <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800 text-left space-y-1">
-                      <div className="text-teal-400 font-bold text-xs flex items-center gap-1.5">
-                        <Building2 className="w-4 h-4" />
-                        Sınıflar & Lablar
+                    <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 text-left space-y-1">
+                      <div className="text-slate-200 font-bold text-xs flex items-center gap-1.5">
+                        <Building2 className="w-4 h-4 text-indigo-400" />
+                        Derslik ve Laboratuvarlar
                       </div>
-                      <p className="text-[11px] text-slate-400">Teori amfileri, online dersler ve BLM LAB yerleri net belirtilir.</p>
+                      <p className="text-[11px] text-slate-400">Teorik derslikler ve LAB ortamları açık ve net şekilde belirtilir.</p>
                     </div>
 
-                    <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800 text-left space-y-1">
-                      <div className="text-indigo-400 font-bold text-xs flex items-center gap-1.5">
-                        <User className="w-4 h-4" />
-                        Öğretim Üyeleri
+                    <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 text-left space-y-1">
+                      <div className="text-slate-200 font-bold text-xs flex items-center gap-1.5">
+                        <User className="w-4 h-4 text-indigo-400" />
+                        Öğretim Elemanları
                       </div>
-                      <p className="text-[11px] text-slate-400">Hocaların unvan ve tam adları veritabanından otomatik getirilir.</p>
+                      <p className="text-[11px] text-slate-400">Dersi veren öğretim üyelerinin unvan ve isimleri eksiksiz gösterilir.</p>
                     </div>
                   </div>
                 </div>
               </div>
             ) : (
-              /* PDF successfully parsed -> Visualizer View */
+              /* Belge Yüklendi -> Resmi Çizelge Görünümü */
               <div className="space-y-6">
-                {/* Visualizer Top Bar / Header */}
-                <div className="bg-gradient-to-r from-slate-900 via-emerald-950/30 to-slate-900 border border-emerald-800/40 rounded-3xl p-6 shadow-2xl space-y-4">
+                {/* Üst Yönetim Paneli */}
+                <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4">
                   <div className="flex flex-wrap items-center justify-between gap-4">
-                    {/* Left: Student Identity */}
-                    <div className="flex items-center space-x-4">
-                      <div className="w-12 h-12 bg-gradient-to-tr from-emerald-600 to-teal-500 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-emerald-950 font-bold text-lg">
-                        {visualizerData.student_name ? visualizerData.student_name.charAt(0) : 'Ö'}
+                    {/* Öğrenci Resmi Bilgi Alanı */}
+                    <div className="flex items-center space-x-3.5">
+                      <div className="w-11 h-11 bg-slate-800 border border-slate-700 rounded-xl flex items-center justify-center text-slate-200 font-bold text-base shadow">
+                        <GraduationCap className="w-6 h-6 text-indigo-400" />
                       </div>
                       <div>
                         <div className="flex items-center gap-2 flex-wrap">
-                          <h2 className="text-lg font-bold text-slate-100">
+                          <h2 className="text-base font-bold text-slate-100">
                             {visualizerData.student_name || 'Öğrenci Ders Programı'}
                           </h2>
                           {visualizerData.student_id && (
-                            <span className="font-mono text-xs font-bold px-2 py-0.5 bg-slate-800 border border-slate-700 text-slate-300 rounded-lg">
-                              {visualizerData.student_id}
+                            <span className="font-mono text-xs font-semibold px-2 py-0.5 bg-slate-950 border border-slate-800 text-slate-400 rounded-md">
+                              No: {visualizerData.student_id}
                             </span>
                           )}
                         </div>
-                        <p className="text-xs text-emerald-400 font-medium mt-0.5">
-                          {visualizerData.term ? `${visualizerData.term} Dönemi` : 'Haftalık Ders Programı'}
+                        <p className="text-xs text-slate-400 font-medium mt-0.5">
+                          {visualizerData.term ? `${visualizerData.term} Öğretim Yarıyılı` : 'Haftalık Ders Programı'}
                         </p>
                       </div>
                     </div>
 
-                    {/* Right: Quick Action Buttons */}
-                    <div className="flex items-center gap-2.5 flex-wrap">
-                      {/* View mode switcher */}
+                    {/* Eylem Butonları */}
+                    <div className="flex items-center gap-2 flex-wrap">
+                      {/* Görünüm Seçici */}
                       <div className="bg-slate-950 p-1 rounded-xl border border-slate-800 flex items-center gap-1">
                         <button
                           onClick={() => setVisualizerViewMode('table')}
                           className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                             visualizerViewMode === 'table'
-                              ? 'bg-emerald-600 text-white shadow'
+                              ? 'bg-slate-800 text-white shadow'
                               : 'text-slate-400 hover:text-slate-200'
                           }`}
                         >
                           <Calendar className="w-3.5 h-3.5 inline mr-1" />
-                          Haftalık Tablo
+                          Haftalık Çizelge
                         </button>
                         <button
                           onClick={() => setVisualizerViewMode('cards')}
                           className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                             visualizerViewMode === 'cards'
-                              ? 'bg-emerald-600 text-white shadow'
+                              ? 'bg-slate-800 text-white shadow'
                               : 'text-slate-400 hover:text-slate-200'
                           }`}
                         >
                           <LayoutGrid className="w-3.5 h-3.5 inline mr-1" />
-                          Günlük Kartlar
+                          Günlük Dağılım
                         </button>
                         <button
                           onClick={() => setVisualizerViewMode('summary')}
                           className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                             visualizerViewMode === 'summary'
-                              ? 'bg-emerald-600 text-white shadow'
+                              ? 'bg-slate-800 text-white shadow'
                               : 'text-slate-400 hover:text-slate-200'
                           }`}
                         >
                           <Building2 className="w-3.5 h-3.5 inline mr-1" />
-                          Derslik & Hoca Özeti
+                          Derslik & Hoca Dökümü
                         </button>
                       </div>
 
                       <button
                         onClick={handleExportVisualizerPNG}
-                        className="flex items-center space-x-1.5 px-4 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-bold rounded-xl shadow-lg shadow-emerald-950 transition-all cursor-pointer"
+                        className="flex items-center space-x-1.5 px-3.5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-xl shadow transition-all cursor-pointer"
                       >
                         <Download className="w-3.5 h-3.5" />
-                        <span>PNG İndir</span>
+                        <span>PNG Olarak Kaydet</span>
                       </button>
 
                       <button
@@ -2625,8 +2623,8 @@ export default function Home() {
                       </button>
 
                       <label className="flex items-center space-x-1.5 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium rounded-xl border border-slate-700 transition-all cursor-pointer">
-                        <Upload className="w-3.5 h-3.5 text-emerald-400" />
-                        <span>Yeni PDF</span>
+                        <Upload className="w-3.5 h-3.5 text-slate-400" />
+                        <span>Yeni Belge</span>
                         <input
                           type="file"
                           accept=".pdf"
@@ -2637,254 +2635,267 @@ export default function Home() {
                     </div>
                   </div>
 
-                  {/* Summary Badges Pill */}
-                  <div className="flex items-center gap-3 pt-3 border-t border-slate-800/80 flex-wrap text-xs">
-                    <span className="px-3 py-1 bg-slate-950 rounded-lg border border-slate-800 text-slate-300 flex items-center gap-1.5 font-medium">
-                      <BookOpen className="w-3.5 h-3.5 text-emerald-400" />
-                      Toplam <strong className="text-white">{visualizerData.courses_summary?.length || 0}</strong> Ders
+                  {/* Özet Göstergeleri */}
+                  <div className="flex items-center gap-3 pt-3 border-t border-slate-800 flex-wrap text-xs text-slate-400">
+                    <span className="px-2.5 py-1 bg-slate-950 rounded-lg border border-slate-800 flex items-center gap-1.5">
+                      <BookOpen className="w-3.5 h-3.5 text-slate-400" />
+                      Kayıtlı Ders: <strong className="text-slate-200 font-mono">{visualizerData.courses_summary?.length || 0}</strong>
                     </span>
 
-                    <span className="px-3 py-1 bg-slate-950 rounded-lg border border-slate-800 text-slate-300 flex items-center gap-1.5 font-medium">
-                      <Clock className="w-3.5 h-3.5 text-teal-400" />
-                      Haftalık <strong className="text-white">
-                        {visualizerData.courses_summary?.reduce((acc: number, c: any) => {
-                          const slotsCount = c.time_slots?.length || 0;
-                          return acc + slotsCount;
-                        }, 0)}
-                      </strong> Saat Ders
+                    <span className="px-2.5 py-1 bg-slate-950 rounded-lg border border-slate-800 flex items-center gap-1.5">
+                      <Clock className="w-3.5 h-3.5 text-slate-400" />
+                      Haftalık Toplam: <strong className="text-slate-200 font-mono">
+                        {visualizerData.courses_summary?.reduce((acc: number, c: any) => acc + (c.time_slots?.length || 0), 0)}
+                      </strong> Saat
                     </span>
 
-                    <span className="px-3 py-1 bg-slate-950 rounded-lg border border-slate-800 text-slate-300 flex items-center gap-1.5 font-medium">
-                      <Building2 className="w-3.5 h-3.5 text-indigo-400" />
-                      Farklı Derslikler: <strong className="text-white">
+                    <span className="px-2.5 py-1 bg-slate-950 rounded-lg border border-slate-800 flex items-center gap-1.5">
+                      <Building2 className="w-3.5 h-3.5 text-slate-400" />
+                      Derslikler: <strong className="text-slate-200">
                         {Array.from(new Set(visualizerData.courses_summary?.flatMap((c: any) => c.classrooms || []) || [])).join(', ') || 'Belirtilmedi'}
                       </strong>
                     </span>
                   </div>
                 </div>
 
-                {/* VIEW 1: WEEKLY TIMETABLE GRID */}
+                {/* GÖRÜNÜM 1: HAFTALIK AKADEMİK ÇİZELGE (PNG ÇIKTISI) */}
                 {visualizerViewMode === 'table' && (
-                  <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl space-y-4">
-                    <div ref={visualizerScheduleRef} className="bg-slate-950 p-6 rounded-2xl border border-slate-800 space-y-4 overflow-x-auto">
-                      {/* Printable Banner inside image export */}
-                      <div className="flex items-center justify-between border-b border-slate-800/80 pb-4">
-                        <div className="flex items-center space-x-3">
-                          <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white font-black text-base shadow">
-                            YTÜ
+                  <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-2xl space-y-4">
+                    <div
+                      ref={visualizerScheduleRef}
+                      className="bg-slate-950 p-6 rounded-xl border border-slate-800/80 space-y-4 w-full"
+                      style={{ minWidth: '850px' }}
+                    >
+                      {/* Resmi Kurumsal Belge Başlığı */}
+                      <div className="border-b-2 border-slate-800 pb-4 flex items-center justify-between">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <span className="font-extrabold text-sm tracking-wider uppercase text-slate-100">
+                              YILDIZ TEKNİK ÜNİVERSİTESİ
+                            </span>
+                            <span className="text-xs text-slate-500 font-semibold">•</span>
+                            <span className="text-xs text-slate-400 font-medium">
+                              Öğrenci İşleri Daire Başkanlığı
+                            </span>
                           </div>
-                          <div>
-                            <h3 className="text-base font-bold text-slate-100">
-                              Yıldız Teknik Üniversitesi — Haftalık Ders Programı
-                            </h3>
-                            <p className="text-xs text-slate-400">
-                              {visualizerData.student_name} ({visualizerData.student_id}) • {visualizerData.term ? `${visualizerData.term} Dönemi` : 'Ders Programı'}
-                            </p>
-                          </div>
+                          <h3 className="text-base font-bold text-slate-100">
+                            Haftalık Ders Programı Çizelgesi
+                          </h3>
                         </div>
 
-                        <div className="text-right font-mono text-xs text-slate-500">
-                          {new Date().toLocaleDateString('tr-TR')}
+                        <div className="text-right text-xs space-y-0.5">
+                          <p className="font-bold text-slate-200 font-mono">
+                            {visualizerData.student_name}
+                          </p>
+                          <p className="text-slate-400 font-mono text-[11px]">
+                            Öğrenci No: <span className="text-slate-300 font-semibold">{visualizerData.student_id}</span>
+                          </p>
+                          <p className="text-slate-500 text-[10px]">
+                            {visualizerData.term ? `${visualizerData.term} Yarıyılı` : ''} • {new Date().toLocaleDateString('tr-TR')}
+                          </p>
                         </div>
                       </div>
 
-                      {/* Timetable Table */}
-                      <div className="overflow-x-auto">
-                        <table className="w-full border-collapse text-xs select-none min-w-[700px]">
-                          <thead>
-                            <tr className="border-b border-slate-800 text-slate-400">
-                              <th className="p-3 w-24 text-center font-semibold bg-slate-950/90 border-r border-slate-800">
-                                Saat
+                      {/* Resmi Tablo Gövdesi */}
+                      <table className="w-full border-collapse text-xs select-none table-fixed">
+                        <thead>
+                          <tr className="border-b border-slate-800 text-slate-400 bg-slate-900/60">
+                            <th className="p-2.5 w-24 text-center font-bold text-[11px] border-r border-slate-800 uppercase tracking-wider">
+                              Saat
+                            </th>
+                            {['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma'].map((day, dIdx) => (
+                              <th
+                                key={day}
+                                className={`p-2.5 text-center font-bold text-[11px] border-r border-slate-800 uppercase tracking-wider text-slate-200 ${
+                                  dIdx === 4 ? 'border-r-0' : ''
+                                }`}
+                              >
+                                {day}
                               </th>
-                              {['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma'].map(day => (
-                                <th key={day} className="p-3 text-center font-bold text-slate-200 border-r border-slate-800 last:border-r-0">
-                                  {day}
-                                </th>
-                              ))}
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {(() => {
-                              const VISUALIZER_HOURS = [
-                                '08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00'
-                              ];
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {(() => {
+                            const VISUALIZER_HOURS = [
+                              '08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00'
+                            ];
 
-                              const VIS_DAYS = ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma'];
+                            const VIS_DAYS = ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma'];
 
-                              const toMinutes = (timeStr: string) => {
-                                const parts = timeStr.replace('.', ':').split(':');
-                                return parseInt(parts[0], 10) * 60 + parseInt(parts[1], 10);
-                              };
+                            const toMinutes = (timeStr: string) => {
+                              const parts = timeStr.replace('.', ':').split(':');
+                              return parseInt(parts[0], 10) * 60 + parseInt(parts[1], 10);
+                            };
 
-                              const COLOR_PALETTES = [
-                                { bg: 'bg-indigo-950/90', border: 'border-indigo-500', text: 'text-indigo-100', accent: 'text-indigo-300', badge: 'bg-indigo-900/90 text-indigo-200 border border-indigo-600', icon: 'text-indigo-400' },
-                                { bg: 'bg-emerald-950/90', border: 'border-emerald-500', text: 'text-emerald-100', accent: 'text-emerald-300', badge: 'bg-emerald-900/90 text-emerald-200 border border-emerald-600', icon: 'text-emerald-400' },
-                                { bg: 'bg-purple-950/90', border: 'border-purple-500', text: 'text-purple-100', accent: 'text-purple-300', badge: 'bg-purple-900/90 text-purple-200 border border-purple-600', icon: 'text-purple-400' },
-                                { bg: 'bg-amber-950/90', border: 'border-amber-500', text: 'text-amber-100', accent: 'text-amber-300', badge: 'bg-amber-900/90 text-amber-200 border border-amber-600', icon: 'text-amber-400' },
-                                { bg: 'bg-rose-950/90', border: 'border-rose-500', text: 'text-rose-100', accent: 'text-rose-300', badge: 'bg-rose-900/90 text-rose-200 border border-rose-600', icon: 'text-rose-400' },
-                                { bg: 'bg-cyan-950/90', border: 'border-cyan-500', text: 'text-cyan-100', accent: 'text-cyan-300', badge: 'bg-cyan-900/90 text-cyan-200 border border-cyan-600', icon: 'text-cyan-400' },
-                                { bg: 'bg-teal-950/90', border: 'border-teal-500', text: 'text-teal-100', accent: 'text-teal-300', badge: 'bg-teal-900/90 text-teal-200 border border-teal-600', icon: 'text-teal-400' },
-                                { bg: 'bg-fuchsia-950/90', border: 'border-fuchsia-500', text: 'text-fuchsia-100', accent: 'text-fuchsia-300', badge: 'bg-fuchsia-900/90 text-fuchsia-200 border border-fuchsia-600', icon: 'text-fuchsia-400' },
-                                { bg: 'bg-sky-950/90', border: 'border-sky-500', text: 'text-sky-100', accent: 'text-sky-300', badge: 'bg-sky-900/90 text-sky-200 border border-sky-600', icon: 'text-sky-400' },
-                                { bg: 'bg-orange-950/90', border: 'border-orange-500', text: 'text-orange-100', accent: 'text-orange-300', badge: 'bg-orange-900/90 text-orange-200 border border-orange-600', icon: 'text-orange-400' },
-                              ];
+                            // Resmi ve dengeli akademik renk temaları (Mavi çubuk içermez, temiz ve uyumlu)
+                            const ACADEMIC_PALETTES = [
+                              { bg: 'bg-slate-900', border: 'border-slate-700', text: 'text-slate-100', accent: 'text-indigo-400', badge: 'bg-slate-800 text-slate-300 border-slate-700' },
+                              { bg: 'bg-emerald-950/40', border: 'border-emerald-800/80', text: 'text-emerald-100', accent: 'text-emerald-400', badge: 'bg-emerald-900/60 text-emerald-200 border-emerald-700/60' },
+                              { bg: 'bg-indigo-950/40', border: 'border-indigo-800/80', text: 'text-indigo-100', accent: 'text-indigo-400', badge: 'bg-indigo-900/60 text-indigo-200 border-indigo-700/60' },
+                              { bg: 'bg-amber-950/40', border: 'border-amber-800/80', text: 'text-amber-100', accent: 'text-amber-400', badge: 'bg-amber-900/60 text-amber-200 border-amber-700/60' },
+                              { bg: 'bg-purple-950/40', border: 'border-purple-800/80', text: 'text-purple-100', accent: 'text-purple-400', badge: 'bg-purple-900/60 text-purple-200 border-purple-700/60' },
+                              { bg: 'bg-teal-950/40', border: 'border-teal-800/80', text: 'text-teal-100', accent: 'text-teal-400', badge: 'bg-teal-900/60 text-teal-200 border-teal-700/60' },
+                              { bg: 'bg-rose-950/40', border: 'border-rose-800/80', text: 'text-rose-100', accent: 'text-rose-400', badge: 'bg-rose-900/60 text-rose-200 border-rose-700/60' },
+                              { bg: 'bg-cyan-950/40', border: 'border-cyan-800/80', text: 'text-cyan-100', accent: 'text-cyan-400', badge: 'bg-cyan-900/60 text-cyan-200 border-cyan-700/60' },
+                            ];
 
-                              const getCourseColor = (code: string) => {
-                                const codes = (visualizerData.courses_summary || []).map((c: any) => c.code);
-                                const idx = codes.indexOf(code);
-                                if (idx !== -1) return COLOR_PALETTES[idx % COLOR_PALETTES.length];
-                                let hash = 0;
-                                for (let i = 0; i < code.length; i++) hash = code.charCodeAt(i) + ((hash << 5) - hash);
-                                return COLOR_PALETTES[Math.abs(hash) % COLOR_PALETTES.length];
-                              };
+                            const getCourseColor = (code: string) => {
+                              const codes = (visualizerData.courses_summary || []).map((c: any) => c.code);
+                              const idx = codes.indexOf(code);
+                              if (idx !== -1) return ACADEMIC_PALETTES[idx % ACADEMIC_PALETTES.length];
+                              let hash = 0;
+                              for (let i = 0; i < code.length; i++) hash = code.charCodeAt(i) + ((hash << 5) - hash);
+                              return ACADEMIC_PALETTES[Math.abs(hash) % ACADEMIC_PALETTES.length];
+                            };
 
-                              // Precompute which course runs on (day, hourIdx)
-                              const grid: Record<string, Record<number, any>> = {};
-                              VIS_DAYS.forEach(d => { grid[d] = {}; });
+                            const grid: Record<string, Record<number, any>> = {};
+                            VIS_DAYS.forEach(d => { grid[d] = {}; });
 
-                              VIS_DAYS.forEach(day => {
-                                const items = visualizerData.schedule[day] || [];
-                                items.forEach((it: any) => {
-                                  const startM = toMinutes(it.start_time);
-                                  const endM = toMinutes(it.end_time);
+                            VIS_DAYS.forEach(day => {
+                              const items = visualizerData.schedule[day] || [];
+                              items.forEach((it: any) => {
+                                const startM = toMinutes(it.start_time);
+                                const endM = toMinutes(it.end_time);
 
-                                  VISUALIZER_HOURS.forEach((hr, hrIdx) => {
-                                    const hrM = toMinutes(hr);
-                                    if (hrM >= startM && hrM < endM) {
-                                      grid[day][hrIdx] = it;
-                                    }
-                                  });
+                                VISUALIZER_HOURS.forEach((hr, hrIdx) => {
+                                  const hrM = toMinutes(hr);
+                                  if (hrM >= startM && hrM < endM) {
+                                    grid[day][hrIdx] = it;
+                                  }
                                 });
                               });
+                            });
 
-                              const skipCells: Record<string, Set<number>> = {};
-                              VIS_DAYS.forEach(d => { skipCells[d] = new Set(); });
+                            const skipCells: Record<string, Set<number>> = {};
+                            VIS_DAYS.forEach(d => { skipCells[d] = new Set(); });
 
-                              return VISUALIZER_HOURS.map((hour, hrIdx) => {
-                                const nextHour = `${parseInt(hour.split(':')[0], 10)}:50`;
-                                const hourLabel = `${hour} - ${nextHour}`;
+                            return VISUALIZER_HOURS.map((hour, hrIdx) => {
+                              const nextHour = `${parseInt(hour.split(':')[0], 10)}:50`;
+                              const hourLabel = `${hour} - ${nextHour}`;
 
-                                return (
-                                  <tr key={hour} className="border-b border-slate-800/60 hover:bg-slate-800/20 h-20">
-                                    <td className="p-2 border-r border-slate-800 text-center font-mono text-slate-500 bg-slate-950/40 h-20 align-middle">
-                                      {hourLabel}
-                                    </td>
+                              return (
+                                <tr key={hour} className="border-b border-slate-800/60 h-16">
+                                  <td className="p-2 border-r border-slate-800 text-center font-mono text-[11px] text-slate-400 bg-slate-950 align-middle">
+                                    {hourLabel}
+                                  </td>
 
-                                    {VIS_DAYS.map(day => {
-                                      if (skipCells[day].has(hrIdx)) return null;
+                                  {VIS_DAYS.map((day, dayIdx) => {
+                                    if (skipCells[day].has(hrIdx)) return null;
 
-                                      const it = grid[day][hrIdx];
-                                      if (!it) {
-                                        return <td key={day} className="p-1 border-r border-slate-800/60 last:border-r-0 h-20 align-top" />;
-                                      }
+                                    const it = grid[day][hrIdx];
+                                    const isLastCol = dayIdx === 4;
 
-                                      // calculate span
-                                      let span = 1;
-                                      while (
-                                        hrIdx + span < VISUALIZER_HOURS.length &&
-                                        grid[day][hrIdx + span]?.code === it.code &&
-                                        grid[day][hrIdx + span]?.section === it.section &&
-                                        grid[day][hrIdx + span]?.classroom === it.classroom
-                                      ) {
-                                        skipCells[day].add(hrIdx + span);
-                                        span++;
-                                      }
-
-                                      const palette = getCourseColor(it.code);
-                                      const fullInst = getFullInstructorName(it.instructor);
-
+                                    if (!it) {
                                       return (
                                         <td
                                           key={day}
-                                          rowSpan={span}
-                                          style={{ height: `${span * 80}px` }}
-                                          className="p-1.5 border-r border-slate-800/60 last:border-r-0 align-top h-full"
-                                        >
-                                          <div className={`h-full w-full p-3 rounded-2xl border ${palette.bg} ${palette.border} shadow-lg flex flex-col justify-between transition-all hover:brightness-110 space-y-2`}>
-                                            <div className="space-y-1.5">
-                                              {/* Top Badges */}
-                                              <div className="flex items-center justify-between gap-1 flex-wrap">
-                                                <span className={`font-mono font-extrabold text-xs ${palette.accent}`}>
-                                                  {it.code} {it.section ? `(Şb. ${it.section})` : ''}
-                                                </span>
-
-                                                <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-lg flex items-center gap-1 ${
-                                                  it.is_lab
-                                                    ? 'bg-emerald-900/90 text-emerald-200 border border-emerald-600'
-                                                    : it.classroom.toLowerCase().includes('online')
-                                                    ? 'bg-cyan-900/90 text-cyan-200 border border-cyan-600'
-                                                    : palette.badge
-                                                }`}>
-                                                  {it.is_lab ? '🔬' : it.classroom.toLowerCase().includes('online') ? '💻' : '📍'} {it.classroom || 'Derslik'}
-                                                </span>
-                                              </div>
-
-                                              {/* Course Title */}
-                                              <h4 className={`text-xs font-bold ${palette.text} leading-tight line-clamp-2`}>
-                                                {it.name}
-                                              </h4>
-                                            </div>
-
-                                            {/* Bottom Info: Instructor & Time */}
-                                            <div className="pt-2 border-t border-slate-700/50 space-y-1 text-[10px] text-slate-300">
-                                              {fullInst && (
-                                                <div className="flex items-center gap-1 truncate" title={fullInst}>
-                                                  <User className={`w-3 h-3 flex-shrink-0 ${palette.icon}`} />
-                                                  <span className="truncate font-medium">{fullInst}</span>
-                                                </div>
-                                              )}
-                                              <div className="flex items-center gap-1 text-slate-400 font-mono">
-                                                <Clock className="w-3 h-3 flex-shrink-0 text-slate-500" />
-                                                <span>{it.start_time} - {it.end_time}</span>
-                                              </div>
-                                            </div>
-                                          </div>
-                                        </td>
+                                          className={`p-1 border-r border-slate-800/60 h-16 align-top ${
+                                            isLastCol ? 'border-r-0' : ''
+                                          }`}
+                                        />
                                       );
-                                    })}
-                                  </tr>
-                                );
-                              });
-                            })()}
-                          </tbody>
-                        </table>
-                      </div>
+                                    }
+
+                                    let span = 1;
+                                    while (
+                                      hrIdx + span < VISUALIZER_HOURS.length &&
+                                      grid[day][hrIdx + span]?.code === it.code &&
+                                      grid[day][hrIdx + span]?.section === it.section &&
+                                      grid[day][hrIdx + span]?.classroom === it.classroom
+                                    ) {
+                                      skipCells[day].add(hrIdx + span);
+                                      span++;
+                                    }
+
+                                    const palette = getCourseColor(it.code);
+                                    const fullInst = getFullInstructorName(it.instructor);
+
+                                    return (
+                                      <td
+                                        key={day}
+                                        rowSpan={span}
+                                        style={{ height: `${span * 64}px` }}
+                                        className={`p-1 border-r border-slate-800/60 align-top h-full ${
+                                          isLastCol ? 'border-r-0' : ''
+                                        }`}
+                                      >
+                                        <div className={`h-full w-full p-2.5 rounded-lg border ${palette.bg} ${palette.border} flex flex-col justify-between space-y-1.5 transition-all`}>
+                                          <div className="space-y-1">
+                                            {/* Başlık ve Şube / Derslik Bilgisi */}
+                                            <div className="flex items-center justify-between gap-1">
+                                              <span className={`font-mono font-bold text-xs ${palette.accent}`}>
+                                                {it.code} {it.section ? `(Şb. ${it.section})` : ''}
+                                              </span>
+
+                                              <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded border ${palette.badge}`}>
+                                                {it.is_lab ? `LAB (${it.classroom})` : it.classroom || 'Derslik'}
+                                              </span>
+                                            </div>
+
+                                            {/* Ders Adı */}
+                                            <h4 className={`text-[11px] font-semibold ${palette.text} leading-snug line-clamp-2`}>
+                                              {it.name}
+                                            </h4>
+                                          </div>
+
+                                          {/* Alt Bilgi: Öğretim Elemanı ve Saat */}
+                                          <div className="pt-1.5 border-t border-slate-800/80 space-y-0.5 text-[10px] text-slate-400">
+                                            {fullInst && (
+                                              <p className="truncate text-slate-300 font-medium" title={fullInst}>
+                                                {fullInst}
+                                              </p>
+                                            )}
+                                            <p className="font-mono text-slate-500 text-[10px]">
+                                              {it.start_time} - {it.end_time}
+                                            </p>
+                                          </div>
+                                        </div>
+                                      </td>
+                                    );
+                                  })}
+                                </tr>
+                              );
+                            });
+                          })()}
+                        </tbody>
+                      </table>
                     </div>
                   </div>
                 )}
 
-                {/* VIEW 2: DAILY CARDS BREAKDOWN */}
+                {/* GÖRÜNÜM 2: GÜNLÜK DERS DAĞILIMI */}
                 {visualizerViewMode === 'cards' && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi', 'Pazar'].map(day => {
                       const dayItems = visualizerData.schedule[day] || [];
                       if (dayItems.length === 0) return null;
 
                       return (
-                        <div key={day} className="bg-slate-900 border border-slate-800 rounded-3xl p-5 shadow-xl space-y-4">
-                          <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-                            <h3 className="font-bold text-slate-100 text-sm flex items-center gap-2">
-                              <Calendar className="w-4 h-4 text-emerald-400" />
+                        <div key={day} className="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-xl space-y-3">
+                          <div className="flex items-center justify-between border-b border-slate-800 pb-2.5">
+                            <h3 className="font-bold text-slate-100 text-xs flex items-center gap-2 uppercase tracking-wider">
+                              <Calendar className="w-3.5 h-3.5 text-indigo-400" />
                               {day}
                             </h3>
-                            <span className="text-xs px-2 py-0.5 bg-slate-800 rounded-full text-slate-400 font-mono font-semibold">
+                            <span className="text-[10px] px-2 py-0.5 bg-slate-950 rounded border border-slate-800 text-slate-400 font-mono">
                               {dayItems.length} Ders
                             </span>
                           </div>
 
-                          <div className="space-y-3">
+                          <div className="space-y-2.5">
                             {dayItems.map((it: any, idx: number) => {
                               const fullInst = getFullInstructorName(it.instructor);
                               return (
                                 <div
                                   key={idx}
-                                  className="p-3.5 rounded-2xl bg-slate-950 border border-slate-800/80 hover:border-emerald-500/40 transition-all space-y-2"
+                                  className="p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-1.5"
                                 >
                                   <div className="flex items-center justify-between gap-2">
-                                    <span className="font-mono font-bold text-xs text-emerald-400">
+                                    <span className="font-mono font-bold text-xs text-indigo-300">
                                       {it.code} (Şb. {it.section})
                                     </span>
-                                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-lg bg-slate-900 border border-slate-700 text-slate-300">
+                                    <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-900 border border-slate-700 text-slate-300">
                                       {it.classroom}
                                     </span>
                                   </div>
@@ -2893,13 +2904,11 @@ export default function Home() {
                                     {it.name}
                                   </h4>
 
-                                  <div className="flex items-center justify-between text-[11px] text-slate-400 pt-1 border-t border-slate-900">
-                                    <span className="flex items-center gap-1 truncate max-w-[160px]" title={fullInst}>
-                                      <User className="w-3 h-3 text-slate-500 flex-shrink-0" />
-                                      {fullInst || 'Öğretim Üyesi'}
+                                  <div className="flex items-center justify-between text-[10px] text-slate-400 pt-1 border-t border-slate-900">
+                                    <span className="truncate max-w-[150px]" title={fullInst}>
+                                      {fullInst || 'Öğretim Elemanı'}
                                     </span>
-                                    <span className="flex items-center gap-1 font-mono text-emerald-300">
-                                      <Clock className="w-3 h-3" />
+                                    <span className="font-mono text-slate-300">
                                       {it.start_time} - {it.end_time}
                                     </span>
                                   </div>
@@ -2913,70 +2922,59 @@ export default function Home() {
                   </div>
                 )}
 
-                {/* VIEW 3: SUMMARY TABLE (COURSES & CLASSROOMS) */}
+                {/* GÖRÜNÜM 3: DERSLİK VE ÖĞRETİM ELEMANI DÖKÜMÜ */}
                 {visualizerViewMode === 'summary' && (
-                  <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl space-y-4">
-                    <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-                      <div>
-                        <h3 className="text-base font-bold text-slate-100 flex items-center gap-2">
-                          <Building2 className="w-5 h-5 text-emerald-400" />
-                          Kayıtlı Dersler & Derslikler Özeti
-                        </h3>
-                        <p className="text-xs text-slate-400">Tüm dersler, şubeler, derslikler ve öğretim üyeleri dökümü</p>
-                      </div>
+                  <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
+                    <div className="border-b border-slate-800 pb-3">
+                      <h3 className="text-sm font-bold text-slate-100 flex items-center gap-2">
+                        <Building2 className="w-4 h-4 text-indigo-400" />
+                        Kayıtlı Dersler ve Derslik Dağılımı Dökümü
+                      </h3>
+                      <p className="text-xs text-slate-400 mt-0.5">Ders kodları, şubeler, öğretim elemanları ve derslik ortamları resmi listesi</p>
                     </div>
 
                     <div className="overflow-x-auto">
                       <table className="w-full text-left text-xs text-slate-300 border-collapse">
                         <thead>
-                          <tr className="border-b border-slate-800 text-slate-400 uppercase tracking-wider text-[10px]">
-                            <th className="p-3">Ders Kodu</th>
-                            <th className="p-3">Ders Adı</th>
-                            <th className="p-3">Şube</th>
-                            <th className="p-3">Öğretim Elemanı</th>
-                            <th className="p-3">Derslik(ler)</th>
-                            <th className="p-3">Haftalık Saatler</th>
+                          <tr className="border-b border-slate-800 text-slate-400 uppercase tracking-wider text-[10px] bg-slate-950/60">
+                            <th className="p-2.5">Ders Kodu</th>
+                            <th className="p-2.5">Ders Adı</th>
+                            <th className="p-2.5">Şube</th>
+                            <th className="p-2.5">Öğretim Elemanı</th>
+                            <th className="p-2.5">Derslik / Ortam</th>
+                            <th className="p-2.5">Ders Saatleri</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-800/60">
                           {visualizerData.courses_summary?.map((c: any, idx: number) => {
                             const fullInst = getFullInstructorName(c.instructor);
                             return (
-                              <tr key={idx} className="hover:bg-slate-800/30 transition-colors">
-                                <td className="p-3 font-mono font-bold text-emerald-400 whitespace-nowrap">
+                              <tr key={idx} className="hover:bg-slate-800/20 transition-colors">
+                                <td className="p-2.5 font-mono font-bold text-indigo-300 whitespace-nowrap">
                                   {c.code}
                                 </td>
-                                <td className="p-3 font-semibold text-slate-100">
+                                <td className="p-2.5 font-medium text-slate-100">
                                   {c.name}
                                 </td>
-                                <td className="p-3 font-mono">
+                                <td className="p-2.5 font-mono text-slate-400">
                                   Şb. {c.section}
                                 </td>
-                                <td className="p-3">
-                                  <span className="flex items-center gap-1.5">
-                                    <User className="w-3.5 h-3.5 text-slate-500 flex-shrink-0" />
-                                    <span>{fullInst || c.instructor || 'Bölüm Öğretim Üyesi'}</span>
-                                  </span>
+                                <td className="p-2.5 text-slate-300">
+                                  {fullInst || c.instructor || 'Bölüm Öğretim Elemanı'}
                                 </td>
-                                <td className="p-3">
+                                <td className="p-2.5">
                                   <div className="flex items-center gap-1.5 flex-wrap">
                                     {c.classrooms?.map((cr: string, cidx: number) => (
                                       <span
                                         key={cidx}
-                                        className={`px-2 py-0.5 rounded-lg border text-[11px] font-mono ${
-                                          cr.toUpperCase().includes('LAB')
-                                            ? 'bg-emerald-950/80 border-emerald-700/60 text-emerald-300'
-                                            : cr.toLowerCase().includes('online')
-                                            ? 'bg-cyan-950/80 border-cyan-700/60 text-cyan-300'
-                                            : 'bg-slate-950 border-slate-700 text-slate-300'
-                                        }`}
+                                        className="px-2 py-0.5 rounded border text-[11px] font-mono bg-slate-950 border-slate-700 text-slate-300"
                                       >
                                         {cr}
                                       </span>
                                     ))}
                                   </div>
                                 </td>
-                                <td className="p-3 font-mono text-slate-400">
+                                <td className="p-2.5 font-mono text-slate-400">
                                   <div className="space-y-0.5">
                                     {c.time_slots?.map((ts: any, tidx: number) => (
                                       <div key={tidx} className="flex items-center gap-1">
@@ -3000,9 +2998,6 @@ export default function Home() {
           </div>
         )}
       </main>
-
-
-
 
       {/* Modal for Adding / Editing Course */}
       {isManageModalOpen && (
