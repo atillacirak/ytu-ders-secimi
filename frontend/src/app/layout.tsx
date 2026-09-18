@@ -1,15 +1,17 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
+const inter = Inter({
+  variable: "--font-inter",
+  subsets: ["latin", "latin-ext"],
+  display: "swap",
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+const jetbrainsMono = JetBrains_Mono({
+  variable: "--font-jetbrains-mono",
+  subsets: ["latin", "latin-ext"],
+  display: "swap",
 });
 
 export const viewport: Viewport = {
@@ -62,10 +64,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang="tr"
       style={{ colorScheme: "light" }}
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased bg-[#f8fafc] text-slate-900`}
+      className={`${inter.variable} ${jetbrainsMono.variable} font-sans h-full antialiased bg-[#f8fafc] text-slate-900`}
     >
       <body
-        className="min-h-full flex flex-col bg-[#f8fafc] text-slate-900"
+        className="min-h-full flex flex-col bg-[#f8fafc] text-slate-900 font-sans"
         style={{ colorScheme: "light" }}
       >
         {children}
