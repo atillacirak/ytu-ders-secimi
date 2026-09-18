@@ -2835,6 +2835,8 @@ export default function Home() {
                                       (it.name && /uzaktan/i.test(it.name))
                                     );
 
+                                    const isMonochrome = visualizerColorMode === 'monochrome';
+
                                     return (
                                       <td
                                         key={day}
@@ -2854,10 +2856,18 @@ export default function Home() {
 
                                               {isOnline && (
                                                 <span
-                                                  className="inline-flex items-center gap-0.5 text-rose-600 shrink-0"
+                                                  className={`inline-flex items-center gap-0.5 px-1 py-0.5 rounded border text-[8px] font-mono shrink-0 shadow-2xs ${
+                                                    isMonochrome
+                                                      ? 'bg-white border-slate-300 text-slate-800'
+                                                      : 'bg-rose-50/80 border-rose-300 text-rose-600'
+                                                  }`}
                                                   title="Online / Sanal Ders"
                                                 >
-                                                  <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0 animate-pulse" />
+                                                  <span
+                                                    className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                                                      isMonochrome ? 'bg-slate-700' : 'bg-rose-500 animate-pulse'
+                                                    }`}
+                                                  />
                                                   <svg className="w-2.5 h-2.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.2">
                                                     <path strokeLinecap="round" strokeLinejoin="round" d="m15.75 10.5 4.72-4.72a.75.75 0 0 1 1.28.53v11.38a.75.75 0 0 1-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 0 0 2.25-2.25v-9a2.25 2.25 0 0 0-2.25-2.25h-9A2.25 2.25 0 0 0 2.25 7.5v9a2.25 2.25 0 0 0 2.25 2.25Z" />
                                                   </svg>
